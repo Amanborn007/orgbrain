@@ -2,7 +2,7 @@
 # scripts/pr-stability-check.sh — validate that the committed state is
 # actually running / testable. Run before opening any PR.
 #
-# Convention: every Bifrost PR ships code the author has locally
+# Convention: every OrgBrain PR ships code the author has locally
 # validated against HEAD. This script encodes that contract as 8 gates.
 # Any failure is a ✗; any ✗ means the PR description should explain it.
 #
@@ -102,11 +102,11 @@ fi
 if [ "$SKIP_UI" -eq 1 ]; then
   record ui-tsc "UI typecheck" skip "--skip-ui"
 else
-  if ( cd ui && npx -y tsc --noEmit ) >/tmp/bifrost-stability-tsc.log 2>&1; then
+  if ( cd ui && npx -y tsc --noEmit ) >/tmp/orgbrain-stability-tsc.log 2>&1; then
     record ui-tsc "UI typecheck" pass "clean"
   else
-    errs=$(grep -c "error TS" /tmp/bifrost-stability-tsc.log 2>/dev/null || echo 0)
-    record ui-tsc "UI typecheck" fail "$errs errors (see /tmp/bifrost-stability-tsc.log)"
+    errs=$(grep -c "error TS" /tmp/orgbrain-stability-tsc.log 2>/dev/null || echo 0)
+    record ui-tsc "UI typecheck" fail "$errs errors (see /tmp/orgbrain-stability-tsc.log)"
   fi
 fi
 
@@ -114,11 +114,11 @@ fi
 if [ "$SKIP_UI" -eq 1 ]; then
   record ui-tests "UI tests" skip "--skip-ui"
 else
-  if ( cd ui && npx -y vitest run ) >/tmp/bifrost-stability-vitest.log 2>&1; then
-    total=$(grep -oE 'Tests  [0-9]+ passed \([0-9]+\)' /tmp/bifrost-stability-vitest.log | tail -1)
+  if ( cd ui && npx -y vitest run ) >/tmp/orgbrain-stability-vitest.log 2>&1; then
+    total=$(grep -oE 'Tests  [0-9]+ passed \([0-9]+\)' /tmp/orgbrain-stability-vitest.log | tail -1)
     record ui-tests "UI tests" pass "$total"
   else
-    record ui-tests "UI tests" fail "vitest failed (see /tmp/bifrost-stability-vitest.log)"
+    record ui-tests "UI tests" fail "vitest failed (see /tmp/orgbrain-stability-vitest.log)"
   fi
 fi
 
@@ -126,8 +126,8 @@ fi
 import_probe=$(uv run python -c "
 import importlib, pkgutil, sys
 failed = []
-import bifrost
-for mod in pkgutil.walk_packages(bifrost.__path__, prefix='bifrost.'):
+import orgbrain
+for mod in pkgutil.walk_packages(orgbrain.__path__, prefix='orgbrain.'):
     try:
         importlib.import_module(mod.name)
     except Exception as e:
@@ -139,7 +139,7 @@ if failed:
 print('OK')
 " 2>&1)
 if [ $? -eq 0 ] && [ "$import_probe" = "OK" ]; then
-  record py-imports "Python imports" pass "every bifrost.* module loads"
+  record py-imports "Python imports" pass "every orgbrain.* module loads"
 else
   first=$(echo "$import_probe" | head -1 | cut -c 1-90)
   record py-imports "Python imports" fail "$first"
@@ -149,7 +149,7 @@ fi
 shadow=$(uv run python - <<'PY' 2>/dev/null
 import ast, pathlib, sys
 total = 0
-for p in pathlib.Path('src/bifrost').rglob('*.py'):
+for p in pathlib.Path('src/orgbrain').rglob('*.py'):
     try: tree = ast.parse(p.read_text())
     except SyntaxError: continue
     mod = set()

@@ -16,17 +16,17 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import delete, select, text
 
-from bifrost.api.deps import get_session_factory
-from bifrost.benchmarks.loader import ensure_loaded
-from bifrost.benchmarks.runner import (
+from orgbrain.api.deps import get_session_factory
+from orgbrain.benchmarks.loader import ensure_loaded
+from orgbrain.benchmarks.runner import (
     _build_one_hop_neighbours,
     _resolve_repo_ids,
     clear_caches_for_scope,
     run_domain,
 )
-from bifrost.cli.config import get_settings
-from bifrost.research.coordinator import ResearchDeps
-from bifrost.storage.models import (
+from orgbrain.cli.config import get_settings
+from orgbrain.research.coordinator import ResearchDeps
+from orgbrain.storage.models import (
     BenchmarkQuestion,
     BenchmarkRun,
     Entity,
@@ -70,7 +70,7 @@ async def test_loaded_questions_have_expected_fields() -> None:
         ).scalar_one()
     assert q.question_text.startswith("What services does the AcmeCo webhook delivery platform")
     assert q.expects_diagram is True
-    assert "urn:bifrost:service:webhook-api" in q.expected_entities
+    assert "urn:orgbrain:service:webhook-api" in q.expected_entities
     assert q.tier_floor == 1
 
 
@@ -94,13 +94,13 @@ async def _seeded_dispatcher_graph():
     repo_id = _u.uuid4()
     dispatcher_id = _u.uuid4()
     doc_id = _u.uuid4()
-    dispatcher_urn = "urn:bifrost:service:dispatcher"
-    doc_urn = "urn:bifrost:service:delivery-gateway"
+    dispatcher_urn = "urn:orgbrain:service:dispatcher"
+    doc_urn = "urn:orgbrain:service:delivery-gateway"
     async with f() as s:
         s.add(
             Repo(
                 id=repo_id,
-                urn="urn:bifrost:repo/dispatcher",
+                urn="urn:orgbrain:repo/dispatcher",
                 name="dispatcher",
                 url="https://github.com/test/dispatcher",
             )
@@ -160,9 +160,9 @@ async def test_one_hop_neighbours_finds_real_edges(_seeded_dispatcher_graph) -> 
     async with f() as s:
         adj = await _build_one_hop_neighbours(
             session=s,
-            expected_urns=["urn:bifrost:service:dispatcher"],
+            expected_urns=["urn:orgbrain:service:dispatcher"],
         )
-    d_neighbours = adj.get("urn:bifrost:service:dispatcher", set())
+    d_neighbours = adj.get("urn:orgbrain:service:dispatcher", set())
     # Real graph: dispatcher has several edges. We assert at least one well-
     # known target appears.
     assert any("delivery-gateway" in u or "usage-metering" in u for u in d_neighbours), (
@@ -176,9 +176,9 @@ async def test_one_hop_neighbours_empty_for_unknown_urn() -> None:
     async with f() as s:
         adj = await _build_one_hop_neighbours(
             session=s,
-            expected_urns=["urn:bifrost:repo/no-such-thing-12345"],
+            expected_urns=["urn:orgbrain:repo/no-such-thing-12345"],
         )
-    assert adj == {"urn:bifrost:repo/no-such-thing-12345": set()}
+    assert adj == {"urn:orgbrain:repo/no-such-thing-12345": set()}
 
 
 # ── repo id resolution ───────────────────────────────────────────────────────
@@ -271,9 +271,9 @@ def _stub_run_query_turn_factory(
             assert "/conversations/" in path and "/messages" in path
             import uuid as _u
 
-            from bifrost.api.deps import get_session_factory
-            from bifrost.cli.config import get_settings as _gs
-            from bifrost.storage.repository import EntityRepository
+            from orgbrain.api.deps import get_session_factory
+            from orgbrain.cli.config import get_settings as _gs
+            from orgbrain.storage.repository import EntityRepository
 
             conv_id = _u.UUID(path.split("/conversations/", 1)[1].split("/", 1)[0])
             sf = get_session_factory(_gs())
@@ -332,19 +332,19 @@ async def test_run_domain_with_stubbed_research_persists_score_row() -> None:
     # Use only one question to keep the test fast
     only_key = "q4-dispatcher-gateway-host"
     answer = (
-        "dispatcher (urn:bifrost:service:dispatcher) calls delivery-gateway "
-        "(urn:bifrost:service:delivery-gateway) for delivery. "
+        "dispatcher (urn:orgbrain:service:dispatcher) calls delivery-gateway "
+        "(urn:orgbrain:service:delivery-gateway) for delivery. "
         "See `gateway_client.py:22` for the dispatch."
     )
     sources = [
-        {"urn": "urn:bifrost:service:dispatcher", "ref": "code"},
-        {"urn": "urn:bifrost:service:delivery-gateway", "ref": "code"},
+        {"urn": "urn:orgbrain:service:dispatcher", "ref": "code"},
+        {"urn": "urn:orgbrain:service:delivery-gateway", "ref": "code"},
     ]
 
     build_label = f"test-{_uuid.uuid4().hex[:6]}"
 
     with patch(
-        "bifrost.benchmarks.runner.httpx.AsyncClient",
+        "orgbrain.benchmarks.runner.httpx.AsyncClient",
         new=_stub_run_query_turn_factory(answer=answer, sources=sources),
     ):
         reports = await run_domain(
@@ -402,7 +402,7 @@ def test_runner_drives_over_http_not_inprocess() -> None:
     from pathlib import Path
 
     runner_src = (
-        Path(__file__).resolve().parents[1] / "src" / "bifrost" / "benchmarks" / "runner.py"
+        Path(__file__).resolve().parents[1] / "src" / "orgbrain" / "benchmarks" / "runner.py"
     )
     text = runner_src.read_text()
     # Forbid in-process calls — both run_research (raw coordinator)
@@ -432,7 +432,7 @@ async def test_run_domain_persists_user_and_assistant_messages() -> None:
     """
     from sqlalchemy import select
 
-    from bifrost.storage.models import ConversationMessage
+    from orgbrain.storage.models import ConversationMessage
 
     f = _factory()
     deps = ResearchDeps(session_factory=f, settings=get_settings())
@@ -440,10 +440,10 @@ async def test_run_domain_persists_user_and_assistant_messages() -> None:
     label = f"msgs-{_uuid.uuid4().hex[:6]}"
 
     with patch(
-        "bifrost.benchmarks.runner.httpx.AsyncClient",
+        "orgbrain.benchmarks.runner.httpx.AsyncClient",
         new=_stub_run_query_turn_factory(
-            answer="A. urn:bifrost:service:dispatcher handles things.",
-            sources=[{"urn": "urn:bifrost:service:dispatcher"}],
+            answer="A. urn:orgbrain:service:dispatcher handles things.",
+            sources=[{"urn": "urn:orgbrain:service:dispatcher"}],
         ),
     ):
         await run_domain(
@@ -495,7 +495,7 @@ async def test_run_domain_skips_run_c_when_no_paraphrase() -> None:
 
     label = f"skipc-{_uuid.uuid4().hex[:6]}"
     with patch(
-        "bifrost.benchmarks.runner.httpx.AsyncClient",
+        "orgbrain.benchmarks.runner.httpx.AsyncClient",
         new=_stub_run_query_turn_factory(answer="x", sources=[]),
     ):
         reports = await run_domain(

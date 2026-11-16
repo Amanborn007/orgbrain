@@ -15,12 +15,12 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.api.sse import SSEEvent, event_bus
-from bifrost.collaboration.events import handover_channel_key
-from bifrost.storage.models import CollaborationSession, Conversation, ExtractionTask
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.api.sse import SSEEvent, event_bus
+from orgbrain.collaboration.events import handover_channel_key
+from orgbrain.storage.models import CollaborationSession, Conversation, ExtractionTask
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture

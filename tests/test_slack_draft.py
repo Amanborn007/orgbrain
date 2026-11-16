@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.actions._prompt_safety import wrap_untrusted
-from bifrost.collaboration.slack_draft import (
+from orgbrain.actions._prompt_safety import wrap_untrusted
+from orgbrain.collaboration.slack_draft import (
     _BODY_CHAR_CAP,
     _SLACK_DRAFT_TOOL,
     _SLACK_SEARCH_TOOL,

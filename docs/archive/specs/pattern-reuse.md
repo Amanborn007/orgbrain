@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-The Pattern and Reuse Engine is the Bifrost subsystem responsible for discovering, storing, matching, and surfacing recurring engineering patterns across repositories, domains, and the organization. Its purpose is to enable humans and agents to:
+The Pattern and Reuse Engine is the OrgBrain subsystem responsible for discovering, storing, matching, and surfacing recurring engineering patterns across repositories, domains, and the organization. Its purpose is to enable humans and agents to:
 
 - Find existing implementations that match or resemble a proposed task.
 - Distinguish between work that extends an existing pattern, varies from one, is net-new, or conflicts with established patterns.
@@ -26,9 +26,9 @@ The Pattern and Reuse Engine is the Bifrost subsystem responsible for discoverin
 | Term | Definition |
 |---|---|
 | **Pattern** | A recurring structural, behavioral, integration, or conventional approach observed across one or more repositories. |
-| **Repo** | A source code repository tracked by Bifrost. |
+| **Repo** | A source code repository tracked by OrgBrain. |
 | **Domain** | A logical grouping of repos that together serve a coherent business or technical purpose. |
-| **KnowledgeArtifact** | Any unit of derived knowledge stored by Bifrost, carrying source basis, freshness, confidence, and scope metadata (defined in the Knowledge Model spec, S1). |
+| **KnowledgeArtifact** | Any unit of derived knowledge stored by OrgBrain, carrying source basis, freshness, confidence, and scope metadata (defined in the Knowledge Model spec, S1). |
 
 ---
 
@@ -273,7 +273,7 @@ When multiple patterns match, rank by:
 | Component | Technology | Rationale |
 |---|---|---|
 | AST parsing | tree-sitter | Multi-language support, fast incremental parsing, mature grammars. |
-| Embedding storage and ANN search | pgvector | Integrates with PostgreSQL (Bifrost's primary store), supports cosine similarity search, HNSW indexes. |
+| Embedding storage and ANN search | pgvector | Integrates with PostgreSQL (OrgBrain's primary store), supports cosine similarity search, HNSW indexes. |
 | Embedding model | Code embedding model (e.g., voyage-code-3 or equivalent) | Produces high-quality code embeddings; 1536-dimensional vectors. |
 | Structural comparison | Custom tree edit distance | Computed on-demand for top-N candidates after initial ANN filtering. |
 
@@ -580,7 +580,7 @@ Response: ReuseRecommendation   // As defined in S9.1
 | Decision | Rationale |
 |---|---|
 | **Hybrid embedding + AST approach for similarity.** | Embeddings capture semantic intent (what the code does); ASTs capture structural form (how it is shaped). Neither alone is sufficient. Behavioral patterns are better caught by embeddings; structural patterns by ASTs. The weighted combination covers both. |
-| **pgvector for embedding storage.** | Bifrost uses PostgreSQL as its primary data store. pgvector avoids introducing a separate vector database, reduces operational complexity, and supports HNSW indexes for fast approximate nearest neighbor search. |
+| **pgvector for embedding storage.** | OrgBrain uses PostgreSQL as its primary data store. pgvector avoids introducing a separate vector database, reduces operational complexity, and supports HNSW indexes for fast approximate nearest neighbor search. |
 | **tree-sitter for multi-language AST parsing.** | tree-sitter has grammars for 100+ languages, is fast, supports incremental parsing, and has mature bindings for Python. It is the standard choice for multi-language tooling. |
 | **Patterns stored as T2 knowledge artifacts.** | Patterns are derived knowledge (not raw source). Storing them as knowledge artifacts gives them freshness metadata, confidence, source basis tracking, and relationship mapping for free. |
 | **V1 stub: manual pattern registry without automated discovery.** | Automated discovery requires AST infrastructure, embedding pipelines, and clustering -- all substantial effort. V1 ships CRUD and manual curation so the data model and APIs stabilize before automation is added. |

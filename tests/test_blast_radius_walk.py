@@ -19,7 +19,7 @@ import uuid as _uuid
 
 import pytest
 
-from bifrost.research.graph_retrieval import (
+from orgbrain.research.graph_retrieval import (
     Subgraph,
     SubgraphEdge,
     SubgraphNode,
@@ -163,7 +163,7 @@ def test_expand_subgraph_accepts_new_kwargs() -> None:
     the new kwargs without TypeError."""
     import inspect
 
-    from bifrost.research.graph_retrieval import expand_subgraph
+    from orgbrain.research.graph_retrieval import expand_subgraph
 
     sig = inspect.signature(expand_subgraph)
     params = sig.parameters
@@ -190,8 +190,8 @@ def test_expand_subgraph_accepts_new_kwargs() -> None:
 async def fixture_session():
     """Async DB session against the live dev DB. Keep transactions
     short so we don't block migrations or other concurrent writes."""
-    from bifrost.api.deps import get_session_factory
-    from bifrost.cli.config import get_settings
+    from orgbrain.api.deps import get_session_factory
+    from orgbrain.cli.config import get_settings
 
     factory = get_session_factory(get_settings())
     async with factory() as session:
@@ -200,7 +200,7 @@ async def fixture_session():
 
 async def _insert_fixture_graph(session, *, prefix: str) -> dict[str, str]:
     """Insert a small graph via ORM. Returns {label: entity_id (str)}."""
-    from bifrost.storage.models import Entity, EntityRelationship
+    from orgbrain.storage.models import Entity, EntityRelationship
 
     nodes = {
         "seed": _uuid.uuid4(),
@@ -257,7 +257,7 @@ async def _cleanup_fixture(session, prefix: str) -> None:
     CASCADE on entity_relationships handles the edges."""
     from sqlalchemy import delete
 
-    from bifrost.storage.models import Entity
+    from orgbrain.storage.models import Entity
 
     await session.execute(delete(Entity).where(Entity.urn.like(f"urn:test:s02:{prefix}:%")))
     await session.commit()
@@ -296,7 +296,7 @@ async def test_direction_upstream_returns_parents_subset(
 ) -> None:
     """With seed in the middle and one parent + one child, the
     ``direction="upstream"`` walk surfaces the parent only."""
-    from bifrost.storage.models import Entity, EntityRelationship
+    from orgbrain.storage.models import Entity, EntityRelationship
 
     prefix = f"dir-{_uuid.uuid4().hex[:8]}"
     try:
@@ -361,7 +361,7 @@ async def test_soft_cap_warns_but_does_not_truncate(
 ) -> None:
     """30 candidates with ``soft_cap=10`` returns all 30 +
     ``soft_cap_exceeded=True``."""
-    from bifrost.storage.models import Entity, EntityRelationship
+    from orgbrain.storage.models import Entity, EntityRelationship
 
     prefix = f"sc-{_uuid.uuid4().hex[:8]}"
     try:

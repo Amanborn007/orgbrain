@@ -18,12 +18,12 @@ from typing import Any
 
 import pytest
 
-from bifrost.research.bundle_cache import BundleSource, ResearchBundle
-from bifrost.research.coordinator import (
+from orgbrain.research.bundle_cache import BundleSource, ResearchBundle
+from orgbrain.research.coordinator import (
     _run_clarify_path,
     _should_run_clarify_shortcut,
 )
-from bifrost.research.planner import (
+from orgbrain.research.planner import (
     MODE_CLARIFY,
     MODE_EXTEND_BUNDLE,
     MODE_NEW_SCOPE,
@@ -46,7 +46,7 @@ def _make_bundle(
         repos_used=["00000000-0000-0000-0000-000000000001"],
         repos_used_names=["orders"],
         scope_rationale="single repo deep-indexed",
-        subgraph_entity_urns=["bifrost://repo/orders/component/RetryQueue"],
+        subgraph_entity_urns=["orgbrain://repo/orders/component/RetryQueue"],
         sources=[BundleSource(kind="jira", ref="SHIP-1", title="retry bug")],
         last_question_embedding=[0.1, 0.2, 0.3],
     )
@@ -114,7 +114,7 @@ class _PersistRecorder:
             self.calls.append(bundle)
 
         monkeypatch.setattr(
-            "bifrost.research.coordinator._persist_research_bundle",
+            "orgbrain.research.coordinator._persist_research_bundle",
             _fake_persist,
         )
 
@@ -243,7 +243,7 @@ async def test_persist_failure_does_not_break_stream(
         raise RuntimeError("DB unreachable")
 
     monkeypatch.setattr(
-        "bifrost.research.coordinator._persist_research_bundle",
+        "orgbrain.research.coordinator._persist_research_bundle",
         _broken_persist,
     )
     runner = _make_runner(

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# One snapshot of extraction health. Appends to /tmp/bifrost_findings.log
+# One snapshot of extraction health. Appends to /tmp/orgbrain_findings.log
 # so we can review everything at the end.
 
-BASE="${BIFROST_API:-http://localhost:8000/api/v1}"
+BASE="${ORGBRAIN_API:-http://localhost:8000/api/v1}"
 TS=$(date +"%H:%M:%S")
-FINDINGS=/tmp/bifrost_findings.log
+FINDINGS=/tmp/orgbrain_findings.log
 
 {
 echo ""
@@ -48,8 +48,8 @@ for row in d.get('by_phase', []):
 
 echo ""
 echo "-- Phase E behavior (our recent fix) --"
-SKIPS=$(grep -cE "Phase E: skipping" /tmp/bifrost_server.log 2>/dev/null || echo 0)
-HANGS=$(grep -cE "Phase E retry|Phase E failed after 3" /tmp/bifrost_server.log 2>/dev/null || echo 0)
+SKIPS=$(grep -cE "Phase E: skipping" /tmp/orgbrain_server.log 2>/dev/null || echo 0)
+HANGS=$(grep -cE "Phase E retry|Phase E failed after 3" /tmp/orgbrain_server.log 2>/dev/null || echo 0)
 echo "  enum/POJO skipped: $SKIPS"
 echo "  Phase E hangs/failures: $HANGS (should be 0)"
 
@@ -57,13 +57,13 @@ echo ""
 echo "-- Any NEW errors in the log (since last snapshot) --"
 # Get log lines since last snapshot marker
 LAST_SNAPSHOT=$(grep -n "== SNAPSHOT" $FINDINGS 2>/dev/null | tail -1 | cut -d: -f1)
-grep -iE "Traceback|ERROR|IntegrityError|AssertionError|Canary echoed|failed after" /tmp/bifrost_server.log 2>&1 \
+grep -iE "Traceback|ERROR|IntegrityError|AssertionError|Canary echoed|failed after" /tmp/orgbrain_server.log 2>&1 \
   | grep -v "http.request" \
   | tail -10
 
 echo ""
 echo "-- Entity counts per repo in domain ${DOMAIN_NAME:-dlvr} --"
-docker exec -i $(docker ps --filter name=bifrost-postgres -q | head -1) psql -U bifrost -d bifrost -t -c "
+docker exec -i $(docker ps --filter name=orgbrain-postgres -q | head -1) psql -U orgbrain -d orgbrain -t -c "
 SELECT r.name, e.entity_type, COUNT(*)
 FROM repos r LEFT JOIN entities e ON r.id=e.scope_repo_id
 WHERE r.domain_id=(SELECT id FROM domains WHERE name='${DOMAIN_NAME:-dlvr}')

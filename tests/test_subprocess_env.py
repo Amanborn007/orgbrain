@@ -1,4 +1,4 @@
-"""Tests for ``bifrost.extraction.cli_client.build_minimal_env``.
+"""Tests for ``orgbrain.extraction.cli_client.build_minimal_env``.
 
 The minimal env is the second-line defence: even if a future
 regression weakens verify_cmd validation OR a Bash tool inside an agent
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.extraction.cli_client import build_minimal_env
+from orgbrain.extraction.cli_client import build_minimal_env
 
 
 class TestAllowlistedKeys:
@@ -46,13 +46,13 @@ class TestSecretsStripped:
             ("DATABASE_URL", "postgresql://user:pass@host/db"),
             ("AWS_SECRET_ACCESS_KEY", "AKIA-DEADBEEF"),
             ("AWS_ACCESS_KEY_ID", "AKIATESTKEY"),
-            ("BIFROST_ANTHROPIC_API_KEY", "sk-ant-api-test"),
+            ("ORGBRAIN_ANTHROPIC_API_KEY", "sk-ant-api-test"),
             ("ANTHROPIC_API_KEY", "sk-ant-test"),
             ("GH_TOKEN", "ghp_test_pat"),
             ("GITHUB_TOKEN", "ghp_other_pat"),
             ("SLACK_BOT_TOKEN", "xoxb-test"),
             ("CONFLUENCE_PASSWORD", "test-pw"),
-            ("BIFROST_DB_PASSWORD", "test-pg-pw"),
+            ("ORGBRAIN_DB_PASSWORD", "test-pg-pw"),
             ("OPENAI_API_KEY", "sk-test"),
         ],
     )

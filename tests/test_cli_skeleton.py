@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from typer.testing import CliRunner
 
-from bifrost.cli.app import app
+from orgbrain.cli.app import app
 
 runner = CliRunner()
 

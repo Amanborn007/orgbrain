@@ -1,4 +1,4 @@
-"""Tests for ``bifrost.actions._shell_safe``.
+"""Tests for ``orgbrain.actions._shell_safe``.
 
 The validator is the gate between LLM-generated ``verify_cmd`` and the
 shell. Each shape below was either observed in real plans (allowed) or
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.actions._shell_safe import split_verify_cmd, validate_verify_cmd
+from orgbrain.actions._shell_safe import split_verify_cmd, validate_verify_cmd
 
 
 class TestAccepts:

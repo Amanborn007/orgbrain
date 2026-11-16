@@ -113,7 +113,7 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Global ⌘K / Ctrl+K listener. Esc closes. Mounted once. Also
-  // listens for a custom ``bifrost:palette:open`` event so a top-bar
+  // listens for a custom ``orgbrain:palette:open`` event so a top-bar
   // search button (or anything else) can open the palette without
   // prop-drilling — keeps the palette decoupled from its triggers.
   useEffect(() => {
@@ -129,10 +129,10 @@ export function CommandPalette() {
     };
     const onCustomOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    window.addEventListener("bifrost:palette:open", onCustomOpen);
+    window.addEventListener("orgbrain:palette:open", onCustomOpen);
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("bifrost:palette:open", onCustomOpen);
+      window.removeEventListener("orgbrain:palette:open", onCustomOpen);
     };
   }, [open]);
 

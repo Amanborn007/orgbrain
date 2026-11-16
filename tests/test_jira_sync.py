@@ -13,11 +13,11 @@ from typing import Any
 import pytest
 from sqlalchemy import text
 
-import bifrost.actions.jira_writer as jw
-from bifrost.actions.jira_sync import on_transition
-from bifrost.actions.task_lifecycle import TaskState
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
+import orgbrain.actions.jira_writer as jw
+from orgbrain.actions.jira_sync import on_transition
+from orgbrain.actions.task_lifecycle import TaskState
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
 
 
 @pytest.fixture
@@ -142,7 +142,7 @@ async def test_executing_transitions_jira_to_in_progress(
         factory,
         state="executing",
         jira_key="DLVR-1234",
-        branch="bifrost/abc-123",
+        branch="orgbrain/abc-123",
     )
     try:
         rec = _Recorder()
@@ -176,7 +176,7 @@ async def test_success_transitions_to_in_review_with_pr_comment(
         factory,
         state="success",
         jira_key="DLVR-1234",
-        pr_url="https://github.com/AcmeCo/bifrost/pull/4242",
+        pr_url="https://github.com/AcmeCo/orgbrain/pull/4242",
     )
     try:
         rec = _Recorder()
@@ -299,15 +299,15 @@ async def test_skipped_mcp_does_not_propagate(
     monkeypatch,
 ) -> None:
     """When the MCP layer raises JiraWriteSkipped, the lifecycle hook
-    must swallow it — Bifrost task transitions cannot be blocked by
+    must swallow it — OrgBrain task transitions cannot be blocked by
     Atlassian auth state."""
-    from bifrost.actions.jira_writer import JiraWriteSkipped
+    from orgbrain.actions.jira_writer import JiraWriteSkipped
 
     task_id = await _seed_task(
         factory,
         state="executing",
         jira_key="DLVR-1234",
-        branch="bifrost/abc",
+        branch="orgbrain/abc",
     )
     try:
         rec = _Recorder()

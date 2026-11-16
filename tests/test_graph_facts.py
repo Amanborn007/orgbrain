@@ -18,18 +18,18 @@ import pytest
 from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bifrost.research.graph_facts import (
+from orgbrain.research.graph_facts import (
     KIND_PREDICATES,
     graph_facts_for_repo,
     graph_facts_for_subject,
     render_facts_block,
     render_repo_facts_block_for_kind,
 )
-from bifrost.storage.models import Base, Entity, EntityRelationship, Repo
+from orgbrain.storage.models import Base, Entity, EntityRelationship, Repo
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test",
+    "postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test",
 )
 
 
@@ -43,7 +43,7 @@ async def factory():
     sm = async_sessionmaker(eng, expire_on_commit=False)
     yield sm
     async with sm() as session:
-        seeded = select(Entity.id).where(Entity.urn.like("urn:bifrost:repo/AcmeApp-%"))
+        seeded = select(Entity.id).where(Entity.urn.like("urn:orgbrain:repo/AcmeApp-%"))
         await session.execute(
             delete(EntityRelationship).where(
                 or_(
@@ -52,8 +52,8 @@ async def factory():
                 )
             )
         )
-        await session.execute(delete(Entity).where(Entity.urn.like("urn:bifrost:repo/AcmeApp-%")))
-        await session.execute(delete(Repo).where(Repo.urn.like("urn:bifrost:repo/AcmeApp-%")))
+        await session.execute(delete(Entity).where(Entity.urn.like("urn:orgbrain:repo/AcmeApp-%")))
+        await session.execute(delete(Repo).where(Repo.urn.like("urn:orgbrain:repo/AcmeApp-%")))
         await session.commit()
     await eng.dispose()
 
@@ -77,13 +77,13 @@ async def _seed(
     repo_full = f"{repo_name}-{suffix}"
     src_full = f"{component_name}-{suffix}"
     tgt_full = f"{target_name}-{suffix}"
-    src_urn = f"urn:bifrost:repo/{repo_full}/component/{src_full}"
-    tgt_urn = f"urn:bifrost:repo/{repo_full}/component/{tgt_full}"
+    src_urn = f"urn:orgbrain:repo/{repo_full}/component/{src_full}"
+    tgt_urn = f"urn:orgbrain:repo/{repo_full}/component/{tgt_full}"
 
     async with factory() as session:
         repo = Repo(
             id=uuid.uuid4(),
-            urn=f"urn:bifrost:repo/{repo_full}",
+            urn=f"urn:orgbrain:repo/{repo_full}",
             name=repo_full,
             url=f"https://github.com/test/{repo_full}",
         )

@@ -1,16 +1,16 @@
-# F2 -- Bifrost System Architecture Overview
+# F2 -- OrgBrain System Architecture Overview
 
 **Spec ID:** F2
 **Status:** Draft
 **Version:** 0.1
 
-This document establishes the overall system shape for Bifrost. All subsystem specifications reference this document as the authoritative architectural frame.
+This document establishes the overall system shape for OrgBrain. All subsystem specifications reference this document as the authoritative architectural frame.
 
 ---
 
 ## 1. Purpose and Scope
 
-Bifrost is an engineering knowledge platform that assembles, maintains, and serves understanding about codebases, domains, flows, dependencies, and organizational engineering surfaces. It does this for both human users (engineers, leads, on-call responders, architects) and AI consumers (coding agents, planning agents, review agents, docs agents).
+OrgBrain is an engineering knowledge platform that assembles, maintains, and serves understanding about codebases, domains, flows, dependencies, and organizational engineering surfaces. It does this for both human users (engineers, leads, on-call responders, architects) and AI consumers (coding agents, planning agents, review agents, docs agents).
 
 This architecture overview defines:
 
@@ -62,7 +62,7 @@ This architecture is shaped primarily by:
 
 ### Non-Goals
 
-1. **Full source duplication.** Bifrost does not clone all raw source content centrally. It stores extracted knowledge, metadata, and references, fetching raw content on demand.
+1. **Full source duplication.** OrgBrain does not clone all raw source content centrally. It stores extracted knowledge, metadata, and references, fetching raw content on demand.
 2. **Real-time streaming from all sources.** V1 uses webhook + polling. Sub-second source propagation is not a target.
 3. **Autonomous execution.** V1 supports understanding, planning, and validation. Execution support (making changes, deploying) is deferred.
 4. **Multi-tenant SaaS.** V1 targets a single organization. Multi-tenancy is a future concern.
@@ -94,17 +94,17 @@ Latency targets are enforced via integration test assertions on the happy path (
 
 ## 5. System Context (C4 Level 1)
 
-The system context diagram shows Bifrost as a black box with its external actors and systems.
+The system context diagram shows OrgBrain as a black box with its external actors and systems.
 
 ```mermaid
 C4Context
-    title Bifrost System Context
+    title OrgBrain System Context
 
     Person(engineer, "Engineer", "Writes code, reviews PRs, debugs issues")
     Person(lead, "Tech Lead / Architect", "Reviews, plans, owns domains")
     Person(oncall, "On-call Engineer", "Investigates incidents, traces flows")
 
-    System(bifrost, "Bifrost", "Engineering knowledge platform that assembles, maintains, and serves understanding across sources")
+    System(orgbrain, "OrgBrain", "Engineering knowledge platform that assembles, maintains, and serves understanding across sources")
 
     System_Ext(github, "GitHub", "Repos, PRs, commits, reviews, branches")
     System_Ext(jira, "Jira", "Work items, epics, sprints, status")
@@ -120,28 +120,28 @@ C4Context
     System_Ext(planning_agent, "Planning Agent", "AI agent creating plans and proposals")
     System_Ext(review_agent, "Review Agent", "AI agent reviewing PRs and changes")
 
-    Rel(engineer, bifrost, "Asks questions, traces flows, reads docs", "CLI / UI")
-    Rel(lead, bifrost, "Reviews blast radius, inspects evidence", "UI / API")
-    Rel(oncall, bifrost, "Correlates symptoms to code, traces flows", "CLI / UI")
+    Rel(engineer, orgbrain, "Asks questions, traces flows, reads docs", "CLI / UI")
+    Rel(lead, orgbrain, "Reviews blast radius, inspects evidence", "UI / API")
+    Rel(oncall, orgbrain, "Correlates symptoms to code, traces flows", "CLI / UI")
 
-    Rel(bifrost, github, "Fetches repos, PRs, commits, reviews", "REST API / Webhooks")
-    Rel(bifrost, jira, "Fetches work items, status", "REST API / Webhooks")
-    Rel(bifrost, slack, "Fetches discussions", "API")
-    Rel(bifrost, observability, "Fetches traces, metrics", "API")
-    Rel(bifrost, k8s, "Fetches deployment state", "API")
-    Rel(bifrost, schemas, "Fetches API/DB/event schemas", "API")
-    Rel(bifrost, catalog, "Fetches ownership, service metadata", "API")
-    Rel(bifrost, llm, "Sends prompts, receives completions (Track A: primary dependency)", "API")
-    Rel(bifrost, managed_agents, "Creates Agent Definitions, Sessions, Memory Stores (Track B: future)", "API")
+    Rel(orgbrain, github, "Fetches repos, PRs, commits, reviews", "REST API / Webhooks")
+    Rel(orgbrain, jira, "Fetches work items, status", "REST API / Webhooks")
+    Rel(orgbrain, slack, "Fetches discussions", "API")
+    Rel(orgbrain, observability, "Fetches traces, metrics", "API")
+    Rel(orgbrain, k8s, "Fetches deployment state", "API")
+    Rel(orgbrain, schemas, "Fetches API/DB/event schemas", "API")
+    Rel(orgbrain, catalog, "Fetches ownership, service metadata", "API")
+    Rel(orgbrain, llm, "Sends prompts, receives completions (Track A: primary dependency)", "API")
+    Rel(orgbrain, managed_agents, "Creates Agent Definitions, Sessions, Memory Stores (Track B: future)", "API")
 
-    Rel(coding_agent, bifrost, "Requests scoped knowledge, flow analysis", "API")
-    Rel(planning_agent, bifrost, "Requests plans, dependencies, risks", "API")
-    Rel(review_agent, bifrost, "Requests blast radius, conflict checks", "API")
+    Rel(coding_agent, orgbrain, "Requests scoped knowledge, flow analysis", "API")
+    Rel(planning_agent, orgbrain, "Requests plans, dependencies, risks", "API")
+    Rel(review_agent, orgbrain, "Requests blast radius, conflict checks", "API")
 ```
 
 ### External Boundaries
 
-**Source systems** provide raw engineering truth. Bifrost connects to them through adapters (see S6). The adapter boundary is the primary extensibility seam -- adding a new source means adding a new adapter, not changing core logic.
+**Source systems** provide raw engineering truth. OrgBrain connects to them through adapters (see S6). The adapter boundary is the primary extensibility seam -- adding a new source means adding a new adapter, not changing core logic.
 
 **Human users** interact through the CLI (terminal, workspace-integrated) and the Control Plane UI (browser-based dashboard). Both hit the same API Gateway.
 
@@ -149,8 +149,8 @@ C4Context
 
 **LLM providers / Anthropic APIs** are external inference services. The system has a dual-track dependency model:
 
-- **Track A (V1):** Bifrost depends on the **Anthropic Messages API** only. Agents are custom Python async loops that call the Messages API directly (claude-sonnet-4-6 for complex synthesis, claude-haiku-4-5 for cheap routing/scoping decisions). No Managed Agents access is required for V1 to ship.
-- **Track B (future, when Research Preview access is granted):** Bifrost additionally depends on the **Anthropic Managed Agents API** (Agent Definitions, Sessions, Memory Stores). The runtime layer is swapped; business logic and interfaces remain unchanged.
+- **Track A (V1):** OrgBrain depends on the **Anthropic Messages API** only. Agents are custom Python async loops that call the Messages API directly (claude-sonnet-4-6 for complex synthesis, claude-haiku-4-5 for cheap routing/scoping decisions). No Managed Agents access is required for V1 to ship.
+- **Track B (future, when Research Preview access is granted):** OrgBrain additionally depends on the **Anthropic Managed Agents API** (Agent Definitions, Sessions, Memory Stores). The runtime layer is swapped; business logic and interfaces remain unchanged.
 
 The LLM boundary is abstracted via the `AgentRuntime` ABC so the underlying provider and runtime model can be swapped without modifying agent business logic.
 
@@ -160,11 +160,11 @@ The LLM boundary is abstracted via the `AgentRuntime` ABC so the underlying prov
 
 ```mermaid
 C4Container
-    title Bifrost Container Diagram
+    title OrgBrain Container Diagram
 
     Person(user, "User", "Engineer / Lead / Agent")
 
-    Container_Boundary(bifrost, "Bifrost Platform") {
+    Container_Boundary(orgbrain, "OrgBrain Platform") {
         Container(api, "API Gateway", "Python / FastAPI", "REST + GraphQL surface for all consumers. Auth, rate limiting, request routing.")
         Container(cli, "CLI", "Python / Typer", "Local developer tool. Workspace-aware, streams results, includes local state.")
         Container(ui, "Control Plane UI", "React SPA", "Dashboard for visibility, task management, docs inspection, refresh controls.")
@@ -219,25 +219,25 @@ C4Container
 
 The Agent Runtime has two concrete implementations behind the same `AgentRuntime` ABC:
 
-- **Track A (V1 — `CustomAgentRuntime`):** Agents run as async Python coroutines within the Bifrost API Server process. The agent loop (receive task → call Anthropic Messages API → execute tools → return response) is implemented in-process via asyncio. State is read/written from PostgreSQL (shared relational DB via SQLAlchemy). All compute remains on customer infrastructure.
-- **Track B (future — `ManagedAgentRuntime`):** Agent Sessions run in Anthropic-hosted containers. The Bifrost API Server creates Sessions via the Managed Agents API and proxies their SSE streams. State is persisted in Anthropic Memory Stores (cloud-hosted, shared across machines). Only the Bifrost API Server and PostgreSQL (for graph data) remain on customer infrastructure.
+- **Track A (V1 — `CustomAgentRuntime`):** Agents run as async Python coroutines within the OrgBrain API Server process. The agent loop (receive task → call Anthropic Messages API → execute tools → return response) is implemented in-process via asyncio. State is read/written from PostgreSQL (shared relational DB via SQLAlchemy). All compute remains on customer infrastructure.
+- **Track B (future — `ManagedAgentRuntime`):** Agent Sessions run in Anthropic-hosted containers. The OrgBrain API Server creates Sessions via the Managed Agents API and proxies their SSE streams. State is persisted in Anthropic Memory Stores (cloud-hosted, shared across machines). Only the OrgBrain API Server and PostgreSQL (for graph data) remain on customer infrastructure.
 
-Swapping from Track A to Track B requires changing one runtime config flag (`BIFROST_TRACK=A|B`). No business logic changes are required.
+Swapping from Track A to Track B requires changing one runtime config flag (`ORGBRAIN_TRACK=A|B`). No business logic changes are required.
 
 #### §6.1 The Plug-and-Play Switch — Boot-Time Track Selection
 
-The entire Track A → Track B migration happens in ONE place in the codebase: the application boot sequence. All other code uses injected ABCs — they never reference `os.environ["BIFROST_TRACK"]` directly.
+The entire Track A → Track B migration happens in ONE place in the codebase: the application boot sequence. All other code uses injected ABCs — they never reference `os.environ["ORGBRAIN_TRACK"]` directly.
 
 ```python
-# src/bifrost/agents/boot.py — the ONLY place track selection happens
+# src/orgbrain/agents/boot.py — the ONLY place track selection happens
 import os
-from bifrost.agents.runtime.message_api import MessageApiRuntime
-from bifrost.agents.runtime.managed_agent import ManagedAgentRuntime  # stub until Research Preview
-from bifrost.db.agent_state import PostgresStateBackend
-from bifrost.agents.state.memory_store import MemoryStoreBackend  # stub until Research Preview
+from orgbrain.agents.runtime.message_api import MessageApiRuntime
+from orgbrain.agents.runtime.managed_agent import ManagedAgentRuntime  # stub until Research Preview
+from orgbrain.db.agent_state import PostgresStateBackend
+from orgbrain.agents.state.memory_store import MemoryStoreBackend  # stub until Research Preview
 
 def create_agent_infrastructure(deps: BootDeps) -> AgentInfrastructure:
-    track = os.environ.get("BIFROST_TRACK", "A")
+    track = os.environ.get("ORGBRAIN_TRACK", "A")
 
     if track == "B":
         if os.environ.get("TRACK_B_DPA_CONFIRMED") != "true":
@@ -292,7 +292,7 @@ def create_agent_infrastructure(deps: BootDeps) -> AgentInfrastructure:
 
 ### Agent Hierarchy (both Track A and Track B)
 
-Bifrost uses a strict **2-level agent hierarchy**. There is no DomainAgent layer — domain-level reasoning is absorbed into the TaskCoordinator.
+OrgBrain uses a strict **2-level agent hierarchy**. There is no DomainAgent layer — domain-level reasoning is absorbed into the TaskCoordinator.
 
 ```
 TaskCoordinator
@@ -357,7 +357,7 @@ flowchart LR
         ExtAgent[External AI Agent]
     end
 
-    subgraph Bifrost
+    subgraph OrgBrain
         API[API Gateway]
         ORCH[Orchestrator]
         AR[Agent Runtime]
@@ -435,13 +435,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A2[User registers repo] --> B2[Bifrost creates ExtractionAgent Session via Managed Agents API]
+    A2[User registers repo] --> B2[OrgBrain creates ExtractionAgent Session via Managed Agents API]
     B2 --> C2[Session runs in Anthropic-hosted container]
     C2 -->|clones repo, analyzes code| D2[ExtractionAgent calls MCP source adapters]
     D2 --> E2[Writes extracted text to Anthropic Memory Stores]
     E2 --> F2[Writes structured graph data to PostgreSQL on customer infra]
     F2 --> G2[Session completes, emits completion event]
-    G2 --> H2[Bifrost control plane updates freshness metadata]
+    G2 --> H2[OrgBrain control plane updates freshness metadata]
 ```
 
 **Key properties of the write path (both tracks):**
@@ -479,7 +479,7 @@ flowchart TD
     J --> K[TaskCoordinator: merge, detect conflicts, assess confidence]
     K --> L[Final synthesis with Anthropic Messages API]
     L --> M[Annotate with freshness, confidence, gaps, evidence]
-    M --> N[Custom SSE stream via Bifrost API Server]
+    M --> N[Custom SSE stream via OrgBrain API Server]
     N --> O[Consumer receives streamed response]
 ```
 
@@ -488,7 +488,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A2[Query arrives at API Gateway] --> B2[Authenticate + authorize]
-    B2 --> C2[Bifrost creates TaskCoordinator Session via Managed Agents API]
+    B2 --> C2[OrgBrain creates TaskCoordinator Session via Managed Agents API]
     C2 --> D2[Session runs in Anthropic container, parses intent]
     D2 --> E2[TaskCoordinator Session spawns RepoAgent Session Threads in parallel]
 
@@ -503,7 +503,7 @@ flowchart TD
     H2 --> I2[RepoAgent Threads return findings to TaskCoordinator Session]
     I2 --> J2[TaskCoordinator synthesizes, annotates response]
     J2 --> K2[Built-in SSE stream from Managed Agents Session]
-    K2 --> L2[Bifrost API Server proxies SSE to consumer]
+    K2 --> L2[OrgBrain API Server proxies SSE to consumer]
 ```
 
 **Key properties of the read path (both tracks):**
@@ -513,7 +513,7 @@ flowchart TD
 - **Orchestrated.** The TaskCoordinator decides which RepoAgents to consult based on task scope. Simple single-repo questions may consult one RepoAgent. Cross-domain flow traces may consult several in parallel.
 - **Cache-first.** Agents check the Cache Layer before hitting the Knowledge Store. Cache entries carry freshness metadata so agents can decide whether cached data is acceptable for the current task.
 - **Confidence-annotated.** Every response carries explicit confidence levels, source freshness, known gaps, and conflicts (S16).
-- **Streamable.** Long-running responses (flow traces, plan generation) are streamed via SSE. Track A uses custom SSE streaming in the Bifrost API Server; Track B uses the built-in SSE stream from Managed Agent Sessions.
+- **Streamable.** Long-running responses (flow traces, plan generation) are streamed via SSE. Track A uses custom SSE streaming in the OrgBrain API Server; Track B uses the built-in SSE stream from Managed Agent Sessions.
 
 ### 8.3 Refresh Path (Staleness Detection and Re-extraction)
 
@@ -600,7 +600,7 @@ flowchart TD
 
 ### ADR-003: Python Throughout
 
-**Context.** Bifrost has a CLI, API server, agent runtime, ingestion engine, and (future) React UI. Choosing a consistent backend language simplifies the toolchain and maximizes ecosystem leverage for the AI/LLM domain.
+**Context.** OrgBrain has a CLI, API server, agent runtime, ingestion engine, and (future) React UI. Choosing a consistent backend language simplifies the toolchain and maximizes ecosystem leverage for the AI/LLM domain.
 
 **Decision.** Use Python for all backend components: API server (FastAPI), CLI (Typer), agent runtime, and ingestion engine. The future UI is a React SPA communicating via the API.
 
@@ -613,7 +613,7 @@ flowchart TD
 
 **Alternatives considered.**
 - *TypeScript/Node.js:* Enables shared types with React UI, but the LLM/ML ecosystem is weaker. Async model (single-threaded event loop) is less natural for CPU-bound extraction.
-- *Go backend:* Better performance characteristics, but worse ergonomics for the kind of dynamic, LLM-integrated, graph-traversal logic Bifrost needs. Stronger case if raw throughput were the bottleneck.
+- *Go backend:* Better performance characteristics, but worse ergonomics for the kind of dynamic, LLM-integrated, graph-traversal logic OrgBrain needs. Stronger case if raw throughput were the bottleneck.
 
 **Consequences.** Performance-critical paths (large graph traversals) should leverage query pushdown to PostgreSQL. CPU-intensive extraction tasks can use `asyncio.to_thread()` or process pools. UI will communicate via API contract (OpenAPI schema from FastAPI), not shared types.
 
@@ -658,7 +658,7 @@ flowchart TD
 **Rationale.**
 - Unbounded LLM usage leads to runaway costs and unpredictable latency. Budgets and model selection per task keep costs proportional to value.
 - Prompt versioning enables A/B testing and rollback without code changes.
-- Graceful degradation ensures Bifrost remains useful even when LLMs are slow or down. The Knowledge Store still has structured data that can be returned directly.
+- Graceful degradation ensures OrgBrain remains useful even when LLMs are slow or down. The Knowledge Store still has structured data that can be returned directly.
 
 **Alternatives considered.**
 - *Single model for everything:* Simpler but either too expensive (large model for everything) or too weak (small model for complex tasks).
@@ -689,7 +689,7 @@ flowchart TD
 
 ### ADR-007: Hexagonal / Ports-and-Adapters for Source Isolation
 
-**Context.** Bifrost must support plug-and-play source addition (§6.1). The system must not assume a fixed set of source systems.
+**Context.** OrgBrain must support plug-and-play source addition (§6.1). The system must not assume a fixed set of source systems.
 
 **Decision.** Apply hexagonal architecture (ports and adapters) at the Ingestion Engine boundary. Define port ABCs for source adapter capabilities. Each source system gets an adapter that implements these ABCs. Core ingestion logic depends only on the port ABCs, never on source-specific types.
 
@@ -726,20 +726,20 @@ SourceAdapter {
 
 **Decision.** Build V1 on a custom agent runtime (Track A) using the Anthropic Messages API directly, while designing all agent ABCs to support Anthropic Managed Agents (Track B) as a drop-in replacement when Research Preview access is granted.
 
-**Context.** Anthropic Managed Agents (multi-agent sessions, memory stores) is in Research Preview with waitlist access. Bifrost cannot block V1 on access approval. However, Managed Agents offers significant long-term advantages: managed containers, shared memory persistence across machines, built-in streaming, and prompt caching. Designing for both tracks from the start avoids a costly rewrite when Track B access becomes available.
+**Context.** Anthropic Managed Agents (multi-agent sessions, memory stores) is in Research Preview with waitlist access. OrgBrain cannot block V1 on access approval. However, Managed Agents offers significant long-term advantages: managed containers, shared memory persistence across machines, built-in streaming, and prompt caching. Designing for both tracks from the start avoids a costly rewrite when Track B access becomes available.
 
 **Consequences.**
 - V1 ships without waiting for Managed Agents access.
 - All agent ABCs are defined as Python abstract base classes with swappable implementations.
 - `AgentRuntime` ABC: `initialize()`, `execute(task)`, `get_state()`, `set_state()` — same API for both tracks.
 - `AgentStateBackend` ABC: `read(path)`, `write(path, content)`, `list(prefix)` — same API for both tracks. Track A: PostgreSQL; Track B: Memory Stores.
-- Track B adoption requires no business logic changes, only runtime config changes (`BIFROST_TRACK=A|B`).
+- Track B adoption requires no business logic changes, only runtime config changes (`ORGBRAIN_TRACK=A|B`).
 - When Managed Agents access is granted, Track B can be enabled per-agent-type incrementally (e.g., enable Track B for RepoAgents first, keep TaskCoordinator on Track A temporarily).
 
 **Tradeoffs vs Track B:**
 - Track A: no shared agent state across machines without a shared PostgreSQL instance (PostgreSQL provides this for structured data, but in-process agent state is per-instance).
 - Track A: custom agent loop code to maintain and test.
-- Track A: no built-in container sandboxing (agents run inside the Bifrost process; compromise of Bifrost process = access to agent execution).
+- Track A: no built-in container sandboxing (agents run inside the OrgBrain process; compromise of OrgBrain process = access to agent execution).
 - Track A: custom SSE streaming implementation required.
 - Track B (future): shared state via Memory Stores across all machines, managed container sandboxing, built-in SSE from sessions, less infrastructure code to maintain.
 
@@ -755,7 +755,7 @@ SourceAdapter {
 
 #### Track B Known Constraints
 
-| Code | Limitation | Impact on Bifrost | Mitigation in Spec |
+| Code | Limitation | Impact on OrgBrain | Mitigation in Spec |
 |------|-----------|-------------------|-------------------|
 | L1 | No recursive delegation (max 1-level) | DomainAgent tier cannot exist as a separate managed agent; TaskCoordinator must absorb domain-level reasoning | Agent hierarchy is defined as exactly 2 levels: TaskCoordinator → RepoAgents (ADR-008 Decision; S14) |
 | L2 | Ephemeral sessions (state lost without Memory Store writes) | Any in-flight task state is lost if a session ends unexpectedly | `AgentStateBackend.write()` called after every significant reasoning step; checkpoint interval configurable |
@@ -868,10 +868,10 @@ The architecture provides four primary extension seams:
 - Single Python process (uvicorn + FastAPI) running all containers as Python modules. `asyncio.to_thread()` or process pools for CPU-intensive extraction tasks.
 - Agents run in-process as async Python coroutines. No external container dependency for agent execution.
 - All data (knowledge graph, agent state, freshness metadata, extracted knowledge text) stays on customer infrastructure in PostgreSQL.
-- SSE streaming is implemented as custom server-sent events in the Bifrost API Server.
+- SSE streaming is implemented as custom server-sent events in the OrgBrain API Server.
 - **Data residency:** All source code and extracted knowledge remain on customer infrastructure. No data is sent to Anthropic beyond LLM inference payloads (prompts + completions).
 
-**Module layout:** `src/bifrost/{core,server,cli,db,adapters,agents}/` — each directory maps to a logical container from the C4 diagram. `core` contains the knowledge model and shared types (Pydantic models, ABCs). `server` is the FastAPI API Gateway. `cli` is the Typer CLI. `db` contains SQLAlchemy models and the `AgentStateBackend` PostgreSQL implementation. `adapters` contains source adapter plugins. `agents` contains `AgentRuntime`, agent definitions, and the boot-time track selection.
+**Module layout:** `src/orgbrain/{core,server,cli,db,adapters,agents}/` — each directory maps to a logical container from the C4 diagram. `core` contains the knowledge model and shared types (Pydantic models, ABCs). `server` is the FastAPI API Gateway. `cli` is the Typer CLI. `db` contains SQLAlchemy models and the `AgentStateBackend` PostgreSQL implementation. `adapters` contains source adapter plugins. `agents` contains `AgentRuntime`, agent definitions, and the boot-time track selection.
 
 **External dependencies (V1):** PostgreSQL (knowledge store + artifact store metadata + agent state), Redis (shared cache, optional for small deployments), filesystem (artifact content). The React UI is served as static files from a CDN/reverse proxy.
 
@@ -882,7 +882,7 @@ The architecture provides four primary extension seams:
 │  Customer Infrastructure           │    │  Anthropic Cloud                    │
 │                                   │    │                                     │
 │  ┌───────────┐  ┌──────────────┐  │    │  ┌────────────────────────────────┐ │
-│  │ API       │  │ Bifrost      │  │◄──►│  │ Managed Agent Sessions         │ │
+│  │ API       │  │ OrgBrain      │  │◄──►│  │ Managed Agent Sessions         │ │
 │  │ Gateway   │──│ Control      │  │    │  │ (TaskCoordinator + RepoAgents) │ │
 │  └───────────┘  │ Plane        │  │    │  └────────────────────────────────┘ │
 │                 └──────────────┘  │    │  ┌────────────────────────────────┐ │
@@ -896,8 +896,8 @@ The architecture provides four primary extension seams:
 **V1.5 (Track B) properties:**
 - Agent Sessions run in Anthropic's cloud containers. Repo cloning and code analysis moves to Anthropic infrastructure.
 - Agent state (configs, knowledge text, freshness) moves to Anthropic Memory Stores. PostgreSQL remains for structured graph data (entities, relationships, flows, dependencies).
-- Built-in SSE from Managed Agent Sessions replaces custom SSE streaming. Bifrost API Server proxies the session event stream.
-- Enabled by changing `BIFROST_TRACK=B`. No business logic changes required.
+- Built-in SSE from Managed Agent Sessions replaces custom SSE streaming. OrgBrain API Server proxies the session event stream.
+- Enabled by changing `ORGBRAIN_TRACK=B`. No business logic changes required.
 - **Data residency note:** Track B sends source code to Anthropic-hosted containers for analysis. This requires Data Processing Agreement (DPA) review with Anthropic before enabling. Track A keeps all data on customer infrastructure and does not have this requirement.
 
 **Session Pool**: Track B concurrent session limit (estimated 3-5 in Research Preview) requires a session queue. The orchestrator must maintain a `sessionPool` with configurable `maxConcurrentSessions` (default: 3). Excess tasks queue with backpressure signaled via `429 Too Many Sessions` internal error.
@@ -906,7 +906,7 @@ The architecture provides four primary extension seams:
 - `DATABASE_URL` -- PostgreSQL connection string
 - `REDIS_URL` -- Redis connection string
 - `ANTHROPIC_API_KEY` -- Anthropic API key (used for both Messages API in Track A and Managed Agents API in Track B)
-- `BIFROST_TRACK` -- `A` (default, V1 custom runtime) or `B` (Managed Agents, requires Research Preview access)
+- `ORGBRAIN_TRACK` -- `A` (default, V1 custom runtime) or `B` (Managed Agents, requires Research Preview access)
 - `LLM_MODEL_ANALYSIS` -- model for complex analysis/synthesis tasks (default: `claude-sonnet-4-6`)
 - `LLM_MODEL_ROUTING` -- model for cheap scope/routing decisions (default: `claude-haiku-4-5`)
 - `PORT` -- HTTP port (default: 3000)
@@ -932,7 +932,7 @@ The architecture provides four primary extension seams:
 | Cache | Redis 7+ | Shared cache with TTL, pub/sub for invalidation |
 | In-process cache | cachetools or custom LRU | Fast, size-bounded, per-process |
 | Event bus (V1) | Custom async event emitter | In-process, zero-dependency, type-safe via Pydantic events |
-| Streaming | Server-Sent Events (SSE) | Simple, HTTP-native, firewall-friendly. Track A: custom SSE in Bifrost API Server. Track B: proxied from Managed Agent Session SSE stream. |
+| Streaming | Server-Sent Events (SSE) | Simple, HTTP-native, firewall-friendly. Track A: custom SSE in OrgBrain API Server. Track B: proxied from Managed Agent Session SSE stream. |
 | **LLM (Track A)** | **Anthropic Messages API** | **Direct inference. `claude-sonnet-4-6` for analysis/synthesis. `claude-haiku-4-5` for cheap routing/scoping decisions.** |
 | **LLM (Track B)** | **Anthropic Managed Agents API** | **Same models as Track A. Agent Definitions + Sessions replace custom Python loops. Memory Stores replace PostgreSQL-backed agent state.** |
 | **Cheap-model routing** | **`claude-haiku-4-5`** | **Used for scope decisions (which repos to query, query classification). Fast and cheap. Sonnet reserved for analysis and synthesis.** |
@@ -1016,7 +1016,7 @@ Single Python process (uvicorn + FastAPI). PostgreSQL + Redis. GitHub + Jira ada
 
 ### Phase 5: Multi-Tenant (if needed)
 
-**Trigger:** Bifrost offered to multiple organizations.
+**Trigger:** OrgBrain offered to multiple organizations.
 **Action:** Tenant isolation at the database level (schema-per-tenant or row-level security). Tenant-aware routing at the API Gateway. Per-tenant LLM cost tracking.
 
 ```mermaid

@@ -2,7 +2,7 @@
 
 Track-A↔B seam. The factory is the single place that wires
 agent dependencies per track; before it, construction was duplicated
-across ask.py / dispatcher.py and BIFROST_TRACK was decorative.
+across ask.py / dispatcher.py and ORGBRAIN_TRACK was decorative.
 """
 
 from __future__ import annotations
@@ -11,19 +11,19 @@ import uuid
 
 import pytest
 
-from bifrost.agents.coordinator import TaskCoordinator
-from bifrost.agents.repo import RepoAgent
-from bifrost.boot import (
+from orgbrain.agents.coordinator import TaskCoordinator
+from orgbrain.agents.repo import RepoAgent
+from orgbrain.boot import (
     AgentInfrastructure,
     TrackBNotAvailableError,
     create_agent_infrastructure,
 )
-from bifrost.cli.config import BifrostSettings
-from bifrost.extraction.cli_client import ClaudeLlmClient
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.extraction.cli_client import ClaudeLlmClient
 
 
-def _settings(track: str = "A") -> BifrostSettings:
-    return BifrostSettings(track=track)
+def _settings(track: str = "A") -> OrgBrainSettings:
+    return OrgBrainSettings(track=track)
 
 
 def test_track_a_builds_infrastructure() -> None:
@@ -37,7 +37,7 @@ def test_track_a_builds_infrastructure() -> None:
 
 
 def test_track_b_fails_loud() -> None:
-    """BIFROST_TRACK=B must raise, not silently fall back to Track A."""
+    """ORGBRAIN_TRACK=B must raise, not silently fall back to Track A."""
     with pytest.raises(TrackBNotAvailableError):
         create_agent_infrastructure(_settings("B"))
 
@@ -85,7 +85,7 @@ def test_agents_expose_stable_definition_ids() -> None:
 def test_agent_runtime_requires_definition_id() -> None:
     """The ABC enforces get_definition_id — a subclass missing it can't
     instantiate (the seam is a real contract, not a fiction)."""
-    from bifrost.agents.runtime import AgentRuntime
+    from orgbrain.agents.runtime import AgentRuntime
 
     class IncompleteAgent(AgentRuntime):
         async def run(self, task):  # type: ignore[no-untyped-def]

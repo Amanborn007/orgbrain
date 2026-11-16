@@ -195,7 +195,7 @@ export function TasksPage() {
             Tasks
           </h1>
           <p className="mt-1 max-w-xl text-[13.5px] text-fg-2">
-            Tell Bifrost what to build. It plans, codes, and opens a PR for
+            Tell OrgBrain what to build. It plans, codes, and opens a PR for
             your review.
           </p>
         </div>
@@ -203,7 +203,7 @@ export function TasksPage() {
           <button
             onClick={() => setFromJiraOpen(true)}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-bg-1 px-3 py-2 text-[13px] font-medium text-fg-1 hover:bg-bg-2"
-            title="Adopt an existing Jira ticket as a Bifrost task"
+            title="Adopt an existing Jira ticket as a OrgBrain task"
           >
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
             From Jira
@@ -529,7 +529,7 @@ function TaskListEmpty({
           Start your first task
         </p>
         <p className="mt-2 max-w-[260px] text-[12.5px] leading-relaxed text-fg-2">
-          Describe what you want built. Bifrost will plan the work and open a
+          Describe what you want built. OrgBrain will plan the work and open a
           pull request for your review.
         </p>
         <button
@@ -732,7 +732,7 @@ function FromJiraModal({
         </header>
         <div className="space-y-3 p-4">
           <p className="text-[12px] text-fg-2">
-            Pull an existing Jira ticket into Bifrost. The ticket's summary
+            Pull an existing Jira ticket into OrgBrain. The ticket's summary
             becomes the task title; the description and acceptance criteria are
             imported automatically.
           </p>

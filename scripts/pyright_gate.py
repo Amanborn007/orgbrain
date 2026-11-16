@@ -3,8 +3,8 @@
 
 Usage: python scripts/pyright_gate.py [pyright args ...]
 
-With no arguments it checks ``src/bifrost``. Any arguments are passed to
-pyright as-is (e.g. ``--pythonpath /path/to/python src/bifrost``).
+With no arguments it checks ``src/orgbrain``. Any arguments are passed to
+pyright as-is (e.g. ``--pythonpath /path/to/python src/orgbrain``).
 The other pyright rules are not gated; they are noisy on this codebase.
 """
 
@@ -61,7 +61,7 @@ def run_pyright(args: list[str]) -> dict[str, Any]:
 
 
 def main(argv: list[str]) -> int:
-    report = run_pyright(argv or ["src/bifrost"])
+    report = run_pyright(argv or ["src/orgbrain"])
     violations = find_violations(report)
     for v in violations:
         print(v)

@@ -7,23 +7,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from bifrost.agents.runtime import AgentState, AgentStatus, AgentTask, TaskResult
-from bifrost.core.enums import ConfidenceLevel
-from bifrost.orchestration.budget import (
+from orgbrain.agents.runtime import AgentState, AgentStatus, AgentTask, TaskResult
+from orgbrain.core.enums import ConfidenceLevel
+from orgbrain.orchestration.budget import (
     BudgetExceededError,
     BudgetTracker,
     CostEntry,
     SessionPool,
     SessionPoolExhaustedError,
 )
-from bifrost.orchestration.skeptic import (
+from orgbrain.orchestration.skeptic import (
     SkepticConfig,
     SkepticResult,
     apply_skeptic_result,
     should_challenge,
 )
-from bifrost.orchestration.synthesis import synthesize
-from bifrost.orchestration.task import (
+from orgbrain.orchestration.synthesis import synthesize
+from orgbrain.orchestration.task import (
     OrchestratedTaskResult,
     OrchestrationQuery,
     QueryRunState,
@@ -400,7 +400,7 @@ class TestSkeptic:
 class TestDispatcher:
     def test_lazy_agent_creation(self) -> None:
         """Dispatcher should NOT pre-create agents — only on first dispatch."""
-        from bifrost.orchestration.dispatcher import Dispatcher
+        from orgbrain.orchestration.dispatcher import Dispatcher
 
         client = MagicMock()
         session = MagicMock()
@@ -411,7 +411,7 @@ class TestDispatcher:
     @pytest.mark.asyncio
     async def test_dispatch_creates_agent(self) -> None:
         """Dispatching to a repo should lazily create a RepoAgent."""
-        from bifrost.orchestration.dispatcher import Dispatcher
+        from orgbrain.orchestration.dispatcher import Dispatcher
 
         client = MagicMock()
         session = AsyncMock()
@@ -451,7 +451,7 @@ class TestTaskCoordinator:
     @pytest.mark.asyncio
     async def test_decompose_and_dispatch(self) -> None:
         """Coordinator decomposes multi-repo question into sub-tasks."""
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         client = AsyncMock()
         session = AsyncMock()
@@ -530,7 +530,7 @@ class TestTaskCoordinator:
 
     @pytest.mark.asyncio
     async def test_no_question_returns_error(self) -> None:
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         coordinator = TaskCoordinator(
             client=AsyncMock(),
@@ -544,7 +544,7 @@ class TestTaskCoordinator:
 
     @pytest.mark.asyncio
     async def test_no_repos_returns_unknown(self) -> None:
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         entity_repo = AsyncMock()
         entity_repo.list_repos = AsyncMock(return_value=[])
@@ -566,7 +566,7 @@ class TestTaskCoordinator:
     @pytest.mark.asyncio
     async def test_feedback_positive_bumps_confidence(self) -> None:
         """Feedback loop: positive feedback bumps entity confidence."""
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         entity = MagicMock()
         entity.confidence_level = ConfidenceLevel.INFERRED
@@ -592,7 +592,7 @@ class TestTaskCoordinator:
     @pytest.mark.asyncio
     async def test_feedback_negative_degrades_confidence(self) -> None:
         """Feedback loop: negative feedback degrades entity confidence."""
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         entity = MagicMock()
         entity.confidence_level = ConfidenceLevel.CONFIRMED
@@ -617,7 +617,7 @@ class TestTaskCoordinator:
 
     @pytest.mark.asyncio
     async def test_feedback_entity_not_found(self) -> None:
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         entity_repo = AsyncMock()
         entity_repo.get_entity_by_urn = AsyncMock(return_value=None)
@@ -637,7 +637,7 @@ class TestTaskCoordinator:
     @pytest.mark.asyncio
     async def test_coordinator_implements_agent_runtime(self) -> None:
         """TaskCoordinator must satisfy the AgentRuntime ABC."""
-        from bifrost.agents.coordinator import TaskCoordinator
+        from orgbrain.agents.coordinator import TaskCoordinator
 
         coordinator = TaskCoordinator(
             client=AsyncMock(),

@@ -1,5 +1,5 @@
 /**
- * Bifrost REST API client.
+ * OrgBrain REST API client.
  * Base URL read from VITE_API_BASE_URL env var (default: /api/v1).
  */
 
@@ -7,7 +7,7 @@ import { csrfHeaders } from "./csrf";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 
-export interface BifrostEnvelope<T> {
+export interface OrgBrainEnvelope<T> {
   data: T;
   meta?: Record<string, unknown>;
   errors?: Array<{ code: string; message: string }>;
@@ -158,7 +158,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       `API ${res.status}: ${typeof detail === "string" ? detail : text}`,
     );
   }
-  const envelope: BifrostEnvelope<T> = await res.json();
+  const envelope: OrgBrainEnvelope<T> = await res.json();
   return envelope.data;
 }
 
@@ -502,7 +502,7 @@ export const retractJiraWrite = (
     },
   );
 
-/** One audit row from ``task_jira_audit`` — every Jira write Bifrost
+/** One audit row from ``task_jira_audit`` — every Jira write OrgBrain
  * has performed for a task. Retractable while ``retracted_at`` is
  * NULL.  */
 export interface JiraAuditRow {
@@ -525,7 +525,7 @@ export interface JiraAuditRow {
 export const listTaskJiraAudit = (task_id: string) =>
   request<JiraAuditRow[]>(`/tasks/${task_id}/jira-audit`);
 
-/** Adopt an existing Jira ticket as a Bifrost task. */
+/** Adopt an existing Jira ticket as a OrgBrain task. */
 export const taskFromJira = (params: {
   jira_key: string;
   conversation_id?: string | null;
@@ -951,7 +951,7 @@ export const answerClarification = (
   task_id: string,
   clarification_id: string,
   answer: string,
-  answered_by: "user" | "bifrost_research" | "bifrost_extraction" | "system" = "user",
+  answered_by: "user" | "orgbrain_research" | "orgbrain_extraction" | "system" = "user",
 ) =>
   request<{ id: string; state: string; answered_at: string }>(
     `/tasks/${task_id}/clarifications/${clarification_id}/answer`,
@@ -2278,7 +2278,7 @@ export interface ClaudeCliStatus {
 
 /**
  * The /health/claude-cli endpoint returns an un-enveloped object directly
- * (no BifrostEnvelope wrapping) so we fetch it manually.
+ * (no OrgBrainEnvelope wrapping) so we fetch it manually.
  *
  * On HTTP error or network failure we THROW so react-query treats it
  * as `isError` rather than caching a false ``{ok:false}``. Without
@@ -2539,7 +2539,7 @@ export const listHandoverDocs = (params?: {
  * Free-text search across handover docs. Backend
  * ranks by simple score (scope_value match + body occurrences,
  * capped) plus recency tie-break — see
- * ``src/bifrost/api/routes/handover_docs.py:search_handover_docs``.
+ * ``src/orgbrain/api/routes/handover_docs.py:search_handover_docs``.
  * A later version could swap this for a real Postgres tsvector + ts_rank index.
  */
 export interface HandoverSearchHit extends HandoverDocSummary {
@@ -2757,7 +2757,7 @@ export const getHandoverBodyHistory = (docId: string, limit = 20) =>
 // Wrappers for the team-collaboration affordances layered on top of
 // handover docs: cross-references from collab sessions, per-section
 // feedback, body restoration, owner inbox, and section metadata.
-// Backend routes live in `src/bifrost/api/routes/handover_docs.py`
+// Backend routes live in `src/orgbrain/api/routes/handover_docs.py`
 // (alongside the existing handover endpoints).
 
 /**

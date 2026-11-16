@@ -1,5 +1,5 @@
 /**
- * IdentityGate — wraps the entire Bifrost app, blocking it from
+ * IdentityGate — wraps the entire OrgBrain app, blocking it from
  * rendering until the operator's identity has been resolved by the
  * configured identity provider (trusted proxy header, verified bearer
  * JWT, or operator env override).
@@ -17,7 +17,7 @@
  * re-resolves through /auth/me.
  *
  * Dismiss flag: once an operator clicks "Continue in demo mode", we
- * set sessionStorage["bifrost_identity_gate_dismissed"] = "true" so the
+ * set sessionStorage["orgbrain_identity_gate_dismissed"] = "true" so the
  * gate is skipped for the rest of the tab.
  */
 
@@ -40,7 +40,7 @@ type GateState =
   | { kind: "unresolved"; me: Me }
   | { kind: "error"; message: string; detail?: string };
 
-export const DISMISS_KEY = "bifrost_identity_gate_dismissed";
+export const DISMISS_KEY = "orgbrain_identity_gate_dismissed";
 
 export function IdentityGate({ children }: { children: ReactNode }) {
   const dismissed =

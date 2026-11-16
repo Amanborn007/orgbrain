@@ -14,14 +14,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from bifrost.extraction.pipeline import (
+from orgbrain.extraction.pipeline import (
     ContentTooLargeError,
     ExtractedComponent,
     ExtractionOutput,
     ExtractionPipeline,
     _validate_content_size,
 )
-from bifrost.extraction.prompts import (
+from orgbrain.extraction.prompts import (
     MAX_CHARS_PER_CALL,
     build_canary,
     build_component_messages,
@@ -31,7 +31,7 @@ from bifrost.extraction.prompts import (
     should_exclude_path,
     validate_canary,
 )
-from bifrost.extraction.triage import TriagedFile, TriageResult, triage_files
+from orgbrain.extraction.triage import TriagedFile, TriageResult, triage_files
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -243,7 +243,7 @@ class TestCanary:
         c1 = build_canary()
         c2 = build_canary()
         assert c1 != c2
-        assert c1.startswith("BIFROST-CANARY-")
+        assert c1.startswith("ORGBRAIN-CANARY-")
 
     def test_canary_validation_safe(self) -> None:
         canary = build_canary()
@@ -464,7 +464,7 @@ class TestFlowExtraction:
         assert len(output.flows[0].segments) == 2
 
     def test_flow_segment_fields(self) -> None:
-        from bifrost.extraction.pipeline import ExtractedFlowSegment
+        from orgbrain.extraction.pipeline import ExtractedFlowSegment
 
         seg = ExtractedFlowSegment(
             component_name="Svc",
@@ -650,14 +650,14 @@ class TestFastClassify:
     """
 
     def test_service_class_is_key_component(self) -> None:
-        from bifrost.extraction.prompts import fast_classify
+        from orgbrain.extraction.prompts import fast_classify
 
         cat, is_key = fast_classify("src/main/java/com/x/SigningService.java")
         assert cat == "component_definition"
         assert is_key is True
 
     def test_handler_class_is_key_component(self) -> None:
-        from bifrost.extraction.prompts import fast_classify
+        from orgbrain.extraction.prompts import fast_classify
 
         cat, is_key = fast_classify("src/main/java/com/x/ShipmentHandler.java")
         assert cat == "component_definition"
@@ -665,7 +665,7 @@ class TestFastClassify:
 
     def test_enum_inside_processors_dir_is_not_key_component(self) -> None:
         """The file that triggered the production incident."""
-        from bifrost.extraction.prompts import fast_classify
+        from orgbrain.extraction.prompts import fast_classify
 
         cat, is_key = fast_classify(
             "src/main/java/com/acmeco/delivery/processors/http/DeliveryMatchResult.java"
@@ -675,14 +675,14 @@ class TestFastClassify:
         assert is_key is False
 
     def test_pojo_inside_services_dir_is_not_key_component(self) -> None:
-        from bifrost.extraction.prompts import fast_classify
+        from orgbrain.extraction.prompts import fast_classify
 
         cat, is_key = fast_classify("src/main/java/com/x/services/dto/OrderItem.java")
         assert cat == "component_definition"
         assert is_key is False
 
     def test_snake_case_service_file_is_key_component(self) -> None:
-        from bifrost.extraction.prompts import fast_classify
+        from orgbrain.extraction.prompts import fast_classify
 
         cat, is_key = fast_classify("src/app/shipment_service.py")
         assert cat == "component_definition"
@@ -694,7 +694,7 @@ class TestHasFlowsWorthExtracting:
     heuristic must reject it before spawning the LLM."""
 
     def test_enum_only_returns_false(self) -> None:
-        from bifrost.extraction.pipeline import _has_flows_worth_extracting
+        from orgbrain.extraction.pipeline import _has_flows_worth_extracting
 
         content = """\
 package com.x;
@@ -708,7 +708,7 @@ public enum ShipmentMatchResult {
         assert _has_flows_worth_extracting(content) is False
 
     def test_service_with_if_returns_true(self) -> None:
-        from bifrost.extraction.pipeline import _has_flows_worth_extracting
+        from orgbrain.extraction.pipeline import _has_flows_worth_extracting
 
         content = """\
 public class SigningService {
@@ -723,7 +723,7 @@ public class SigningService {
         assert _has_flows_worth_extracting(content) is True
 
     def test_python_record_with_behavior_returns_true(self) -> None:
-        from bifrost.extraction.pipeline import _has_flows_worth_extracting
+        from orgbrain.extraction.pipeline import _has_flows_worth_extracting
 
         content = """\
 async def send_order(carrier, amount):
@@ -736,7 +736,7 @@ async def send_order(carrier, amount):
         assert _has_flows_worth_extracting(content) is True
 
     def test_java_record_returns_false(self) -> None:
-        from bifrost.extraction.pipeline import _has_flows_worth_extracting
+        from orgbrain.extraction.pipeline import _has_flows_worth_extracting
 
         content = "public record Dimensions(long length, String unit) {}"
         assert _has_flows_worth_extracting(content) is False

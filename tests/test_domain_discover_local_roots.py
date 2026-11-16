@@ -13,20 +13,20 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.cli.config import get_settings
-from bifrost.cli.config_sections import LocalSourceConfig, SourcesConfig
-from bifrost.manifest.team_repos import TeamRepoMatch
-from bifrost.storage.models import Domain, Repo
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.cli.config import get_settings
+from orgbrain.cli.config_sections import LocalSourceConfig, SourcesConfig
+from orgbrain.manifest.team_repos import TeamRepoMatch
+from orgbrain.storage.models import Domain, Repo
+from orgbrain.storage.repository import EntityRepository
 
 TAG = uuid.uuid4().hex[:8]
 
 
 @pytest.fixture(autouse=True)
 def _stub_worker():
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -57,7 +57,7 @@ async def client(app) -> AsyncGenerator[AsyncClient]:
 
 @pytest.fixture
 async def domain(db_session: AsyncSession) -> Domain:
-    d = Domain(id=uuid.uuid4(), urn=f"urn:bifrost:domain:dlvr-{TAG}", name=f"dlvr-{TAG}")
+    d = Domain(id=uuid.uuid4(), urn=f"urn:orgbrain:domain:dlvr-{TAG}", name=f"dlvr-{TAG}")
     db_session.add(d)
     await db_session.flush()
     return d
@@ -82,7 +82,7 @@ def _use(app: Any, monkeypatch: pytest.MonkeyPatch, matches: list[TeamRepoMatch]
     async def fake(team: str, **kwargs: Any):
         return list(matches)
 
-    monkeypatch.setattr("bifrost.api.routes.domains.discover_team_repos", fake)
+    monkeypatch.setattr("orgbrain.api.routes.domains.discover_team_repos", fake)
 
 
 async def _repo_names(db: AsyncSession, *names: str) -> set[str]:

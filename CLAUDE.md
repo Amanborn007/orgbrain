@@ -1,4 +1,4 @@
-# Working on Bifrost with Claude Code
+# Working on OrgBrain with Claude Code
 
 **Purpose:** Keep sessions focused and verified. Read this file at the start of a session.
 
@@ -17,9 +17,9 @@ Do this:
    ```bash
    ./scripts/bootstrap.sh
    ```
-   It automates 10 steps (verify tools, create `bifrost.yaml` from the
+   It automates 10 steps (verify tools, create `orgbrain.yaml` from the
    example, `uv sync`, `npm install`, create `.env`, bring up Postgres,
-   create the `bifrost_test` database, run migrations, `make up`,
+   create the `orgbrain_test` database, run migrations, `make up`,
    smoke-test). It's idempotent — safe to re-run after a `git pull` or
    to recover from a half-finished setup.
 
@@ -119,10 +119,10 @@ Silent success ≠ success. "I think this works" is not a validation. The cost o
 
 ## Project Orientation
 
-**What Bifrost is:** An AI-powered engineering knowledge platform. Agents analyze codebases locally, extract knowledge (components, flows, dependencies), store it in PostgreSQL, and answer engineering questions with confidence-graded, sourced answers. The code runs as Python plus `claude -p` subprocesses. A managed-agents runtime is not built; code should stay behind the `AgentRuntime` and `AgentStateBackend` interfaces so one can be added.
+**What OrgBrain is:** An AI-powered engineering knowledge platform. Agents analyze codebases locally, extract knowledge (components, flows, dependencies), store it in PostgreSQL, and answer engineering questions with confidence-graded, sourced answers. The code runs as Python plus `claude -p` subprocesses. A managed-agents runtime is not built; code should stay behind the `AgentRuntime` and `AgentStateBackend` interfaces so one can be added.
 
 **Layout:**
-- `src/bifrost/` — backend (`research/`, `extraction/`, `manifest/`, `storage/`, `api/`, `cli/`)
+- `src/orgbrain/` — backend (`research/`, `extraction/`, `manifest/`, `storage/`, `api/`, `cli/`)
 - `alembic/versions/` — one baseline migration with a single head
 - `ui/` — React frontend
 - `tests/` — pytest suite; `scripts/` — bootstrap and gate scripts
@@ -138,15 +138,15 @@ uv run python -m pytest -q -p no:cacheprovider --noconftest tests/test_leak_gate
 **Enforced conventions:**
 - `tests/test_neutral_names.py` and `tests/test_ui_neutral_copy.py` fail on organization-specific names in code or UI copy.
 - Every test module that imports `tests/leak_terms.py` must be listed in `.github/workflows/leak-gate.yml`; `tests/test_leak_terms_wiring.py` checks this.
-- Every name in the tree that starts with the `BIFROST` environment prefix must be a real setting or listed in `PROCESS_ENV_ONLY` (`src/bifrost/cli/unknown_settings.py`). `tests/test_unknown_settings.py` scans the tree.
-- No `mcp__` tool names in `src/` outside `src/bifrost/cli/config_sections.py`.
+- Every name in the tree that starts with the `ORGBRAIN` environment prefix must be a real setting or listed in `PROCESS_ENV_ONLY` (`src/orgbrain/cli/unknown_settings.py`). `tests/test_unknown_settings.py` scans the tree.
+- No `mcp__` tool names in `src/` outside `src/orgbrain/cli/config_sections.py`.
 - Keep a single Alembic baseline migration with one head. The CI gate compares heads.
 
 ---
 
 ## Browser automation is forbidden (formerly anti-pattern #10)
 
-**Do not add browser automation (puppeteer, playwright, selenium, headless-chrome, webdriver, chromium) anywhere in the extraction or research path.** Bifrost extracts via `git clone` + `claude -p` subprocess; external data flows through MCP servers (`mcp__atlassian__*`, `mcp__github__*`, `mcp__claude_ai_Slack__*`). If a future task seems to require fetching a webpage:
+**Do not add browser automation (puppeteer, playwright, selenium, headless-chrome, webdriver, chromium) anywhere in the extraction or research path.** OrgBrain extracts via `git clone` + `claude -p` subprocess; external data flows through MCP servers (`mcp__atlassian__*`, `mcp__github__*`, `mcp__claude_ai_Slack__*`). If a future task seems to require fetching a webpage:
 - First confirm the data isn't reachable via an MCP tool the operator already has authenticated (`gh auth`, Atlassian OAuth, Slack OAuth).
 - If genuinely no API path exists, use `httpx` / `requests` with explicit token auth — never a browser.
 - Document why the MCP / API path didn't work in a comment at the call site.

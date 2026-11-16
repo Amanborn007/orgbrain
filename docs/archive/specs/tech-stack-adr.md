@@ -1,4 +1,4 @@
-# ADR: Technology Stack — Bifrost V1
+# ADR: Technology Stack — OrgBrain V1
 
 **Status:** ACCEPTED
 **Language:** Python 3.12+
@@ -16,13 +16,13 @@ The rows below were checked against the code on 2026-11-10. The original rows an
 | Entry | ADR says | Code does | Where |
 |---|---|---|---|
 | D0 | Python 3.13 in the decision text, 3.12+ in the header | `requires-python = ">=3.12"`, CI runs 3.12 | `pyproject.toml`, `.github/workflows/pr-check.yml` |
-| D8 | `anthropic` SDK is required | `anthropic` is still listed as a dependency. Only `extraction_probe/agent.py` imports it. Everything else spawns `claude -p`. | `pyproject.toml`, `src/bifrost/extraction/cli_client.py` |
-| D9 | `event_log` table and `LISTEN/NOTIFY` | An in-memory bus with a per-task replay buffer. No `event_log` table and no `LISTEN` in `src/`. | `src/bifrost/api/sse.py` |
+| D8 | `anthropic` SDK is required | `anthropic` is still listed as a dependency. Only `extraction_probe/agent.py` imports it. Everything else spawns `claude -p`. | `pyproject.toml`, `src/orgbrain/extraction/cli_client.py` |
+| D9 | `event_log` table and `LISTEN/NOTIFY` | An in-memory bus with a per-task replay buffer. No `event_log` table and no `LISTEN` in `src/`. | `src/orgbrain/api/sse.py` |
 | D10 | Postgres advisory locks | No advisory lock in `src/` | none |
-| D11 | 1536-dimension embeddings | 384-dimension `all-MiniLM-L6-v2` vectors, `Vector(384)` | `src/bifrost/storage/models.py`, `src/bifrost/research/embeddings.py` |
+| D11 | 1536-dimension embeddings | 384-dimension `all-MiniLM-L6-v2` vectors, `Vector(384)` | `src/orgbrain/storage/models.py`, `src/orgbrain/research/embeddings.py` |
 | D14 | Compose with Postgres, Redis and an `api` service | Compose has one service, Postgres, on image `pgvector/pgvector:0.8.0-pg16` | `docker-compose.yml` |
 | D17 | `pyrightconfig.json`, strict mode | `[tool.pyright]` in `pyproject.toml`, `typeCheckingMode = "standard"`, plus a gate script | `pyproject.toml`, `scripts/pyright_gate.py` |
-| Package layout | `server/` and `db/` packages | No `server/` or `db/`. The API is in `api/` and the models are in `storage/`. Other packages are `extraction/`, `research/`, `collaboration/`, `actions/`, `manifest/`, `agents/`, `orchestration/`, `adapters/`, `core/`, `cli/` and `benchmarks/`. | `src/bifrost/` |
+| Package layout | `server/` and `db/` packages | No `server/` or `db/`. The API is in `api/` and the models are in `storage/`. Other packages are `extraction/`, `research/`, `collaboration/`, `actions/`, `manifest/`, `agents/`, `orchestration/`, `adapters/`, `core/`, `cli/` and `benchmarks/`. | `src/orgbrain/` |
 
 ### Original quick reference
 
@@ -59,7 +59,7 @@ The rows below were checked against the code on 2026-11-10. The original rows an
 | TypeScript | ✓ Available now | Partial: the UI is TypeScript, but the backend ORM and vector tooling are weaker | Rejected |
 | Go | ✗ Client SDK only — NO Agent SDK | ✓ Strong backend language | Rejected |
 
-**Rationale:** Track B (Managed Agents) requires the Anthropic Agent SDK, which exists only for Python and TypeScript. Python is the only language with both the Agent SDK and a mature stack for what Bifrost needs (FastAPI + SQLAlchemy + asyncpg + pgvector).
+**Rationale:** Track B (Managed Agents) requires the Anthropic Agent SDK, which exists only for Python and TypeScript. Python is the only language with both the Agent SDK and a mature stack for what OrgBrain needs (FastAPI + SQLAlchemy + asyncpg + pgvector).
 
 ---
 
@@ -69,7 +69,7 @@ The rows below were checked against the code on 2026-11-10. The original rows an
 |----------|--------|
 | Embedding dimension | 1536 (OpenAI text-embedding-3-small compatible) — revisit in V2 |
 | Auto-generated API docs | FastAPI generates OpenAPI 3.1 natively — no extra plugin needed |
-| Package layout | `src/bifrost/{core,server,cli,db,adapters,agents}/` (flat src layout) |
+| Package layout | `src/orgbrain/{core,server,cli,db,adapters,agents}/` (flat src layout) |
 | RESTRICTED repos (D15) | Same runtime as other repos; your Claude plan's data terms apply |
 | Self-hosted LLM (V1) | Not needed — RESTRICTED repos use the same runtime |
 
@@ -134,7 +134,7 @@ uv add --dev pytest pytest-asyncio pytest-cov ruff pyright
 **Decision:** FastAPI + uvicorn
 **Install:** `uv add fastapi uvicorn[standard]`
 
-**Why:** Pydantic-native request/response validation. Auto-generates OpenAPI 3.1 docs from type annotations — no separate swagger plugin needed. Async-first design matches asyncpg and the async agent pipeline. SSE streaming (`StreamingResponse`) built-in for the `bifrost ask` endpoint. Native dependency injection for auth, cost tracking, and DB sessions.
+**Why:** Pydantic-native request/response validation. Auto-generates OpenAPI 3.1 docs from type annotations — no separate swagger plugin needed. Async-first design matches asyncpg and the async agent pipeline. SSE streaming (`StreamingResponse`) built-in for the `orgbrain ask` endpoint. Native dependency injection for auth, cost tracking, and DB sessions.
 
 | Alternative | Why rejected |
 |-------------|--------------|
@@ -149,7 +149,7 @@ uv add --dev pytest pytest-asyncio pytest-cov ruff pyright
 **Decision:** Typer
 **Install:** `uv add typer`
 
-**Why:** Typer builds on FastAPI's type annotation approach — commands are functions with typed arguments, automatically generating help text and validation. Zero boilerplate for the ~12 Bifrost commands (`ask`, `repos add/list/remove`, `domains create/list`, `init`, `index`, `status`). Integrates cleanly with the `src/bifrost/cli/` package structure.
+**Why:** Typer builds on FastAPI's type annotation approach — commands are functions with typed arguments, automatically generating help text and validation. Zero boilerplate for the ~12 OrgBrain commands (`ask`, `repos add/list/remove`, `domains create/list`, `init`, `index`, `status`). Integrates cleanly with the `src/orgbrain/cli/` package structure.
 
 | Alternative | Why rejected |
 |-------------|--------------|
@@ -286,7 +286,7 @@ CREATE INDEX ON embeddings USING hnsw (embedding vector_cosine_ops);
 **Decision:** Pydantic v2 + pydantic-settings
 **Install:** `uv add pydantic pydantic-settings`
 
-**Why:** Already required — FastAPI uses Pydantic natively for request/response validation. `BaseModel` subclasses eliminate separate interface declarations. `pydantic-settings` handles environment variable loading for `BifrostConfig`. `model_validator` and custom validators handle LLM response parsing and confidence gate logic.
+**Why:** Already required — FastAPI uses Pydantic natively for request/response validation. `BaseModel` subclasses eliminate separate interface declarations. `pydantic-settings` handles environment variable loading for `OrgBrainConfig`. `model_validator` and custom validators handle LLM response parsing and confidence gate logic.
 
 No alternatives evaluated — already required by FastAPI dependency.
 
@@ -297,7 +297,7 @@ No alternatives evaluated — already required by FastAPI dependency.
 **Decision:** Docker + Docker Compose v2
 **Install:** Docker Desktop (developer) or Docker Engine + Compose plugin (CI/CD)
 
-**Why:** Reproducible local development with PostgreSQL 16 + pgvector, Redis 7, and the Bifrost API. Production image: Python 3.13-slim base, multi-stage build, non-root user.
+**Why:** Reproducible local development with PostgreSQL 16 + pgvector, Redis 7, and the OrgBrain API. Production image: Python 3.13-slim base, multi-stage build, non-root user.
 
 **`docker-compose.yml`:**
 ```yaml
@@ -305,9 +305,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: bifrost
-      POSTGRES_USER: bifrost
-      POSTGRES_PASSWORD: bifrost
+      POSTGRES_DB: orgbrain
+      POSTGRES_USER: orgbrain
+      POSTGRES_PASSWORD: orgbrain
     ports: ["5432:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -320,9 +320,9 @@ services:
     build: .
     ports: ["8000:8000"]
     environment:
-      DATABASE_URL: postgresql+asyncpg://bifrost:bifrost_dev@postgres:5432/bifrost
+      DATABASE_URL: postgresql+asyncpg://orgbrain:orgbrain_dev@postgres:5432/orgbrain
       REDIS_URL: redis://redis:6379
-      BIFROST_TRACK: "A"
+      ORGBRAIN_TRACK: "A"
     depends_on: [postgres, redis]
 
 volumes:
@@ -361,9 +361,9 @@ volumes:
 ## Package Layout
 
 ```
-bifrost/
+orgbrain/
 ├── src/
-│   └── bifrost/
+│   └── orgbrain/
 │       ├── core/          # Domain models, ABCs, shared types
 │       ├── server/        # FastAPI app, routes, middleware
 │       ├── cli/           # Typer CLI commands

@@ -1,18 +1,18 @@
 # 04 — API Surface
 
-> **TL;DR.** Bifrost's HTTP surface is one FastAPI app at `/api/v1/*` (plus an unauthed `/health/*` and a separately-gated `/admin/*`). Every successful response is wrapped in `{ data, errors, meta }`. Every long-running operation publishes progress on Server-Sent Events through one of four channel families (`task:*`, `chat:*`, `collab_session:*`, `handover:*`). Every route needs a principal (trusted proxy, OIDC or a `bft_` API token) and mutating routes that change the corpus, spend in bulk, run code or write to Jira need the `admin` role; a signed `bifrost_session` cookie scopes per-browser ownership for chats and collab sessions.
+> **TL;DR.** OrgBrain's HTTP surface is one FastAPI app at `/api/v1/*` (plus an unauthed `/health/*` and a separately-gated `/admin/*`). Every successful response is wrapped in `{ data, errors, meta }`. Every long-running operation publishes progress on Server-Sent Events through one of four channel families (`task:*`, `chat:*`, `collab_session:*`, `handover:*`). Every route needs a principal (trusted proxy, OIDC or a `bft_` API token) and mutating routes that change the corpus, spend in bulk, run code or write to Jira need the `admin` role; a signed `orgbrain_session` cookie scopes per-browser ownership for chats and collab sessions.
 
 > **Read this when** you're about to add a route, debug an SSE event that didn't arrive, or trace which DB tables a request actually writes to. **Skip if** you're looking for the *implementation* of a route's worker — that's chapter 05 (agents) or 06 (extraction pipeline).
 
-> **Audience:** the owner who needs a same-day refresher on every endpoint Bifrost exposes — what it does, where it lives, and what fires when it's hit.
+> **Audience:** the owner who needs a same-day refresher on every endpoint OrgBrain exposes — what it does, where it lives, and what fires when it's hit.
 
-All routes are mounted at the prefix `/api/v1` by `src/bifrost/api/app.py`. The router composition lives in `src/bifrost/api/routes/__init__.py:39-69`:
+All routes are mounted at the prefix `/api/v1` by `src/orgbrain/api/app.py`. The router composition lives in `src/orgbrain/api/routes/__init__.py:39-69`:
 
 - `api_router` — every group below; `IdentityMiddleware` requires a principal, and admin-only routes add `AdminOnly` on their decorator.
 - `public_router` — health and auth routers; no principal needed so liveness probes and the identity gate work.
 - `admin_router` — every route requires the `admin` role.
 
-Every successful response is wrapped in `BifrostEnvelope` (`{ data, errors, meta }`); error responses use FastAPI's `HTTPException` shape.
+Every successful response is wrapped in `OrgBrainEnvelope` (`{ data, errors, meta }`); error responses use FastAPI's `HTTPException` shape.
 
 ---
 
@@ -34,7 +34,7 @@ Every successful response is wrapped in `BifrostEnvelope` (`{ data, errors, meta
 
 **Idempotency.** Most mutating routes are non-idempotent — `POST /repos` twice with the same URL creates two `repos` rows (or 409s on uniqueness). The exceptions are *register-or-update* endpoints (`POST /repos/{id}/sync-ownership`, `POST /catalog/sync`) which are safe to retry.
 
-**Cookies.** `bifrost_session` is set HTTP-only=false on the first POST to `/conversations` or `/collab-sessions`. Subsequent requests with the cookie inherit ownership of those threads. `max_age=1y`. There is no login UI — the cookie is the identity.
+**Cookies.** `orgbrain_session` is set HTTP-only=false on the first POST to `/conversations` or `/collab-sessions`. Subsequent requests with the cookie inherit ownership of those threads. `max_age=1y`. There is no login UI — the cookie is the identity.
 
 **Streaming.** Long-running operations return `202 Accepted` with a `task_id` (or `conversation_id`, etc.) and the caller subscribes to the matching SSE channel. See §19 for the four channel families.
 
@@ -85,9 +85,9 @@ Two takeaways: (1) writes happen *before* the 202 returns so the doc row exists;
 |-------|--------|---------------|-----------------|
 | Principal | `identity.provider` (none, header, oidc_jwt) or a `bft_` token in `api_tokens` | `IdentityMiddleware`, every route outside health and auth | proxy headers, or `Authorization: Bearer <JWT or bft_ token>` |
 | Role | `identity.roles`, token `roles`, or the `none` operator | `AdminOnly` on admin and mutating-corpus routes | n/a |
-| `bifrost_session` cookie | server-set on first POST | conversations + collaboration | HTTP-only=false, max_age=1y, HMAC-signed; bare or badly signed values get a fresh session |
+| `orgbrain_session` cookie | server-set on first POST | conversations + collaboration | HTTP-only=false, max_age=1y, HMAC-signed; bare or badly signed values get a fresh session |
 
-See `src/bifrost/api/auth/` and `src/bifrost/api/deps.py` for the wiring.
+See `src/orgbrain/api/auth/` and `src/orgbrain/api/deps.py` for the wiring.
 
 > **If you remember nothing else about §2.** Two roles (`member`, `admin`), one cookie. A 403 with `auth.role_required` means the route needs `admin`.
 
@@ -104,18 +104,18 @@ Liveness + capability probes. Mounted on `public_router`, never authed — they'
 ```json
 { "data": { "ok": true, "components": { "db": "ok", "claude_cli": "ok", "dry_run": false } }, "errors": [], "meta": {} }
 ```
-**Why it exists:** kube/ELB liveness; also surfaced in the UI `ClaudeCliBanner` so the operator sees "Claude CLI not logged in" before they hit a chat. (`src/bifrost/api/routes/health.py:21`.)
+**Why it exists:** kube/ELB liveness; also surfaced in the UI `ClaudeCliBanner` so the operator sees "Claude CLI not logged in" before they hit a chat. (`src/orgbrain/api/routes/health.py:21`.)
 
 ### `GET /health/claude-cli`
 **Purpose:** Reports whether `claude auth status` succeeds. Uses a fast subprocess timeout to avoid hanging the probe if the CLI is mid-OAuth.
 **Example response:** `{ "data": { "ok": true, "status": "authenticated", "message": "Logged in as ..." } }`
-(`src/bifrost/api/routes/health.py:45`.)
+(`src/orgbrain/api/routes/health.py:45`.)
 
 ---
 
 ## 4. Repos (`/repos`)
 
-The registry of source-of-truth repositories Bifrost extracts from. Each registered repo gets a `repos` row, an extraction lifecycle, and (optionally) a `repo_ownership` row when a manifest (Backstage `catalog-info.yaml`, `CODEOWNERS` or a generic YAML file) syncs. File: `src/bifrost/api/routes/repos.py`.
+The registry of source-of-truth repositories OrgBrain extracts from. Each registered repo gets a `repos` row, an extraction lifecycle, and (optionally) a `repo_ownership` row when a manifest (Backstage `catalog-info.yaml`, `CODEOWNERS` or a generic YAML file) syncs. File: `src/orgbrain/api/routes/repos.py`.
 
 ### `POST /repos`
 **Purpose:** Register a repo. Records `repo_url`, optional `org`/`org_repo_id`, and seeds a `repos` row plus a baseline `repo_freshness` row.
@@ -127,7 +127,7 @@ POST /api/v1/repos
 **Example response:**
 ```http
 202 Accepted
-{ "data": { "repo": { "id": "abc-123", "urn": "bifrost:repo:acmeco/dispatcher", "name": "dispatcher" }, "ownership_synced": true } }
+{ "data": { "repo": { "id": "abc-123", "urn": "orgbrain:repo:acmeco/dispatcher", "name": "dispatcher" }, "ownership_synced": true } }
 ```
 **Side effects:** writes `repos`, `repo_freshness`; if a manifest is present the same call schedules a `RepoOwnership` sync. (`repos.py:42`.)
 
@@ -167,12 +167,12 @@ POST /api/v1/repos
 
 ## 5. Domains (`/domains`)
 
-Logical groupings of repos. Used by the multi-repo handover scopes. A domain is a soft container — repos can move between domains without losing data. File: `src/bifrost/api/routes/domains.py`.
+Logical groupings of repos. Used by the multi-repo handover scopes. A domain is a soft container — repos can move between domains without losing data. File: `src/orgbrain/api/routes/domains.py`.
 
 ### `POST /domains`
 **Purpose:** Create a new domain.
 **Example request:** `POST /api/v1/domains  { "name": "delivery", "description": "Webhook delivery" }`
-**Example response:** `{ "data": { "domain": { "id": "...", "urn": "bifrost:domain:delivery" } } }`
+**Example response:** `{ "data": { "domain": { "id": "...", "urn": "orgbrain:domain:delivery" } } }`
 (`domains.py:32`. Inputs `CreateDomainRequest`; outputs `CreateDomainData`.)
 
 ### `GET /domains` & `GET /domains/{id}`
@@ -199,7 +199,7 @@ With `dry_run: true` nothing is written and `repo_id` is null for repos that wou
 
 ## 6. Extraction Tasks (`/extraction-tasks`)
 
-Lifecycle for the extraction-job machine — *the indexing tasks*, not the user-facing action layer. File: `src/bifrost/api/routes/extraction_tasks.py`.
+Lifecycle for the extraction-job machine — *the indexing tasks*, not the user-facing action layer. File: `src/orgbrain/api/routes/extraction_tasks.py`.
 
 > **Naming note:** this prefix used to be `/tasks` until the brief→task rename. The user-facing task layer (the "spec-driven action layer") is now mounted bare on the root router as `/tasks` (see §7). Keep the distinction sharp — they're two different routers and two different tables (`extraction_tasks` vs `tasks`).
 
@@ -232,13 +232,13 @@ POST /api/v1/extraction-tasks
 event: phase_started
 data: {"phase":"D","phase_label":"Components","files_total":127}
 ```
-**Auth:** inherits `api_router` gate. (`src/bifrost/api/routes/streaming.py:13`.)
+**Auth:** inherits `api_router` gate. (`src/orgbrain/api/routes/streaming.py:13`.)
 
 ---
 
 ## 7. Tasks — action layer (`/tasks/*`, `/quick`)
 
-The **spec-driven action layer**: discuss → plan → execute → verify. The largest router by far (~2,300 lines). Routes are bare-prefix because they were the old `/briefs` namespace and the rename kept them stable. All task endpoints are envelope-wrapped. File: `src/bifrost/api/routes/tasks.py`.
+The **spec-driven action layer**: discuss → plan → execute → verify. The largest router by far (~2,300 lines). Routes are bare-prefix because they were the old `/briefs` namespace and the rename kept them stable. All task endpoints are envelope-wrapped. File: `src/orgbrain/api/routes/tasks.py`.
 
 ### Lifecycle CRUD
 
@@ -283,9 +283,9 @@ POST /api/v1/tasks
 
 | Method | Path | Line | Tool | Notes |
 |---|---|---|---|---|
-| POST | `/tasks/{id}/tools/research` | 979 | `bifrost_research` | Spawn a research bundle for a sub-question; result writes to `task_research`. |
-| POST | `/tasks/{id}/tools/extract` | 1014 | `bifrost_extract` | On-demand extraction for an unindexed repo. |
-| POST | `/tasks/{id}/tools/ask-user` | 1041 | `bifrost_ask_user` | Open an `ask_back` row that the UI surfaces in the right rail. |
+| POST | `/tasks/{id}/tools/research` | 979 | `orgbrain_research` | Spawn a research bundle for a sub-question; result writes to `task_research`. |
+| POST | `/tasks/{id}/tools/extract` | 1014 | `orgbrain_extract` | On-demand extraction for an unindexed repo. |
+| POST | `/tasks/{id}/tools/ask-user` | 1041 | `orgbrain_ask_user` | Open an `ask_back` row that the UI surfaces in the right rail. |
 
 ### Discoverable state
 
@@ -324,11 +324,11 @@ POST /api/v1/tasks
 
 ## 8. Conversations (`/conversations`)
 
-Chat threads. Per-cookie ownership. The assistant response always streams via SSE — the POST returns immediately. File: `src/bifrost/api/routes/conversations.py`.
+Chat threads. Per-cookie ownership. The assistant response always streams via SSE — the POST returns immediately. File: `src/orgbrain/api/routes/conversations.py`.
 
 | Method | Path | Line | Purpose |
 |---|---|---|---|
-| POST | `/conversations` | 56 | Create a thread. Sets `bifrost_session` cookie if missing. |
+| POST | `/conversations` | 56 | Create a thread. Sets `orgbrain_session` cookie if missing. |
 | GET | `/conversations` | 80 | List threads scoped to the cookie. |
 | GET | `/conversations/{id}` | 119 | Full thread detail (messages, scope, research state). |
 | PATCH | `/conversations/{id}` | 171 | Rename / set title manually. |
@@ -360,7 +360,7 @@ data: {"chunk":"FanoutService dispatches to..."}
 
 ## 9. Query (`/query`)
 
-The synchronous one-shot path. Used by tooling / scripts; the UI uses `/conversations/{id}/messages` for chat ergonomics. File: `src/bifrost/api/routes/query.py`.
+The synchronous one-shot path. Used by tooling / scripts; the UI uses `/conversations/{id}/messages` for chat ergonomics. File: `src/orgbrain/api/routes/query.py`.
 
 ### `POST /query`
 **Purpose:** Run a question against the research coordinator and return the answer synchronously (no SSE).
@@ -376,7 +376,7 @@ POST /api/v1/query
 
 ## 10. Knowledge (`/knowledge`)
 
-Read model the UI Knowledge page hangs off — the overview of what is indexed. File: `src/bifrost/api/routes/knowledge.py`.
+Read model the UI Knowledge page hangs off — the overview of what is indexed. File: `src/orgbrain/api/routes/knowledge.py`.
 
 ### `GET /knowledge/repos`
 **Purpose:** Every registered repo with freshness, ownership, latest task, entity-count rollup.
@@ -387,7 +387,7 @@ Read model the UI Knowledge page hangs off — the overview of what is indexed. 
 
 ## 11. Entities (`/entities`)
 
-Direct entity-graph access. The catch-all path `/entities/{urn:path}` exists because URNs contain `/`. File: `src/bifrost/api/routes/entities.py`.
+Direct entity-graph access. The catch-all path `/entities/{urn:path}` exists because URNs contain `/`. File: `src/orgbrain/api/routes/entities.py`.
 
 | Method | Path | Line | Purpose |
 |---|---|---|---|
@@ -403,7 +403,7 @@ GET /api/v1/entities/search?q=FanoutService&repo_id=abc-123
 
 → 200 OK
 { "data": { "results": [
-  { "urn": "bifrost:repo:.../component:FanoutService", "name": "FanoutService",
+  { "urn": "orgbrain:repo:.../component:FanoutService", "name": "FanoutService",
     "score": 0.91, "confidence_level": "confirmed" }
 ]}}
 ```
@@ -412,7 +412,7 @@ GET /api/v1/entities/search?q=FanoutService&repo_id=abc-123
 
 ## 12. Costs (`/costs`)
 
-The Spend page lives off this. Source table: `llm_cost_log`. File: `src/bifrost/api/routes/costs.py:54`.
+The Spend page lives off this. Source table: `llm_cost_log`. File: `src/orgbrain/api/routes/costs.py:54`.
 
 ### `GET /costs/summary`
 **Purpose:** Totals + grouped breakouts by model, phase, repo, plus a 7-day daily series.
@@ -432,7 +432,7 @@ The Spend page lives off this. Source table: `llm_cost_log`. File: `src/bifrost/
 
 ## 13. Indexer (`/indexer`)
 
-Per-repo indexer state for external sources (Confluence / Jira / GitHub / Slack). File: `src/bifrost/api/routes/indexer.py`.
+Per-repo indexer state for external sources (Confluence / Jira / GitHub / Slack). File: `src/orgbrain/api/routes/indexer.py`.
 
 | Method | Path | Line | Purpose |
 |---|---|---|---|
@@ -446,7 +446,7 @@ Per-repo indexer state for external sources (Confluence / Jira / GitHub / Slack)
 
 ## 14. Catalog (`/catalog`)
 
-Org-wide catalog mirror. One row per repo in the GitHub orgs listed in `sources.github.orgs`, populated by the catalog sync. File: `src/bifrost/api/routes/catalog.py`.
+Org-wide catalog mirror. One row per repo in the GitHub orgs listed in `sources.github.orgs`, populated by the catalog sync. File: `src/orgbrain/api/routes/catalog.py`.
 
 | Method | Path | Line | Purpose |
 |---|---|---|---|
@@ -460,15 +460,15 @@ Org-wide catalog mirror. One row per repo in the GitHub orgs listed in `sources.
 
 ## 15. Collaboration (`/collab-sessions`)
 
-Cross-team feature requests. Cookie-scoped per-browser ownership, same as conversations. File: `src/bifrost/api/routes/collaboration.py`.
+Cross-team feature requests. Cookie-scoped per-browser ownership, same as conversations. File: `src/orgbrain/api/routes/collaboration.py`.
 
 | Method | Path | Line | Purpose |
 |---|---|---|---|
-| POST | `/collab-sessions` | 77 | Open a new session. Body has the requirement + scope. Cookie `bifrost_session` set if absent. |
+| POST | `/collab-sessions` | 77 | Open a new session. Body has the requirement + scope. Cookie `orgbrain_session` set if absent. |
 | GET | `/collab-sessions` | 116 | List sessions for this cookie. |
 | GET | `/collab-sessions/{id}` | 146 | Full detail: messages + open/resolved doubts + artifacts. |
 | POST | `/collab-sessions/{id}/messages` | 173 | Append a requester message. **Side effects:** runs the **clarifier** agent inline (or fallback message on LLM error); inserts both the user message and the agent response; emits `agent:running` / `agent:done` over SSE; persists new doubts and resolved-doubt indices. |
-| POST | `/collab-sessions/{id}/doubts/{did}/resolve` | 217 | Resolve / escalate / mark-as-doc-answered a single doubt. Body carries `status`, `resolution_md`, optional `escalation_target`. If `BIFROST_SLACK_ESCALATION_CHANNEL` and `BIFROST_SLACK_BOT_TOKEN` are set and `status=escalated`, the session also fires `slack_escalation.post_escalation_to_slack`; a Slack failure returns 502 with code `slack.escalation.post_failed`. |
+| POST | `/collab-sessions/{id}/doubts/{did}/resolve` | 217 | Resolve / escalate / mark-as-doc-answered a single doubt. Body carries `status`, `resolution_md`, optional `escalation_target`. If `ORGBRAIN_SLACK_ESCALATION_CHANNEL` and `ORGBRAIN_SLACK_BOT_TOKEN` are set and `status=escalated`, the session also fires `slack_escalation.post_escalation_to_slack`; a Slack failure returns 502 with code `slack.escalation.post_failed`. |
 | POST | `/collab-sessions/{id}/close` | 395 | Close a session. **Side effects:** runs the **synthesizer** agent → writes `<handovers_dir>/sessions/<sid>/brief.md`, inserts a `collab_artifacts` row, transitions state `resolved` → `briefed`. |
 | POST | `/collab-sessions/{id}/reopen` | 436 | Reopen a closed/briefed session. |
 | GET | `/collab-sessions/{id}/stream` | 469 | SSE for the session: `agent:running`, `agent:done`, `session:updated`, `message:appended`, `doubt:resolved`. Channel: `collab_session:{id}`. |
@@ -487,7 +487,7 @@ POST /api/v1/collab-sessions
 
 ## 16. Handover Docs (`/handover-docs`)
 
-Generated team handover documents. Second largest router after tasks (~1,400 lines). Four scope kinds: repo / domain / team / region. Multi-repo scopes use tree decomposition above 5 repos (`_TREE_THRESHOLD=5`). File: `src/bifrost/api/routes/handover_docs.py`.
+Generated team handover documents. Second largest router after tasks (~1,400 lines). Four scope kinds: repo / domain / team / region. Multi-repo scopes use tree decomposition above 5 repos (`_TREE_THRESHOLD=5`). File: `src/orgbrain/api/routes/handover_docs.py`.
 
 ### List + read
 
@@ -560,16 +560,16 @@ PATCH /api/v1/handover-docs/hd-xyz/body
 |---|---|---|---|
 | GET | `/handover-docs/stream/{kind}/{value}` | 1403 | SSE for in-flight handover generation. Events: `handover:run_started`, `handover:child_done`, `handover:section_complete`, `handover:run_done`. Channel: `handover:{kind}:{value}`. |
 
-> **If you remember nothing else about §16.** The four `/estimate` endpoints exist because multi-repo handovers can run away on cost. The hard ceiling is `BIFROST_HANDOVER_MAX_COST_USD` (default $10). `?force=true` is the operator's bypass.
+> **If you remember nothing else about §16.** The four `/estimate` endpoints exist because multi-repo handovers can run away on cost. The hard ceiling is `ORGBRAIN_HANDOVER_MAX_COST_USD` (default $10). `?force=true` is the operator's bypass.
 
 ---
 
 ## 17. Extract (`/extract`)
 
-A thin shim. Used by the action layer's `bifrost_extract` tool to trigger an extraction without going through `/repos/{id}/extract`. File: `src/bifrost/api/routes/extract.py:16`.
+A thin shim. Used by the action layer's `orgbrain_extract` tool to trigger an extraction without going through `/repos/{id}/extract`. File: `src/orgbrain/api/routes/extract.py:16`.
 
 ### `POST /extract`
-**Purpose:** A non-repo-specific extraction endpoint; commonly used by the action layer's `bifrost_extract` tool. Body identifies the target repo + optional file-path constraints.
+**Purpose:** A non-repo-specific extraction endpoint; commonly used by the action layer's `orgbrain_extract` tool. Body identifies the target repo + optional file-path constraints.
 **Example request:**
 ```http
 POST /api/v1/extract
@@ -581,7 +581,7 @@ POST /api/v1/extract
 
 ## 18. Feedback (`/feedback`)
 
-Thumbs-up/down + free text scoped to a chat turn or task artifact. Drives the learning loop in `actions/learning.py`. File: `src/bifrost/api/routes/feedback.py:16`.
+Thumbs-up/down + free text scoped to a chat turn or task artifact. Drives the learning loop in `actions/learning.py`. File: `src/orgbrain/api/routes/feedback.py:16`.
 
 ### `POST /feedback`
 **Body:** `SubmitFeedbackRequest { target_kind, target_id, rating, comment? }`
@@ -596,7 +596,7 @@ POST /api/v1/feedback
 
 ## 19. Admin (`/admin/*`)
 
-Every route requires the `admin` role. File: `src/bifrost/api/routes/admin.py`.
+Every route requires the `admin` role. File: `src/orgbrain/api/routes/admin.py`.
 
 ### Embedding maintenance
 
@@ -633,7 +633,7 @@ Every route requires the `admin` role. File: `src/bifrost/api/routes/admin.py`.
 
 ## 20. Streaming (the four SSE channels)
 
-Bifrost has four distinct SSE channel families, each emitted from the in-process event bus (`bifrost.api.sse.event_bus`):
+OrgBrain has four distinct SSE channel families, each emitted from the in-process event bus (`orgbrain.api.sse.event_bus`):
 
 | Channel | Producer | Consumer | Events |
 |---------|----------|----------|--------|
@@ -702,9 +702,9 @@ flowchart LR
 ## 22. Things you'll wish you knew
 
 - **Two `/tasks` routers exist.** `extraction-tasks` for indexing jobs, bare `/tasks/*` for the action layer. Search for the literal path before grepping by name.
-- **Cookies are how anonymity-mode auth works.** No login UI; the `bifrost_session` cookie scopes conversations + collab sessions per browser. Same model both places.
+- **Cookies are how anonymity-mode auth works.** No login UI; the `orgbrain_session` cookie scopes conversations + collab sessions per browser. Same model both places.
 - **Every route needs a principal.** Under `identity.provider: none` the local operator (loopback only) is an admin; under `header` and `oidc_jwt` admin comes from `identity.roles`.
-- **Scripts use `bft_` tokens.** `bifrost token new` prints one; list its sha256 under `api_tokens`.
-- **Cost is the bottleneck on multi-repo handovers.** All four `/estimate` endpoints exist precisely so the UI shows the price tag before the spend. The hard ceiling is `BIFROST_HANDOVER_MAX_COST_USD` (default $10).
+- **Scripts use `bft_` tokens.** `orgbrain token new` prints one; list its sha256 under `api_tokens`.
+- **Cost is the bottleneck on multi-repo handovers.** All four `/estimate` endpoints exist precisely so the UI shows the price tag before the spend. The hard ceiling is `ORGBRAIN_HANDOVER_MAX_COST_USD` (default $10).
 - **`/quick` skips the Task lifecycle.** The action layer's "two-second fix" path. No phases, no artifacts; just one Sonnet call + an inline diff.
 - **SSE events buffer.** A late subscriber (e.g. browser refresh mid-generate) gets the buffered events, not a stale snapshot. The terminal event is what tells the client to stop listening.

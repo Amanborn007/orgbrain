@@ -3,7 +3,7 @@
  * middleware rejects POST/PUT/PATCH/DELETE from a browser without them.
  */
 export const CSRF_HEADER_NAME = "X-Requested-With";
-export const CSRF_HEADER_VALUE = "bifrost-ui";
+export const CSRF_HEADER_VALUE = "orgbrain-ui";
 
 export function csrfHeaders(): Record<string, string> {
   return { [CSRF_HEADER_NAME]: CSRF_HEADER_VALUE };

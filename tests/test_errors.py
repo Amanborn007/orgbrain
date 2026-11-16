@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.errors import (
+from orgbrain.errors import (
     AuthError,
-    BifrostError,
     ConfigError,
     ConflictError,
     NotFoundError,
+    OrgBrainError,
     RateLimitError,
     TransientError,
     UpstreamError,
@@ -28,8 +28,8 @@ from bifrost.errors import (
 
 
 def test_base_defaults() -> None:
-    err = BifrostError("boom")
-    assert err.code == "bifrost.error"
+    err = OrgBrainError("boom")
+    assert err.code == "orgbrain.error"
     assert err.retryable is False
     assert err.http_status == 500
     assert err.message == "boom"
@@ -55,12 +55,12 @@ def test_subclass_triples(cls, code, retryable, status) -> None:
     assert err.code == code
     assert err.retryable is retryable
     assert err.http_status == status
-    assert isinstance(err, BifrostError)
+    assert isinstance(err, OrgBrainError)
 
 
 def test_per_instance_override() -> None:
     """A one-off raise can override the class defaults without a subclass."""
-    err = BifrostError(
+    err = OrgBrainError(
         "custom",
         code="my.code",
         retryable=True,
@@ -74,7 +74,7 @@ def test_per_instance_override() -> None:
     assert err.retry_after == 2.5
     assert err.details == {"k": "v"}
     # Class default is untouched by the instance override.
-    assert BifrostError.retryable is False
+    assert OrgBrainError.retryable is False
 
 
 def test_only_retryable_classes_are_retryable() -> None:
@@ -150,7 +150,7 @@ async def test_non_retryable_raises_immediately() -> None:
 
 @pytest.mark.asyncio
 async def test_raw_exception_not_retried_by_default() -> None:
-    """Non-Bifrost errors are not retryable unless retry_on opts in."""
+    """Non-OrgBrain errors are not retryable unless retry_on opts in."""
     calls = 0
 
     async def fn() -> str:
@@ -250,11 +250,11 @@ async def test_invalid_max_attempts_rejected() -> None:
 
 
 def _handler_app():
-    """Minimal FastAPI app with the Bifrost error handler and routes that
+    """Minimal FastAPI app with the OrgBrain error handler and routes that
     raise each error kind. No auth middleware — pure handler test."""
     from fastapi import FastAPI
 
-    from bifrost.api.error_handlers import register_error_handlers
+    from orgbrain.api.error_handlers import register_error_handlers
 
     app = FastAPI()
     register_error_handlers(app)

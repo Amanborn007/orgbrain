@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.api.schemas.chat_settings import (
+from orgbrain.api.schemas.chat_settings import (
     ChatSettings,
     PartialChatSettings,
     merge_settings,

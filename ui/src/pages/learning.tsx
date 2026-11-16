@@ -50,7 +50,7 @@ import {
  *   - Data-dense by default; no hidden tabs for first 80% of the job.
  *   - Tiny mono-font numbers for everything quantitative (tokens,
  *     confidences, counts) — matches the power-user aesthetic of the
- *     rest of Bifrost.
+ *     rest of OrgBrain.
  */
 export function LearningPage() {
   const stats = useQuery({
@@ -96,7 +96,7 @@ export function LearningPage() {
           Learning
         </h1>
         <p className="text-[12.5px] text-fg-3">
-          Bifrost gets smarter every turn. Capture · Govern · Apply ·
+          OrgBrain gets smarter every turn. Capture · Govern · Apply ·
           Consume · Measure.
         </p>
       </header>
@@ -1028,11 +1028,11 @@ function _planToneBg(status: string): string {
 
 /* ── Knowledge base card ──────────────────────────────────────────────
  *
- * Bifrost's agent_results table is a PERMANENT knowledge base — rows
+ * OrgBrain's agent_results table is a PERMANENT knowledge base — rows
  * live forever, queries reuse them across conversations.  This card
  * shows two views side-by-side:
  *
- *   1. Lifetime — the headline "what does Bifrost know?" totals.
+ *   1. Lifetime — the headline "what does OrgBrain know?" totals.
  *      Distinct targets, distinct conversations, total agent runs,
  *      money saved across all runs.
  *
@@ -1098,7 +1098,7 @@ function KnowledgeCacheCard() {
         </span>
       </header>
 
-      {/* LIFETIME row — the "what Bifrost knows" headline */}
+      {/* LIFETIME row — the "what OrgBrain knows" headline */}
       <div className="border-b border-border px-4 py-3">
         <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-wide text-fg-3">
           Lifetime totals
@@ -1400,7 +1400,7 @@ function BenchmarkScoreboardCard() {
           <div className="font-mono text-[11px] text-fg-3">
             Run{" "}
             <code className="rounded bg-bg-2 px-1.5 py-0.5">
-              uv run python -m bifrost.benchmarks --domain {effectiveDomain} --label after-fixes
+              uv run python -m orgbrain.benchmarks --domain {effectiveDomain} --label after-fixes
             </code>{" "}
             to populate.
           </div>
@@ -1648,9 +1648,9 @@ function BenchmarkBuildRow({ build }: { build: BenchmarkBuild }) {
  * visit so first-timers don't have to hunt the explanation.
  *
  * The diagram is ASCII-art rendered in a monospace box because it
- * matches Bifrost's power-user aesthetic. */
+ * matches OrgBrain's power-user aesthetic. */
 function HowLearningWorks() {
-  const STORAGE_KEY = "bifrost_learning_guide_dismissed";
+  const STORAGE_KEY = "orgbrain_learning_guide_dismissed";
   const dismissed = (() => {
     try {
       return typeof window !== "undefined"

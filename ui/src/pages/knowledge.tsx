@@ -427,7 +427,7 @@ function RepoDetailHeader({
   onClose: () => void;
 }) {
   const copyUrn = async () => {
-    await navigator.clipboard.writeText(`urn:bifrost:repo:${r.name}`);
+    await navigator.clipboard.writeText(`urn:orgbrain:repo:${r.name}`);
     toast.success("URN copied");
   };
   return (
@@ -456,7 +456,7 @@ function RepoDetailHeader({
               </span>
             )}
             <span className="ml-2 rounded border border-border bg-bg-2 px-1.5 py-0.5 font-mono text-[10.5px] text-fg-2">
-              urn:bifrost:repo:{r.name}
+              urn:orgbrain:repo:{r.name}
             </span>
             <button
               onClick={copyUrn}

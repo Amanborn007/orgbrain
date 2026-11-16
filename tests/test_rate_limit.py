@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bifrost.collaboration.rate_limit import check_and_consume, reset
+from orgbrain.collaboration.rate_limit import check_and_consume, reset
 
 
 def test_first_call_within_limit_is_allowed() -> None:

@@ -17,11 +17,11 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.extraction import worker as worker_mod
-from bifrost.storage.models import Domain, ExtractionTask, Repo
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.extraction import worker as worker_mod
+from orgbrain.storage.models import Domain, ExtractionTask, Repo
+from orgbrain.storage.repository import EntityRepository
 
 TAG = uuid.uuid4().hex[:8]
 
@@ -84,7 +84,7 @@ async def committed_repo(
     async with factory() as s:
         r = Repo(
             id=uuid.uuid4(),
-            urn=f"urn:bifrost:repo:commit-order-{TAG}",
+            urn=f"urn:orgbrain:repo:commit-order-{TAG}",
             name=f"commit-order-{TAG}",
             url=f"https://example.invalid/commit-order-{TAG}.git",
             adapter_config={},
@@ -149,11 +149,11 @@ async def test_discover_repos_commits_before_submit(
     cleanup_tasks: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from bifrost.manifest.team_repos import TeamRepoMatch
+    from orgbrain.manifest.team_repos import TeamRepoMatch
 
     domain_id = uuid.uuid4()
     async with factory() as s:
-        s.add(Domain(id=domain_id, urn=f"urn:bifrost:domain:co-{TAG}", name=f"co-{TAG}"))
+        s.add(Domain(id=domain_id, urn=f"urn:orgbrain:domain:co-{TAG}", name=f"co-{TAG}"))
         await s.commit()
     events.clear()
 
@@ -173,7 +173,7 @@ async def test_discover_repos_commits_before_submit(
     async def fake_discover(team: str, **kwargs: Any):
         return list(matches)
 
-    monkeypatch.setattr("bifrost.api.routes.domains.discover_team_repos", fake_discover)
+    monkeypatch.setattr("orgbrain.api.routes.domains.discover_team_repos", fake_discover)
 
     try:
         resp = await client.post(
@@ -196,7 +196,7 @@ async def test_register_repo_commits_before_background_spawn(
     events: list[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from bifrost.api.routes import repos as repos_route
+    from orgbrain.api.routes import repos as repos_route
 
     def fake_spawn(coro: Any, *, what: str) -> None:
         coro.close()
@@ -212,7 +212,7 @@ async def test_register_repo_commits_before_background_spawn(
         assert events[:2] == ["commit", "spawn"], events
     finally:
         async with factory() as s:
-            await s.execute(delete(Repo).where(Repo.urn == f"urn:bifrost:repo:{name}"))
+            await s.execute(delete(Repo).where(Repo.urn == f"urn:orgbrain:repo:{name}"))
             await s.commit()
 
 

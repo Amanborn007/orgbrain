@@ -8,8 +8,8 @@ test only the shape, fallback behaviour, and merge logic here.
 
 from __future__ import annotations
 
-from bifrost.api.schemas.chat_settings import ChatSettings
-from bifrost.research.orchestrator import (
+from orgbrain.api.schemas.chat_settings import ChatSettings
+from orgbrain.research.orchestrator import (
     OrchestrationPlan,
     ResolvedWalkParams,
     merge_plan_with_settings,

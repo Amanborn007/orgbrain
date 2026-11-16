@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.runs import (
+from orgbrain.research.runs import (
     IDEMPOTENCY_TTL,
     find_by_idempotency,
     find_in_flight_run,
@@ -20,7 +20,7 @@ from bifrost.research.runs import (
     reclaim_orphaned_runs,
     start_run,
 )
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture
@@ -228,7 +228,7 @@ async def test_reclaim_orphaned_runs(session_factory_for) -> None:
     # Backdate it artificially.
     from sqlalchemy import update as sql_update
 
-    from bifrost.storage.models import ResearchRun
+    from orgbrain.storage.models import ResearchRun
 
     async with session_factory_for() as session:
         await session.execute(

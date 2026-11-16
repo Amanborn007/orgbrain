@@ -13,31 +13,31 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from httpx import ASGITransport, AsyncClient
 from starlette.requests import Request
 
-from bifrost.api.auth.principal import (
+from orgbrain.api.auth.principal import (
     SOURCE_DEMO_FALLBACK,
     SOURCE_ENV_OVERRIDE,
     SOURCE_OIDC_JWT,
     SOURCE_SSO_HEADER,
 )
-from bifrost.api.auth.providers import (
+from orgbrain.api.auth.providers import (
     IdentityConfigError,
     InvalidCredentials,
     build_identity_provider,
 )
-from bifrost.cli.config import BifrostSettings, reset_settings
+from orgbrain.cli.config import OrgBrainSettings, reset_settings
 
 ISSUER = "https://idp.example.com/"
-AUDIENCE = "bifrost"
+AUDIENCE = "orgbrain"
 JWKS_URL = "https://idp.example.com/.well-known/jwks.json"
-SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "bifrost"
+SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "orgbrain"
 
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     for key in (
-        "BIFROST_DEMO_MODE",
-        "BIFROST_OPERATOR_EMAIL",
-        "BIFROST_OPERATOR_GROUPS",
+        "ORGBRAIN_DEMO_MODE",
+        "ORGBRAIN_OPERATOR_EMAIL",
+        "ORGBRAIN_OPERATOR_GROUPS",
     ):
         monkeypatch.delenv(key, raising=False)
     reset_settings()
@@ -45,8 +45,8 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     reset_settings()
 
 
-def _settings(**overrides: Any) -> BifrostSettings:
-    return BifrostSettings(_env_file=None, **overrides)  # type: ignore[call-arg]
+def _settings(**overrides: Any) -> OrgBrainSettings:
+    return OrgBrainSettings(_env_file=None, **overrides)  # type: ignore[call-arg]
 
 
 def _request(headers: dict[str, str] | None = None) -> Request:
@@ -59,14 +59,14 @@ def _request(headers: dict[str, str] | None = None) -> Request:
 
 
 async def test_none_provider_resolves_operator_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_OPERATOR_EMAIL", "op@example.com")
-    monkeypatch.setenv("BIFROST_OPERATOR_GROUPS", "bifrost-admin, bifrost-engineer")
+    monkeypatch.setenv("ORGBRAIN_OPERATOR_EMAIL", "op@example.com")
+    monkeypatch.setenv("ORGBRAIN_OPERATOR_GROUPS", "orgbrain-admin, orgbrain-engineer")
     provider = build_identity_provider(_settings())
     principal = await provider.resolve(_request())
     assert principal is not None
     assert principal.email == "op@example.com"
     assert principal.source == SOURCE_ENV_OVERRIDE
-    assert principal.groups == ("bifrost-admin", "bifrost-engineer")
+    assert principal.groups == ("orgbrain-admin", "orgbrain-engineer")
 
 
 async def test_none_provider_demo_mode_uses_configured_demo_email() -> None:
@@ -103,7 +103,7 @@ def test_none_provider_reports_no_interactive_refresh() -> None:
 # ── header ──────────────────────────────────────────────────────────
 
 
-def _header_settings(**identity: Any) -> BifrostSettings:
+def _header_settings(**identity: Any) -> OrgBrainSettings:
     return _settings(
         identity={"provider": "header", "trusted_proxy": True, "roles": {"admin": []}, **identity}
     )
@@ -144,9 +144,9 @@ def test_header_mode_without_trusted_proxy_fails_to_build() -> None:
 def test_header_mode_without_trusted_proxy_fails_app_startup(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_IDENTITY__PROVIDER", "header")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__PROVIDER", "header")
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     with pytest.raises(IdentityConfigError, match="trusted_proxy"):
         create_app()
@@ -165,7 +165,7 @@ async def _client(app: object) -> AsyncClient:
 
 async def test_forwarded_headers_are_ignored_unless_provider_is_header() -> None:
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     app = create_app()
     async with await _client(app) as ac:
@@ -178,9 +178,9 @@ async def test_forwarded_headers_are_ignored_unless_provider_is_header() -> None
 async def test_forwarded_headers_do_not_override_operator_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_OPERATOR_EMAIL", "op@example.com")
+    monkeypatch.setenv("ORGBRAIN_OPERATOR_EMAIL", "op@example.com")
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     async with await _client(create_app()) as ac:
         me = await ac.get("/api/v1/auth/me", headers={"X-Forwarded-Email": "spoof@evil.test"})
@@ -188,11 +188,11 @@ async def test_forwarded_headers_do_not_override_operator_env(
 
 
 async def test_header_provider_end_to_end(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_IDENTITY__PROVIDER", "header")
-    monkeypatch.setenv("BIFROST_IDENTITY__TRUSTED_PROXY", "true")
-    monkeypatch.setenv("BIFROST_IDENTITY__ROLES", '{"admin": []}')
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__PROVIDER", "header")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__TRUSTED_PROXY", "true")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__ROLES", '{"admin": []}')
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     async with await _client(create_app()) as ac:
         me = await ac.get("/api/v1/auth/me", headers={"X-Forwarded-Email": "real@example.com"})
@@ -237,7 +237,7 @@ def _token(key: Any, **overrides: Any) -> str:
     return jwt.encode(claims, key, algorithm="RS256", headers={"kid": "test-kid"})
 
 
-def _oidc_settings(**identity: Any) -> BifrostSettings:
+def _oidc_settings(**identity: Any) -> OrgBrainSettings:
     oidc = {"jwks_url": JWKS_URL, "issuer": ISSUER, "audience": AUDIENCE}
     return _settings(
         identity={"provider": "oidc_jwt", "oidc": oidc, "roles": {"admin": []}, **identity}
@@ -302,13 +302,13 @@ def test_oidc_requires_jwks_issuer_and_audience(missing: str) -> None:
 async def test_oidc_end_to_end_rejects_bad_token_with_401(
     monkeypatch: pytest.MonkeyPatch, jwks: None, signing_key: Any
 ) -> None:
-    monkeypatch.setenv("BIFROST_IDENTITY__PROVIDER", "oidc_jwt")
-    monkeypatch.setenv("BIFROST_IDENTITY__ROLES", '{"admin": []}')
-    monkeypatch.setenv("BIFROST_IDENTITY__OIDC__JWKS_URL", JWKS_URL)
-    monkeypatch.setenv("BIFROST_IDENTITY__OIDC__ISSUER", ISSUER)
-    monkeypatch.setenv("BIFROST_IDENTITY__OIDC__AUDIENCE", AUDIENCE)
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__PROVIDER", "oidc_jwt")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__ROLES", '{"admin": []}')
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__JWKS_URL", JWKS_URL)
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__ISSUER", ISSUER)
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__AUDIENCE", AUDIENCE)
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     async with await _client(create_app()) as ac:
         good = await ac.get(

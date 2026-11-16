@@ -26,7 +26,7 @@ import httpx
 # Import path: run from repo root (script lives in scripts/).
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from bifrost.api.auth.csrf import CSRF_HEADER_NAME, CSRF_HEADER_VALUE  # noqa: E402
+from orgbrain.api.auth.csrf import CSRF_HEADER_NAME, CSRF_HEADER_VALUE  # noqa: E402
 
 BASE = "http://localhost:8000/api/v1"
 # The server sets a session cookie on create, so later POSTs need the CSRF header.
@@ -43,10 +43,10 @@ def main() -> int:
     )
     c = httpx.Client(base_url=BASE, headers=HEADERS, timeout=30)
 
-    # 1) create a conversation. Scope to ONE repo (env BIFROST_SMOKE_SCOPE_ALL=1
+    # 1) create a conversation. Scope to ONE repo (env ORGBRAIN_SMOKE_SCOPE_ALL=1
     # to force all-repos) so the fan-out stays small and the run completes fast.
     scope: list[str] = []
-    if os.environ.get("BIFROST_SMOKE_SCOPE_ALL") != "1":
+    if os.environ.get("ORGBRAIN_SMOKE_SCOPE_ALL") != "1":
         repos = c.get("/repos").json().get("data", [])
         indexed = [r for r in repos if r.get("index_status") == "complete"] or repos
         if indexed:
@@ -74,7 +74,7 @@ def main() -> int:
     outcome = "TIMEOUT"
     err = None
     start = time.time()
-    # Reuse the SAME client `c` so the signed bifrost_session cookie set on
+    # Reuse the SAME client `c` so the signed orgbrain_session cookie set on
     # create/post persists — ownership is session-cookie-scoped, so a fresh
     # client would 404 (it would look like a different session).
     if True:

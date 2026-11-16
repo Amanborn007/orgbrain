@@ -1,1 +1,1 @@
-"""Bifrost Extraction Probe — Phase 0 throwaway validation package."""
+"""OrgBrain Extraction Probe — Phase 0 throwaway validation package."""

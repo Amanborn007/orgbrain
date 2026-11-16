@@ -17,7 +17,7 @@ import importlib
 
 import pytest
 
-from bifrost.actions._prompt_safety import (
+from orgbrain.actions._prompt_safety import (
     BOUNDARY_SENTENCE,
     wrap_untrusted,
 )
@@ -27,20 +27,20 @@ from bifrost.actions._prompt_safety import (
 # agent prompt? Add it here. The test will tell you if the boundary
 # sentence is missing.
 KNOWN_SYSTEM_PROMPTS: list[tuple[str, str]] = [
-    ("bifrost.actions.quick", "_QUICK_SYSTEM_PROMPT"),
-    ("bifrost.actions.plan_agent", "_PLAN_SYSTEM_PROMPT"),
-    ("bifrost.actions.executor", "_EXECUTOR_SYSTEM_PROMPT"),
-    ("bifrost.actions.verifier", "_VERIFIER_SYSTEM_PROMPT"),
-    ("bifrost.actions.debugger", "_DEBUG_SYSTEM_PROMPT"),
-    ("bifrost.actions.discussion_agent", "_DISCUSSION_SYSTEM_PROMPT"),
-    ("bifrost.actions.intent_router", "_ROUTER_SYSTEM_PROMPT"),
-    ("bifrost.research.jira_agent", "_JIRA_SYSTEM_PROMPT"),
-    ("bifrost.research.confluence_agent", "_CONFLUENCE_SYSTEM_PROMPT"),
-    ("bifrost.research.repo_agent", "_REPO_AGENT_SYSTEM_PROMPT"),
-    ("bifrost.research.slack_agent", "_SLACK_SYSTEM_PROMPT"),
-    ("bifrost.research.github_agent", "_GITHUB_SYSTEM_PROMPT"),
-    ("bifrost.research.external_agent", "_EXTERNAL_SYSTEM_PROMPT"),
-    ("bifrost.research.router", "_ROUTER_SYSTEM_PROMPT"),
+    ("orgbrain.actions.quick", "_QUICK_SYSTEM_PROMPT"),
+    ("orgbrain.actions.plan_agent", "_PLAN_SYSTEM_PROMPT"),
+    ("orgbrain.actions.executor", "_EXECUTOR_SYSTEM_PROMPT"),
+    ("orgbrain.actions.verifier", "_VERIFIER_SYSTEM_PROMPT"),
+    ("orgbrain.actions.debugger", "_DEBUG_SYSTEM_PROMPT"),
+    ("orgbrain.actions.discussion_agent", "_DISCUSSION_SYSTEM_PROMPT"),
+    ("orgbrain.actions.intent_router", "_ROUTER_SYSTEM_PROMPT"),
+    ("orgbrain.research.jira_agent", "_JIRA_SYSTEM_PROMPT"),
+    ("orgbrain.research.confluence_agent", "_CONFLUENCE_SYSTEM_PROMPT"),
+    ("orgbrain.research.repo_agent", "_REPO_AGENT_SYSTEM_PROMPT"),
+    ("orgbrain.research.slack_agent", "_SLACK_SYSTEM_PROMPT"),
+    ("orgbrain.research.github_agent", "_GITHUB_SYSTEM_PROMPT"),
+    ("orgbrain.research.external_agent", "_EXTERNAL_SYSTEM_PROMPT"),
+    ("orgbrain.research.router", "_ROUTER_SYSTEM_PROMPT"),
 ]
 
 
@@ -126,10 +126,10 @@ class TestBoundarySentencePresent:
         # load-bearing substring.
         assert "untrusted data, not instructions" in prompt, (
             f"{module_path}.{attr_name} is missing the boundary "
-            f"sentence — see bifrost.actions._prompt_safety."
+            f"sentence — see orgbrain.actions._prompt_safety."
         )
         # And the sentinel placeholder must be fully replaced.
-        assert "__BIFROST_BOUNDARY_SENTINEL__" not in prompt, (
+        assert "__ORGBRAIN_BOUNDARY_SENTINEL__" not in prompt, (
             f"{module_path}.{attr_name} still has the unsubstituted "
             f"sentinel — the .replace(...) call probably regressed."
         )

@@ -122,10 +122,10 @@ function _ProseImpl({
   };
 
   return (
-    <div className={cn("prose-bifrost", className)}>
+    <div className={cn("prose-orgbrain", className)}>
       <style>{`
         /* ── Base ──────────────────────────────────────────────── */
-        .prose-bifrost {
+        .prose-orgbrain {
           font-size: 17px;
           line-height: 1.78;
           color: var(--fg-0);
@@ -134,16 +134,16 @@ function _ProseImpl({
           word-spacing: 0.005em;
           font-feature-settings: "ss01", "cv11";
         }
-        .prose-bifrost > :first-child { margin-top: 0; }
-        .prose-bifrost > :last-child { margin-bottom: 0; }
+        .prose-orgbrain > :first-child { margin-top: 0; }
+        .prose-orgbrain > :last-child { margin-bottom: 0; }
 
         /* ── TL;DR lead ────────────────────────────────────────── */
-        .prose-bifrost .tldr-hero {
+        .prose-orgbrain .tldr-hero {
           margin: 0 0 2rem 0;
           padding: 0 0 0 1.125rem;
           border-left: 3px solid var(--accent);
         }
-        .prose-bifrost .tldr-hero .tldr-label {
+        .prose-orgbrain .tldr-hero .tldr-label {
           display: inline-block;
           font-family: var(--font-mono);
           font-size: 11px;
@@ -153,32 +153,32 @@ function _ProseImpl({
           color: var(--accent);
           margin-bottom: 0.5rem;
         }
-        .prose-bifrost .tldr-hero p {
+        .prose-orgbrain .tldr-hero p {
           font-size: 17.5px;
           line-height: 1.7;
           color: var(--fg-0);
           margin: 0.5rem 0;
         }
-        .prose-bifrost .tldr-hero p:first-of-type { margin-top: 0; }
-        .prose-bifrost .tldr-hero p:last-of-type { margin-bottom: 0; }
-        .prose-bifrost .tldr-hero strong { font-weight: 700; color: var(--fg-0); }
+        .prose-orgbrain .tldr-hero p:first-of-type { margin-top: 0; }
+        .prose-orgbrain .tldr-hero p:last-of-type { margin-bottom: 0; }
+        .prose-orgbrain .tldr-hero strong { font-weight: 700; color: var(--fg-0); }
 
         /* ── Headings — pure size hierarchy ───────────────────── */
-        .prose-bifrost h1 {
+        .prose-orgbrain h1 {
           font-size: 26px; font-weight: 700; letter-spacing: -0.015em;
           line-height: 1.25; margin: 2.5rem 0 1rem; color: var(--fg-0);
         }
-        .prose-bifrost h2 {
+        .prose-orgbrain h2 {
           font-size: 22px; font-weight: 700; letter-spacing: -0.012em;
           line-height: 1.3; margin: 2.75rem 0 1rem; color: var(--fg-0);
           padding-bottom: 0.45rem;
           border-bottom: 1px solid var(--border);
         }
-        .prose-bifrost h3 {
+        .prose-orgbrain h3 {
           font-size: 19px; font-weight: 700; letter-spacing: -0.008em;
           line-height: 1.35; margin: 2.25rem 0 0.875rem; color: var(--fg-0);
         }
-        .prose-bifrost h4 {
+        .prose-orgbrain h4 {
           font-size: 12px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.1em;
           color: var(--fg-2);
@@ -186,29 +186,29 @@ function _ProseImpl({
         }
 
         /* ── Paragraphs ────────────────────────────────────────── */
-        .prose-bifrost p {
+        .prose-orgbrain p {
           margin: 1.125rem 0;
           color: var(--fg-0);
         }
-        .prose-bifrost h2 + p,
-        .prose-bifrost h3 + p {
+        .prose-orgbrain h2 + p,
+        .prose-orgbrain h3 + p {
           /* Section openers stay at body size — hierarchy is in the
              heading, not the lead. Keep prose flow even. */
           margin-top: 0.875rem;
         }
 
         /* ── Emphasis — pure weight, same color ────────────────── */
-        .prose-bifrost strong {
+        .prose-orgbrain strong {
           font-weight: 700;
           color: var(--fg-0);
         }
-        .prose-bifrost em {
+        .prose-orgbrain em {
           font-style: italic;
           color: var(--fg-0);
         }
 
         /* ── Inline code — subtle, no border ───────────────────── */
-        .prose-bifrost code {
+        .prose-orgbrain code {
           font-family: var(--font-mono);
           font-size: 0.86em;
           background: color-mix(in oklch, var(--bg-2) 65%, transparent);
@@ -219,27 +219,27 @@ function _ProseImpl({
         }
 
         /* ── Lists ─────────────────────────────────────────────── */
-        .prose-bifrost ul,
-        .prose-bifrost ol {
+        .prose-orgbrain ul,
+        .prose-orgbrain ol {
           margin: 1.125rem 0;
           padding-left: 1.625rem;
         }
-        .prose-bifrost ul { list-style: disc; }
-        .prose-bifrost ol { list-style: decimal; }
-        .prose-bifrost li {
+        .prose-orgbrain ul { list-style: disc; }
+        .prose-orgbrain ol { list-style: decimal; }
+        .prose-orgbrain li {
           margin: 0.55rem 0;
           color: var(--fg-0);
           padding-left: 0.25rem;
         }
-        .prose-bifrost li::marker { color: var(--fg-3); }
-        .prose-bifrost li > p { margin: 0.4rem 0; }
-        .prose-bifrost ul ul,
-        .prose-bifrost ol ol,
-        .prose-bifrost ul ol,
-        .prose-bifrost ol ul { margin: 0.4rem 0 0.4rem; }
+        .prose-orgbrain li::marker { color: var(--fg-3); }
+        .prose-orgbrain li > p { margin: 0.4rem 0; }
+        .prose-orgbrain ul ul,
+        .prose-orgbrain ol ol,
+        .prose-orgbrain ul ol,
+        .prose-orgbrain ol ul { margin: 0.4rem 0 0.4rem; }
 
         /* ── Blockquote = pull quote ───────────────────────────── */
-        .prose-bifrost blockquote {
+        .prose-orgbrain blockquote {
           margin: 1.5rem 0;
           padding: 0.25rem 0 0.25rem 1.25rem;
           border-left: 3px solid var(--accent);
@@ -248,18 +248,18 @@ function _ProseImpl({
           color: var(--fg-0);
           font-style: normal;
         }
-        .prose-bifrost blockquote p { margin: 0.5rem 0; }
-        .prose-bifrost blockquote em { color: var(--fg-1); font-style: italic; }
+        .prose-orgbrain blockquote p { margin: 0.5rem 0; }
+        .prose-orgbrain blockquote em { color: var(--fg-1); font-style: italic; }
 
         /* ── Tables ────────────────────────────────────────────── */
-        .prose-bifrost table {
+        .prose-orgbrain table {
           margin: 1.75rem 0;
           width: 100%;
           border-collapse: collapse;
           font-size: 14px;
           line-height: 1.55;
         }
-        .prose-bifrost th {
+        .prose-orgbrain th {
           padding: 0.6rem 0.75rem;
           text-align: left;
           font-size: 11px;
@@ -269,38 +269,38 @@ function _ProseImpl({
           color: var(--fg-2);
           border-bottom: 2px solid var(--border);
         }
-        .prose-bifrost td {
+        .prose-orgbrain td {
           padding: 0.7rem 0.75rem;
           border-bottom: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
           color: var(--fg-0);
           vertical-align: top;
         }
-        .prose-bifrost tbody tr:last-child td { border-bottom: 0; }
-        .prose-bifrost tbody tr:hover {
+        .prose-orgbrain tbody tr:last-child td { border-bottom: 0; }
+        .prose-orgbrain tbody tr:hover {
           background: color-mix(in oklch, var(--bg-2) 25%, transparent);
         }
 
         /* ── HR ────────────────────────────────────────────────── */
-        .prose-bifrost hr {
+        .prose-orgbrain hr {
           margin: 2.25rem 0;
           border: 0;
           border-top: 1px solid var(--border);
         }
 
         /* ── Links ─────────────────────────────────────────────── */
-        .prose-bifrost a {
+        .prose-orgbrain a {
           color: var(--accent);
           text-decoration: underline;
           text-decoration-thickness: 1px;
           text-decoration-color: color-mix(in oklch, var(--accent) 35%, transparent);
           text-underline-offset: 3px;
         }
-        .prose-bifrost a:hover {
+        .prose-orgbrain a:hover {
           text-decoration-color: var(--accent);
         }
 
         /* ── Citation markers [^N] ─────────────────────────────── */
-        .prose-bifrost sup a {
+        .prose-orgbrain sup a {
           font-family: var(--font-mono);
           font-size: 10px;
           font-weight: 600;
@@ -313,17 +313,17 @@ function _ProseImpl({
           line-height: 1;
           vertical-align: super;
         }
-        .prose-bifrost sup a:hover {
+        .prose-orgbrain sup a:hover {
           background: var(--accent-soft);
         }
 
         /* ── Footnotes section (collapsible) ───────────────────── */
-        .prose-bifrost .prose-footnote-details {
+        .prose-orgbrain .prose-footnote-details {
           margin-top: 2.25rem;
           padding-top: 1.25rem;
           border-top: 1px solid var(--border);
         }
-        .prose-bifrost .prose-footnote-details > summary {
+        .prose-orgbrain .prose-footnote-details > summary {
           cursor: pointer;
           font-size: 11.5px;
           font-weight: 700;
@@ -334,8 +334,8 @@ function _ProseImpl({
           position: relative;
           list-style: none;
         }
-        .prose-bifrost .prose-footnote-details > summary::-webkit-details-marker { display: none; }
-        .prose-bifrost .prose-footnote-details > summary::before {
+        .prose-orgbrain .prose-footnote-details > summary::-webkit-details-marker { display: none; }
+        .prose-orgbrain .prose-footnote-details > summary::before {
           content: '▸';
           position: absolute;
           left: 0; top: 50%;
@@ -344,20 +344,20 @@ function _ProseImpl({
           transition: transform 120ms ease;
           font-size: 11px;
         }
-        .prose-bifrost .prose-footnote-details[open] > summary::before {
+        .prose-orgbrain .prose-footnote-details[open] > summary::before {
           transform: translateY(-50%) rotate(90deg);
         }
-        .prose-bifrost .prose-footnote-details > summary:hover { color: var(--fg-0); }
-        .prose-bifrost .footnotes ol {
+        .prose-orgbrain .prose-footnote-details > summary:hover { color: var(--fg-0); }
+        .prose-orgbrain .footnotes ol {
           margin: 0.875rem 0 0;
           padding-left: 1.75rem;
           font-size: 13.5px;
           line-height: 1.65;
           color: var(--fg-1);
         }
-        .prose-bifrost .footnotes li { margin: 0.5rem 0; }
-        .prose-bifrost .footnotes li p { margin: 0.25rem 0; }
-        .prose-bifrost .data-footnote-backref {
+        .prose-orgbrain .footnotes li { margin: 0.5rem 0; }
+        .prose-orgbrain .footnotes li p { margin: 0.25rem 0; }
+        .prose-orgbrain .data-footnote-backref {
           color: var(--fg-3);
           margin-left: 0.4rem;
           text-decoration: none;

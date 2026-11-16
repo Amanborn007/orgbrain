@@ -6,14 +6,14 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from bifrost.adapters.base import (
+from orgbrain.adapters.base import (
     AdapterScope,
     ScopeFilter,
     SourceAdapter,
     SourceObjectType,
     UserContext,
 )
-from bifrost.adapters.mock import MockAdapter
+from orgbrain.adapters.mock import MockAdapter
 
 SAMPLE_FILES = {
     "src/main.py": "def main(): pass",
@@ -82,10 +82,10 @@ class TestExtract:
         assert content.revision.revision_token.startswith("mock-rev-")
 
     async def test_extract_missing_file_raises(self, adapter: MockAdapter) -> None:
-        from bifrost.adapters.base import SourceObjectRef
+        from orgbrain.adapters.base import SourceObjectRef
 
         bad_ref = SourceObjectRef(
-            urn="bifrost:mock:test:file:nonexistent.py",
+            urn="orgbrain:mock:test:file:nonexistent.py",
             adapter_id="mock",
             source_instance="test",
             object_type=SourceObjectType.FILE,

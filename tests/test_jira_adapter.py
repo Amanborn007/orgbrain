@@ -8,14 +8,14 @@ from typing import Any
 import httpx
 import pytest
 
-from bifrost.adapters.base import (
+from orgbrain.adapters.base import (
     AdapterScope,
     ScopeFilter,
     SourceObjectRef,
     SourceObjectType,
     UserContext,
 )
-from bifrost.adapters.jira import (
+from orgbrain.adapters.jira import (
     JiraAdapter,
     JiraAuthenticationError,
     JiraNotFoundError,
@@ -257,7 +257,7 @@ async def test_extract_full_issue():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -313,7 +313,7 @@ async def test_track_revision():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -339,7 +339,7 @@ async def test_check_permission_allowed():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -361,7 +361,7 @@ async def test_check_permission_denied():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:SECRET-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:SECRET-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -415,7 +415,7 @@ async def test_401_raises_auth_error():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -433,7 +433,7 @@ async def test_404_raises_not_found():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,
@@ -460,7 +460,7 @@ async def test_429_retries_then_raises():
 
     adapter = _make_adapter(handler)
     ref = SourceObjectRef(
-        urn="bifrost:jira:acme.atlassian.net:issue:PROJ-1",
+        urn="orgbrain:jira:acme.atlassian.net:issue:PROJ-1",
         adapter_id="jira",
         source_instance="acme.atlassian.net",
         object_type=SourceObjectType.ISSUE,

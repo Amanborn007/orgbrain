@@ -4,9 +4,9 @@
 
 ## 1. Purpose and Scope
 
-This specification defines how Bifrost authenticates users and agents, authorizes access to knowledge and actions, passes through source-system permissions, handles sensitive data, and provides audit trails for all security-relevant events.
+This specification defines how OrgBrain authenticates users and agents, authorizes access to knowledge and actions, passes through source-system permissions, handles sensitive data, and provides audit trails for all security-relevant events.
 
-It covers identity management, role-based access control, source permission passthrough, agent authorization, execution governance, and audit logging. It applies to all Bifrost interfaces: the control plane UI, CLI, and API.
+It covers identity management, role-based access control, source permission passthrough, agent authorization, execution governance, and audit logging. It applies to all OrgBrain interfaces: the control plane UI, CLI, and API.
 
 This spec covers security requirements for both deployment tracks. Track A (V1): standard external API security (source code to Anthropic Messages API, same as any LLM integration). Track B (future): elevated requirements (source code in Anthropic containers, extracted knowledge in Memory Stores). Track B features require explicit organizational approval and Data Processing Agreement before enabling.
 
@@ -25,7 +25,7 @@ This spec covers security requirements for both deployment tracks. Track A (V1):
 | **Source permission** | The access control a user has in an upstream source system (e.g., GitHub repo visibility) |
 | **Credential vault** | Encrypted storage for adapter credentials, OAuth tokens, and API keys |
 | **Scope** | The boundary to which a permission applies: repo, domain, or org |
-| **AI consumer** | An external AI agent or model that accesses Bifrost through the API |
+| **AI consumer** | An external AI agent or model that accesses OrgBrain through the API |
 | **Service account** | A non-human identity used for system-to-system communication |
 
 ---
@@ -51,7 +51,7 @@ Track B (Future):
 
 ### Repository Classification
 
-All repos must be classified before Bifrost indexes them:
+All repos must be classified before OrgBrain indexes them:
 
 | Level | Description | Track A | Track B |
 |-------|-------------|---------|---------|
@@ -75,8 +75,8 @@ Track B (HARD REQUIREMENT): Before enabling Track B:
 1. Contact Anthropic to discuss enterprise Data Processing Agreement
 2. Confirm DPA covers: container processing of source code, memory store storage of extracted knowledge
 3. Get signed DPA and store it in your legal records system
-4. Admin must confirm DPA completion in Bifrost admin config (`dpa_confirmed: true`) before Track B features are enabled
-5. Bifrost will refuse to create Managed Agent sessions if `dpa_confirmed: false`
+4. Admin must confirm DPA completion in OrgBrain admin config (`dpa_confirmed: true`) before Track B features are enabled
+5. OrgBrain will refuse to create Managed Agent sessions if `dpa_confirmed: false`
 
 Track B cannot be enabled without:
 1. Admin sets config flag: `TRACK_B_DPA_CONFIRMED=true`
@@ -87,7 +87,7 @@ Code enforcement:
 ```python
 import os
 
-if os.environ.get("BIFROST_TRACK") == "B" and not os.environ.get("TRACK_B_DPA_CONFIRMED"):
+if os.environ.get("ORGBRAIN_TRACK") == "B" and not os.environ.get("TRACK_B_DPA_CONFIRMED"):
     raise RuntimeError(
         "Track B (Managed Agents) requires a signed DPA with Anthropic. "
         "Set TRACK_B_DPA_CONFIRMED=true after signing DPA at anthropic.com/legal/dpa"
@@ -96,7 +96,7 @@ if os.environ.get("BIFROST_TRACK") == "B" and not os.environ.get("TRACK_B_DPA_CO
 
 #### Track B Credential Isolation
 
-Each Track B managed agent session receives SCOPED credentials only — not the full Bifrost API key.
+Each Track B managed agent session receives SCOPED credentials only — not the full OrgBrain API key.
 
 **Credential scoping:** A RepoAgent for repo-123 receives a short-lived (1 hour) token scoped to READ on `/repo/123/**` Memory Store paths and the Git sidecar for that specific repo. No other paths or sidecars are accessible.
 
@@ -112,7 +112,7 @@ Each Track B managed agent session receives SCOPED credentials only — not the 
 
 Organizations with strict data residency requirements (all data must stay on-premises):
 - Deploy a self-hosted LLM (Ollama, vLLM, or compatible API endpoint)
-- Configure Bifrost to use the self-hosted LLM via `llm_base_url` config
+- Configure OrgBrain to use the self-hosted LLM via `llm_base_url` config
 - No source code leaves customer infrastructure
 - Track A works identically with self-hosted LLMs
 - Track B is not available with self-hosted LLMs (requires Anthropic Managed Agents)
@@ -140,8 +140,8 @@ Organizations with strict data residency requirements (all data must stay on-pre
 
 ### Goals
 
-- Federate authentication to existing corporate identity providers; Bifrost does not maintain its own user credential store.
-- Enforce that users never see source content through Bifrost that they cannot access in the source system directly.
+- Federate authentication to existing corporate identity providers; OrgBrain does not maintain its own user credential store.
+- Enforce that users never see source content through OrgBrain that they cannot access in the source system directly.
 - Provide a simple, auditable RBAC model in V1 that can evolve toward policy-as-code in V2.
 - Treat agent authorization as a first-class concern: agents always act with the permissions of the requesting user.
 - Log all security-relevant events with enough context for forensic review.
@@ -149,11 +149,11 @@ Organizations with strict data residency requirements (all data must stay on-pre
 
 ### Non-Goals
 
-- Bifrost does not replace source-system access controls. It layers on top of them.
-- Bifrost does not implement its own multi-factor authentication. MFA is delegated to the IdP.
-- Bifrost does not perform real-time intrusion detection or network-level security. Those are infrastructure concerns outside this specification.
+- OrgBrain does not replace source-system access controls. It layers on top of them.
+- OrgBrain does not implement its own multi-factor authentication. MFA is delegated to the IdP.
+- OrgBrain does not perform real-time intrusion detection or network-level security. Those are infrastructure concerns outside this specification.
 - V1 does not include fine-grained attribute-based policies or execution governance (approval gates, policy engine). These are V2 items.
-- Bifrost does not manage container security below the Managed Agent Environment abstraction (Track B). Container runtime security is Anthropic's responsibility.
+- OrgBrain does not manage container security below the Managed Agent Environment abstraction (Track B). Container runtime security is Anthropic's responsibility.
 
 ---
 
@@ -164,23 +164,23 @@ Organizations with strict data residency requirements (all data must stay on-pre
 | Type | Description | Example |
 |---|---|---|
 | **Human user** | An engineer, lead, or admin interacting through UI, CLI, or API | `jane@company.com` |
-| **AI consumer** | An external AI agent or model accessing Bifrost through the API | `coding-agent-prod` |
+| **AI consumer** | An external AI agent or model accessing OrgBrain through the API | `coding-agent-prod` |
 | **Service account** | A system identity for internal integrations and adapter communication | `github-adapter-svc` |
-| **System (Bifrost internal)** | Internal Bifrost processes: orchestrator, specialists, indexing pipelines | `bifrost-orchestrator` |
+| **System (OrgBrain internal)** | Internal OrgBrain processes: orchestrator, specialists, indexing pipelines | `orgbrain-orchestrator` |
 
 ### 6.2 Authentication Mechanisms
 
-**Human users** are identified by the deployment's identity provider (`identity.provider`): a loopback operator, trusted proxy headers, or an OIDC JWT verified against the IdP's JWKS. Bifrost has no login flow of its own and does not store passwords.
+**Human users** are identified by the deployment's identity provider (`identity.provider`): a loopback operator, trusted proxy headers, or an OIDC JWT verified against the IdP's JWKS. OrgBrain has no login flow of its own and does not store passwords.
 
 **AI consumers** and scripts authenticate with `bft_` API tokens. A token carries roles only; it has no per-repo or per-domain scope.
 
 **Service accounts** authenticate with `bft_` API tokens for system-to-system communication. Adapter service accounts use credentials stored in the encrypted credential vault.
 
-**System (Bifrost internal)** processes communicate within the Bifrost trust boundary using internal service tokens. These tokens are not exposed externally.
+**System (OrgBrain internal)** processes communicate within the OrgBrain trust boundary using internal service tokens. These tokens are not exposed externally.
 
 ### 6.3 Session Management
 
-- Bifrost issues no tokens. With `oidc_jwt`, the IdP issues the JWT and Bifrost only verifies it.
+- OrgBrain issues no tokens. With `oidc_jwt`, the IdP issues the JWT and OrgBrain only verifies it.
 - Token expiry is configurable per deployment (default: 1 hour access token, 24 hour refresh token).
 - `POST /api/v1/auth/refresh` only re-verifies the caller's current identity.
 - API keys for AI consumers do not expire automatically but can be rotated and revoked.
@@ -211,7 +211,7 @@ class SourcePermissionCache(BaseModel):
     cache_expiry: datetime        # When this cache entry expires
 
 
-class BifrostUser(BaseModel):
+class OrgBrainUser(BaseModel):
     id: str                       # Unique identifier (UUID)
     type: UserType
     name: str                     # Display name
@@ -229,7 +229,7 @@ The built authentication flow is described in section 6.6.
 
 ### 6.6 Authentication in the API
 
-Bifrost resolves a principal for every non-public route in `IdentityMiddleware` (`src/bifrost/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `bifrost token new`, which Bifrost matches by sha256 against `api_tokens` in `bifrost.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../../RUNNING.md#6-identity) and [handbook 02 §8.1](../../handbook/02-architecture.md#81-auth-at-the-api-boundary).
+OrgBrain resolves a principal for every non-public route in `IdentityMiddleware` (`src/orgbrain/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `orgbrain token new`, which OrgBrain matches by sha256 against `api_tokens` in `orgbrain.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../../RUNNING.md#6-identity) and [handbook 02 §8.1](../../handbook/02-architecture.md#81-auth-at-the-api-boundary).
 
 ---
 
@@ -237,7 +237,7 @@ Bifrost resolves a principal for every non-public route in `IdentityMiddleware` 
 
 ### 7.1 RBAC Base Layer
 
-Bifrost uses role-based access control as the primary authorization mechanism in V1.
+OrgBrain uses role-based access control as the primary authorization mechanism in V1.
 
 #### Roles
 
@@ -268,7 +268,7 @@ Bifrost uses role-based access control as the primary authorization mechanism in
 
 Every role assignment is bound to a scope:
 
-- **Org** — applies to the entire Bifrost deployment.
+- **Org** — applies to the entire OrgBrain deployment.
 - **Domain** — applies to a specific domain and all repos within it.
 - **Repo** — applies to a specific repo.
 
@@ -303,7 +303,7 @@ Scope column values indicate the broadest scope at which the role holds that per
 
 ### 8.1 Core Principle
 
-Bifrost must NOT expose source content that the requesting user cannot access in the source system. This is a hard security requirement, not a best-effort behavior.
+OrgBrain must NOT expose source content that the requesting user cannot access in the source system. This is a hard security requirement, not a best-effort behavior.
 
 ### 8.2 Implementation Strategy
 
@@ -317,7 +317,7 @@ Source permissions are checked at **query time**, not only at indexing time. The
 | System service account | Indexing, extraction, metadata discovery (broader access) | Encrypted credential vault, per-adapter |
 | API keys for source systems | Adapter configuration for sources without OAuth support | Encrypted credential vault, per-adapter |
 
-Source adapter credentials are stored in environment variables or a secrets manager — never in PostgreSQL plaintext. Track B: source API tokens are stored as environment variables in the Managed Agents Environment definition; Anthropic handles secret injection into containers. Secret rotation: adapter credentials can be rotated without redeploying Bifrost — they are stored in the secrets manager and fetched at session start.
+Source adapter credentials are stored in environment variables or a secrets manager — never in PostgreSQL plaintext. Track B: source API tokens are stored as environment variables in the Managed Agents Environment definition; Anthropic handles secret injection into containers. Secret rotation: adapter credentials can be rotated without redeploying OrgBrain — they are stored in the secrets manager and fetched at session start.
 
 ### 8.4 Permission Cache
 
@@ -326,7 +326,7 @@ Source permission checks are cached with a short TTL to avoid excessive round-tr
 - **Default TTL**: 5 minutes.
 - **Cache key**: `(user_id, adapter_id, resource_id)`.
 - **Invalidation**: cache entries are invalidated on user token refresh, explicit cache-clear request, or TTL expiry.
-- **Cache miss behavior**: on cache miss, Bifrost makes a live permission check against the source system. If the source system is unreachable, access is denied (fail-closed).
+- **Cache miss behavior**: on cache miss, OrgBrain makes a live permission check against the source system. If the source system is unreachable, access is denied (fail-closed).
 
 ### 8.5 Partial Access and Redaction
 
@@ -342,7 +342,7 @@ When a query spans multiple repos or sources, and the user has access to some bu
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant API as Bifrost API
+    participant API as OrgBrain API
     participant Auth as Auth Service
     participant KS as Knowledge Store
     participant PC as Permission Cache
@@ -379,7 +379,7 @@ sequenceDiagram
 
 ### 9.1 Classification
 
-Source content ingested by Bifrost may contain:
+Source content ingested by OrgBrain may contain:
 
 - **Secrets**: API keys, tokens, passwords, private keys, connection strings.
 - **PII**: Names, emails, identifiers in commit messages, tickets, or comments.
@@ -388,7 +388,7 @@ Source content ingested by Bifrost may contain:
 
 ### 9.2 Data Minimization
 
-Bifrost extracts metadata, structure, relationships, and flow information from sources. It minimizes the storage of raw source content:
+OrgBrain extracts metadata, structure, relationships, and flow information from sources. It minimizes the storage of raw source content:
 
 - Knowledge artifacts store entity references, relationship edges, and structural summaries rather than full source text.
 - When raw content is cached (e.g., for code snippets in flow segments), it is stored with the same access controls as the source.
@@ -511,7 +511,7 @@ Enforced before content is added to the messages array.
 
 **4. Canary tokens**
 
-System prompt includes: "BIFROST_INTEGRITY_TOKEN: {random-per-session-UUID}"
+System prompt includes: "ORGBRAIN_INTEGRITY_TOKEN: {random-per-session-UUID}"
 
 Post-response validation: if agent response contains the canary token, log a potential injection attempt and discard the response.
 
@@ -535,7 +535,7 @@ Source adapters accept user-provided `baseUrl` configuration. These MUST be vali
 import re
 from urllib.parse import urlparse
 
-from bifrost.config import settings
+from orgbrain.config import settings
 
 
 BLOCKED_HOSTS = frozenset({
@@ -564,7 +564,7 @@ def validate_adapter_url(url: str) -> None:
 
     # Block private network ranges
     if any(r.match(parsed.hostname or "") for r in PRIVATE_RANGES):
-        # Allow only if explicitly allowlisted in Bifrost admin config
+        # Allow only if explicitly allowlisted in OrgBrain admin config
         if parsed.hostname not in settings.allowed_private_hosts:
             raise ValueError("Private network addresses require explicit allowlisting")
 ```
@@ -596,7 +596,7 @@ This prevents any in-container requests to cloud metadata, internal services, or
 
 ## 12a. Supply Chain Threat Model
 
-Bifrost's supply chain risks and mitigations:
+OrgBrain's supply chain risks and mitigations:
 
 | Threat | Attack Surface | V1 Mitigation |
 |--------|---------------|---------------|
@@ -605,7 +605,7 @@ Bifrost's supply chain risks and mitigations:
 | Malicious content in analyzed repos | Source code → LLM context | Prompt injection defenses (§11), content sandboxing |
 | Compromised Docker base image | Server container | Use official node:alpine image, hash-pin in Dockerfile |
 | Adapter credential theft | Git tokens, Jira API keys | Stored in env vars / secrets manager, never in DB plaintext |
-| MCP server compromise (Track B) | bifrost-git-mcp, bifrost-jira-mcp sidecars | Run in isolated Docker network, no internet except target API |
+| MCP server compromise (Track B) | orgbrain-git-mcp, orgbrain-jira-mcp sidecars | Run in isolated Docker network, no internet except target API |
 
 **V2 additions:** SBOM generation, automated dependency scanning, Sigstore cosign signing for container images.
 
@@ -613,7 +613,7 @@ Bifrost's supply chain risks and mitigations:
 
 Anthropic Managed Agents infrastructure is an external dependency. Treat it as a critical third-party service: apply the same vendor risk assessment, availability SLA requirements, and contingency planning as any other production dependency.
 
-**Track A fallback requirement:** Any production Bifrost deployment must implement a Track A fallback path. Relying solely on Track B creates a single point of failure on Anthropic's Research Preview infrastructure, which does not carry production availability guarantees. Track A fallback must be exercised in runbooks and tested in staging.
+**Track A fallback requirement:** Any production OrgBrain deployment must implement a Track A fallback path. Relying solely on Track B creates a single point of failure on Anthropic's Research Preview infrastructure, which does not carry production availability guarantees. Track A fallback must be exercised in runbooks and tested in staging.
 
 **Data sent to Anthropic (Track B):** Agent system prompts and tool results (including Memory Store contents returned to the agent) are transmitted to Anthropic's infrastructure during session execution. These transmissions are subject to Anthropic's data processing agreement. Operators must ensure that the data classification of content processed by Track B agents is compatible with the DPA terms — RESTRICTED and CLASSIFIED content must not flow through Track B sessions.
 
@@ -659,7 +659,7 @@ Content validation:
 
 Jira and other non-Git sources use system-level API credentials in V1. A user querying
 Team A's domain could potentially access Team B's Jira data if both are indexed in the
-same Bifrost installation.
+same OrgBrain installation.
 
 ### V1 Mitigations
 
@@ -681,7 +681,7 @@ Jira returns only what that user can see. System-level access is eliminated.
 
 In Track B, memory stores use path namespaces. RepoAgents only have stores attached for their
 own repo scope. Cross-repo reads are not possible — an agent cannot attach another repo's store.
-Bifrost control plane enforces: only attach stores matching the agent's repo_id.
+OrgBrain control plane enforces: only attach stores matching the agent's repo_id.
 
 #### Track B Cross-Tenant Isolation
 
@@ -701,15 +701,15 @@ Audit event required for any Memory Store read that crosses domain boundaries. F
 
 ### 14.1 Agents Act on Behalf of Users
 
-When a Bifrost agent (specialist, orchestrator, task agent) performs work in response to a user request, the agent inherits the requesting user's permissions. The agent cannot access source content or knowledge artifacts that the user cannot access.
+When a OrgBrain agent (specialist, orchestrator, task agent) performs work in response to a user request, the agent inherits the requesting user's permissions. The agent cannot access source content or knowledge artifacts that the user cannot access.
 
 This is enforced by propagating the user's identity context through the agent execution chain. Every source access and knowledge query made by an agent carries the originating user's identity for permission checks.
 
 ### 14.2 Agent-to-Agent Communication
 
-Within the Bifrost trust boundary, agents communicate using internal service tokens. This communication is trusted because:
+Within the OrgBrain trust boundary, agents communicate using internal service tokens. This communication is trusted because:
 
-- All agents run within Bifrost-controlled infrastructure.
+- All agents run within OrgBrain-controlled infrastructure.
 - Internal tokens are not exposed outside the trust boundary.
 - The originating user context is preserved across agent-to-agent calls.
 
@@ -730,7 +730,7 @@ This section describes capabilities planned for V2. They are not implemented in 
 
 ### 15.1 Approval Gates
 
-Before any write or execution action (e.g., committing code, creating a PR, modifying infrastructure), Bifrost requires explicit human approval:
+Before any write or execution action (e.g., committing code, creating a PR, modifying infrastructure), OrgBrain requires explicit human approval:
 
 - The system presents the proposed action with full context: what will change, where, and why.
 - A designated approver (based on scope ownership) must approve or reject.
@@ -897,7 +897,7 @@ Query parameters for `/audit/events`: `event_type`, `actor_id`, `resource_type`,
 | 1 | Federate to existing IdP, no own user store | Reduces security surface; leverages existing MFA and credential management; aligns with enterprise SSO expectations |
 | 2 | RBAC with scope-based permissions in V1, ABAC/policy-engine in V2 | RBAC is simpler to implement, reason about, and audit; policy-as-code adds flexibility later without breaking the V1 model |
 | 3 | Per-user source permission passthrough, not just system-level | Required by 21.1 — users must not see content they cannot access in the source system; system-level-only would over-expose |
-| 4 | Agents inherit requester permissions | Prevents privilege escalation through agent indirection; maintains the principle that Bifrost never grants more access than the source system |
+| 4 | Agents inherit requester permissions | Prevents privilege escalation through agent indirection; maintains the principle that OrgBrain never grants more access than the source system |
 | 5 | Encrypted credential vault for adapter configs | Adapter credentials (OAuth tokens, API keys) are high-value targets; must be encrypted at rest with KMS-managed keys |
 | 6 | Fail-closed on source permission check failure | If the source system is unreachable for a permission check, deny access rather than guessing; security over availability |
 | 7 | Short TTL permission cache (5 min) | Balances performance (avoid per-request source API calls) against freshness (permission changes propagate within minutes) |
@@ -945,7 +945,7 @@ V1 (Track A) implements: secret scanning (blocking pre-call gate), prompt inject
 - Admin config `dpa_confirmed: true` gate before Managed Agent sessions can be created.
 - Container network restrictions (allowed_hostnames allowlist in Managed Agent Environment definition).
 - Pre-session full-repo secret scanning before cloning into Anthropic containers.
-- Memory Store path isolation enforcement by Bifrost control plane.
+- Memory Store path isolation enforcement by OrgBrain control plane.
 
 ---
 
@@ -964,10 +964,10 @@ V1 (Track A) implements: secret scanning (blocking pre-call gate), prompt inject
 
 | # | Question | Impact |
 |---|---|---|
-| 1 | Should Bifrost support multiple IdPs simultaneously (e.g., Google Workspace for one team, Azure AD for another) in V1, or is single-IdP sufficient? | Authentication architecture, user mapping complexity |
+| 1 | Should OrgBrain support multiple IdPs simultaneously (e.g., Google Workspace for one team, Azure AD for another) in V1, or is single-IdP sufficient? | Authentication architecture, user mapping complexity |
 | 2 | For AI consumer API keys, should keys be linked to a human owner (who bears accountability) or to an organizational entity? | Audit trail attribution, key lifecycle management |
 | 3 | What is the acceptable latency budget for source permission checks at query time? If a query touches 10 repos, 10 sequential permission checks may be too slow. | Permission cache TTL, batch permission check API design |
-| 4 | How should Bifrost handle source systems that do not support per-user permission queries via API (e.g., systems with only admin-level API access)? | Adapter design, V1 source support scope |
+| 4 | How should OrgBrain handle source systems that do not support per-user permission queries via API (e.g., systems with only admin-level API access)? | Adapter design, V1 source support scope |
 | 5 | Should the permission cache TTL be globally fixed or configurable per adapter/source? Some sources change permissions rarely; others change frequently. | Cache design, configuration surface |
-| 6 | For partial-access cross-repo flows, should Bifrost reveal the *existence* of redacted segments (e.g., "step 3 of 5 is in repo X [redacted]") or hide them entirely? | UX for flows, information leakage risk |
+| 6 | For partial-access cross-repo flows, should OrgBrain reveal the *existence* of redacted segments (e.g., "step 3 of 5 is in repo X [redacted]") or hide them entirely? | UX for flows, information leakage risk |
 | 7 | What is the V1 strategy for on-call/debugging scenarios where an engineer may need temporary broader access to trace a production issue? | Temporary access grants, incident response workflow |

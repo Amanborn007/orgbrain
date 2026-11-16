@@ -26,15 +26,15 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api._cookie_signing import mint_signed_cookie, parse_signed_cookie
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.storage.models import (
+from orgbrain.api._cookie_signing import mint_signed_cookie, parse_signed_cookie
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.storage.models import (
     CollaborationSession,
     HandoverBodyHistory,
     HandoverDoc,
 )
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 # ── Shared fixtures ─────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ async def client(app) -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
-        headers={"X-Requested-With": "bifrost-ui"},
+        headers={"X-Requested-With": "orgbrain-ui"},
     ) as ac:
         yield ac
 
@@ -110,7 +110,7 @@ class TestSectionFeedback:
         list (default) hides it → list (include_resolved=true) shows
         it as resolved."""
         cookie_value, session_id = signed_cookie
-        cookies = {"bifrost_session": cookie_value}
+        cookies = {"orgbrain_session": cookie_value}
 
         # 1. Submit.
         submit_resp = await client.post(
@@ -251,7 +251,7 @@ class TestRestoreVersion:
         of the prior body now exists, and (c) an audit row of type
         ``restored_version`` was emitted."""
         cookie_value, session_id = signed_cookie
-        cookies = {"bifrost_session": cookie_value}
+        cookies = {"orgbrain_session": cookie_value}
 
         # Seed a body-history snapshot directly via the ORM so we
         # don't depend on the regen path.
@@ -322,7 +322,7 @@ class TestInbox:
         per-row counters reflect the seeded fixtures (one open
         feedback, one referencing session)."""
         cookie_value, session_id = signed_cookie
-        cookies = {"bifrost_session": cookie_value}
+        cookies = {"orgbrain_session": cookie_value}
 
         # 1. Touch the doc by submitting feedback as our actor — that
         # also writes a feedback row, but feedback alone doesn't

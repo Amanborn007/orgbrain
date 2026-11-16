@@ -10,19 +10,19 @@ import sys
 
 import pytest
 
-from bifrost.api.schemas.chat_settings import (
+from orgbrain.api.schemas.chat_settings import (
     ChatSettings,
     PartialChatSettings,
 )
-from bifrost.cli.config import BifrostSettings
-from bifrost.research import confidence_policy
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.research import confidence_policy
 from tests import leak_terms
 
 
 def _loaded_modules(import_stmt: str) -> list[str]:
     code = (
         "import os, sys\n"
-        "os.environ['BIFROST_SKIP_DB_MIGRATIONS'] = '1'\n"
+        "os.environ['ORGBRAIN_SKIP_DB_MIGRATIONS'] = '1'\n"
         f"{import_stmt}\n"
         "print('\\n'.join(sorted(sys.modules)))\n"
     )
@@ -34,7 +34,7 @@ def _loaded_modules(import_stmt: str) -> list[str]:
 
 @pytest.mark.parametrize(
     "import_stmt",
-    ["import bifrost.research", "import bifrost.research.coordinator"],
+    ["import orgbrain.research", "import orgbrain.research.coordinator"],
 )
 def test_importing_research_loads_no_banned_module(import_stmt: str) -> None:
     leak_terms.patterns()
@@ -47,13 +47,13 @@ def test_chat_settings_have_no_banned_fields(model: type) -> None:
 
 
 def test_ownership_router_has_no_banned_path() -> None:
-    from bifrost.api.routes.ownership import router
+    from orgbrain.api.routes.ownership import router
 
     assert [r.path for r in router.routes if leak_terms.matches(r.path)] == []
 
 
-def test_bifrost_settings_have_no_banned_attributes() -> None:
-    assert [f for f in BifrostSettings.model_fields if leak_terms.matches(f)] == []
+def test_orgbrain_settings_have_no_banned_attributes() -> None:
+    assert [f for f in OrgBrainSettings.model_fields if leak_terms.matches(f)] == []
 
 
 def test_confidence_policy_knows_manifest_and_no_banned_name() -> None:

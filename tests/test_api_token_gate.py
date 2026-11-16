@@ -13,7 +13,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from bifrost.cli.config import reset_settings
+from orgbrain.cli.config import reset_settings
 
 TOKEN = "bft_" + "a" * 43
 DIGEST = hashlib.sha256(TOKEN.encode()).hexdigest()
@@ -23,8 +23,8 @@ DIGEST = hashlib.sha256(TOKEN.encode()).hexdigest()
 def _reset_settings_each_test(monkeypatch: pytest.MonkeyPatch) -> None:
     """The settings singleton caches env at construction; reset around
     each test so monkeypatch'd env vars actually take effect."""
-    monkeypatch.delenv("BIFROST_API_TOKENS", raising=False)
-    monkeypatch.setenv("BIFROST_DEMO_MODE", "false")
+    monkeypatch.delenv("ORGBRAIN_API_TOKENS", raising=False)
+    monkeypatch.setenv("ORGBRAIN_DEMO_MODE", "false")
     reset_settings()
     yield
     reset_settings()
@@ -32,18 +32,18 @@ def _reset_settings_each_test(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestApiRouterWiring:
     def test_api_router_has_no_router_level_gate(self) -> None:
-        from bifrost.api.routes import api_router
+        from orgbrain.api.routes import api_router
 
         assert api_router.dependencies == []
 
     def test_public_router_has_no_gate(self) -> None:
         """Health stays open."""
-        from bifrost.api.routes import public_router
+        from orgbrain.api.routes import public_router
 
         assert public_router.dependencies == []
 
     def test_legacy_gate_is_gone(self) -> None:
-        from bifrost.api import deps
+        from orgbrain.api import deps
 
         assert not hasattr(deps, "require_api_token")
 
@@ -52,12 +52,12 @@ class TestEndToEndBehavior:
     """Black-box checks via TestClient (loopback peer, none provider)."""
 
     def _build_client(self, monkeypatch: pytest.MonkeyPatch, *, tokens: bool) -> TestClient:
-        from bifrost.api.app import create_app
+        from orgbrain.api.app import create_app
 
         if tokens:
             entry = [{"name": "smoke", "sha256": DIGEST, "roles": ["member"]}]
-            monkeypatch.setenv("BIFROST_API_TOKENS", json.dumps(entry))
-        monkeypatch.setenv("BIFROST_OPERATOR_EMAIL", "op@example.com")
+            monkeypatch.setenv("ORGBRAIN_API_TOKENS", json.dumps(entry))
+        monkeypatch.setenv("ORGBRAIN_OPERATOR_EMAIL", "op@example.com")
         reset_settings()
         app = create_app()
         app.router.lifespan_context = None  # type: ignore[assignment]

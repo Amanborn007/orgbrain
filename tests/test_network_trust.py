@@ -6,9 +6,9 @@ from __future__ import annotations
 import pytest
 from starlette.requests import Request
 
-from bifrost.api.auth.providers import IdentityConfigError
-from bifrost.cli.config import reset_settings
-from bifrost.errors import ConfigError
+from orgbrain.api.auth.providers import IdentityConfigError
+from orgbrain.cli.config import reset_settings
+from orgbrain.errors import ConfigError
 from tests.auth_helpers import boot, client, header_identity
 
 ROLES = {"admin": ["eng-admins"]}

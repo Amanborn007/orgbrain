@@ -1,1 +1,1 @@
-"""End-to-end integration tests for Bifrost."""
+"""End-to-end integration tests for OrgBrain."""

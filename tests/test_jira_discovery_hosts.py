@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.cli.config_sections import JiraSourceConfig
-from bifrost.research.jira_discovery import discover_jira_project_key
+from orgbrain.cli.config_sections import JiraSourceConfig
+from orgbrain.research.jira_discovery import discover_jira_project_key
 
 CLOUD = JiraSourceConfig()
 SELF_HOSTED = JiraSourceConfig(base_url="https://jira.acme.com")
@@ -107,12 +107,12 @@ def test_two_configs_back_to_back_do_not_share_a_compiled_pattern(tmp_path: Path
 def test_unset_jira_argument_reads_the_settings_singleton(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from bifrost.cli.config import reset_settings
+    from orgbrain.cli.config import reset_settings
 
     clone = _readme(tmp_path, _refs("https://jira.acme.com"))
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__BASE_URL", "https://jira.acme.com")
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", "https://jira.acme.com")
     reset_settings()
     try:
         assert discover_jira_project_key(clone)[0] == "ABC"
@@ -151,29 +151,29 @@ def _hosted_url(key: str = "AB1-12", base: str = "https://jira.acme.com") -> str
 
 class TestIntentRouter:
     def test_cloud_url_by_default(self) -> None:
-        from bifrost.actions.intent_router import _extract_jira_key
+        from orgbrain.actions.intent_router import _extract_jira_key
 
         assert _extract_jira_key("see https://acme.atlassian.net/browse/AB1-12") == "AB1-12"
 
     def test_self_hosted_ignored_by_default(self) -> None:
-        from bifrost.actions.intent_router import _extract_jira_key
+        from orgbrain.actions.intent_router import _extract_jira_key
 
         assert _extract_jira_key(_hosted_url()) is None
 
     def test_self_hosted_matched_with_base_url(self) -> None:
-        from bifrost.actions.intent_router import _extract_jira_key
+        from orgbrain.actions.intent_router import _extract_jira_key
 
         assert _extract_jira_key(_hosted_url(), jira=SELF_HOSTED) == "AB1-12"
 
     def test_context_path_base(self) -> None:
-        from bifrost.actions.intent_router import _extract_jira_key
+        from orgbrain.actions.intent_router import _extract_jira_key
 
         text = _hosted_url(base="https://acme.com/jira")
         assert _extract_jira_key(text, jira=CONTEXT_PATH) == "AB1-12"
         assert _extract_jira_key(text) is None
 
     def test_configs_do_not_leak_between_calls(self) -> None:
-        from bifrost.actions.intent_router import _extract_jira_key
+        from orgbrain.actions.intent_router import _extract_jira_key
 
         assert _extract_jira_key(_hosted_url(), jira=SELF_HOSTED) == "AB1-12"
         assert _extract_jira_key(_hosted_url(), jira=CLOUD) is None
@@ -181,28 +181,28 @@ class TestIntentRouter:
 
 class TestJiraEnrich:
     def test_cloud_url_by_default(self) -> None:
-        from bifrost.actions.jira_enrich import extract_related_jira_keys
+        from orgbrain.actions.jira_enrich import extract_related_jira_keys
 
         got = extract_related_jira_keys("dup of https://sub.domain.atlassian.net/browse/AB1-12")
         assert got == ["AB1-12"]
 
     def test_self_hosted_ignored_by_default(self) -> None:
-        from bifrost.actions.jira_enrich import extract_related_jira_keys
+        from orgbrain.actions.jira_enrich import extract_related_jira_keys
 
         assert extract_related_jira_keys(_hosted_url()) == []
 
     def test_self_hosted_matched_with_base_url(self) -> None:
-        from bifrost.actions.jira_enrich import extract_related_jira_keys
+        from orgbrain.actions.jira_enrich import extract_related_jira_keys
 
         assert extract_related_jira_keys(_hosted_url(), jira=SELF_HOSTED) == ["AB1-12"]
 
     def test_skip_still_applies(self) -> None:
-        from bifrost.actions.jira_enrich import extract_related_jira_keys
+        from orgbrain.actions.jira_enrich import extract_related_jira_keys
 
         assert extract_related_jira_keys(_hosted_url(), skip="AB1-12", jira=SELF_HOSTED) == []
 
     def test_context_path_base(self) -> None:
-        from bifrost.actions.jira_enrich import extract_related_jira_keys
+        from orgbrain.actions.jira_enrich import extract_related_jira_keys
 
         text = _hosted_url(base="https://acme.com/jira")
         assert extract_related_jira_keys(text, jira=CONTEXT_PATH) == ["AB1-12"]
@@ -211,28 +211,28 @@ class TestJiraEnrich:
 
 class TestCoordinator:
     def test_cloud_url_by_default(self) -> None:
-        from bifrost.research.coordinator import _extract_jira_keys
+        from orgbrain.research.coordinator import _extract_jira_keys
 
         assert _extract_jira_keys("look at https://acme.atlassian.net/browse/ab1-12") == {"AB1-12"}
 
     def test_bare_keys_still_found(self) -> None:
-        from bifrost.research.coordinator import _extract_jira_keys
+        from orgbrain.research.coordinator import _extract_jira_keys
 
         assert _extract_jira_keys("what about ABC-123?") == {"ABC-123"}
 
     def test_self_hosted_ignored_by_default(self) -> None:
-        from bifrost.research.coordinator import _extract_jira_keys
+        from orgbrain.research.coordinator import _extract_jira_keys
 
         assert _extract_jira_keys("look at https://jira.acme.com/browse/AB1-12") == set()
 
     def test_self_hosted_matched_with_base_url(self) -> None:
-        from bifrost.research.coordinator import _extract_jira_keys
+        from orgbrain.research.coordinator import _extract_jira_keys
 
         got = _extract_jira_keys("look at https://jira.acme.com/browse/AB1-12", jira=SELF_HOSTED)
         assert got == {"AB1-12"}
 
     def test_context_path_base(self) -> None:
-        from bifrost.research.coordinator import _extract_jira_keys
+        from orgbrain.research.coordinator import _extract_jira_keys
 
         text = "look at https://acme.com/jira/browse/AB1-12"
         assert _extract_jira_keys(text, jira=CONTEXT_PATH) == {"AB1-12"}

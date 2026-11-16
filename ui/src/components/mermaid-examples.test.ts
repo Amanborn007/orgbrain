@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 // The examples live in the Python prompt source; a regex over the file is simpler
 // than generating a fixture and cannot go stale.
-const SOURCE = resolve(__dirname, "../../../src/bifrost/research/diagram_standards.py");
+const SOURCE = resolve(__dirname, "../../../src/orgbrain/research/diagram_standards.py");
 const FENCE = /```mermaid\n([\s\S]*?)```/g;
 
 const blocks = Array.from(readFileSync(SOURCE, "utf8").matchAll(FENCE), (m) => m[1]);

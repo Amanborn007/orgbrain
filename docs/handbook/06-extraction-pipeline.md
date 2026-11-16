@@ -2,7 +2,7 @@
 
 > The 7 phases that turn a `git clone` into structured knowledge. Where the IP is. The phase that took 30 minutes before parallelization. Why the letters skip B and C.
 
-> **TL;DR.** Bifrost extracts a repo through seven sequential LLM phases (A, D, E, F, G, H, I — letters skipped intentionally). Phase A is a cheap Haiku triage; D-I run on Sonnet. Phase D (component extraction) eats 80% of the bill on a typical repo. Every phase persists incrementally so the UI sees results land live, every batch checkpoints so a crashed worker resumes without redoing work, and every prompt embeds a canary so injection attempts are detectable.
+> **TL;DR.** OrgBrain extracts a repo through seven sequential LLM phases (A, D, E, F, G, H, I — letters skipped intentionally). Phase A is a cheap Haiku triage; D-I run on Sonnet. Phase D (component extraction) eats 80% of the bill on a typical repo. Every phase persists incrementally so the UI sees results land live, every batch checkpoints so a crashed worker resumes without redoing work, and every prompt embeds a canary so injection attempts are detectable.
 
 > **Read this when** you're investigating why an extraction is slow or expensive, debugging a phase that hangs, tuning concurrency for a new repo shape, or onboarding to the extraction codebase.
 > **Skip if** you only consume extracted knowledge through chat / handovers and never trigger extractions yourself.
@@ -11,16 +11,16 @@
 
 ## 0. Why this matters
 
-Extraction is the front door. Without it, every other Bifrost capability — chat, handovers, action layer — has nothing to reason over. It is also the most expensive operation in the whole system (a single 200-file repo is estimated at **$15-50** in Sonnet calls), so the pipeline is engineered for resumability, observability, and partial-output liveness.
+Extraction is the front door. Without it, every other OrgBrain capability — chat, handovers, action layer — has nothing to reason over. It is also the most expensive operation in the whole system (a single 200-file repo is estimated at **$15-50** in Sonnet calls), so the pipeline is engineered for resumability, observability, and partial-output liveness.
 
 **Source-of-truth files:**
-- `src/bifrost/extraction/pipeline.py` — `ExtractionPipeline` orchestrator
-- `src/bifrost/extraction/worker.py` — lifecycle (start/pause/resume/cancel)
-- `src/bifrost/extraction/prompts.py` — every system prompt + JSON schema
-- `src/bifrost/extraction/triage.py` — Phase A (Haiku)
-- `src/bifrost/extraction/checkpoint.py` — resume substrate
-- `src/bifrost/extraction/cost.py` — cost-tracker writeback to `llm_cost_log`
-- `src/bifrost/extraction/cli_client.py` — `claude -p` subprocess wrapper
+- `src/orgbrain/extraction/pipeline.py` — `ExtractionPipeline` orchestrator
+- `src/orgbrain/extraction/worker.py` — lifecycle (start/pause/resume/cancel)
+- `src/orgbrain/extraction/prompts.py` — every system prompt + JSON schema
+- `src/orgbrain/extraction/triage.py` — Phase A (Haiku)
+- `src/orgbrain/extraction/checkpoint.py` — resume substrate
+- `src/orgbrain/extraction/cost.py` — cost-tracker writeback to `llm_cost_log`
+- `src/orgbrain/extraction/cli_client.py` — `claude -p` subprocess wrapper
 
 ---
 
@@ -44,7 +44,7 @@ flowchart LR
   I --> Persist[("entities + relationships<br/>knowledge_index<br/>repo_freshness")]
 ```
 
-The phase letters skip **B** and **C**: those were originally assigned to clone/fetch and file inventory, both of which happen *before* the pipeline class (`ExtractionPipeline.run()`) is invoked. The caller (`ExtractionWorker._run_pipeline()`) does the clone via the GitAdapter abstraction and hands the pipeline a list of file paths (`src/bifrost/extraction/pipeline.py:1-15`, `:425-445`).
+The phase letters skip **B** and **C**: those were originally assigned to clone/fetch and file inventory, both of which happen *before* the pipeline class (`ExtractionPipeline.run()`) is invoked. The caller (`ExtractionWorker._run_pipeline()`) does the clone via the GitAdapter abstraction and hands the pipeline a list of file paths (`src/orgbrain/extraction/pipeline.py:1-15`, `:425-445`).
 
 ### `extraction_tasks.status` lifecycle
 
@@ -75,11 +75,11 @@ stateDiagram-v2
 **Job.** Classify every tracked file into one of seven categories so subsequent phases only run against signal-bearing files.
 
 **LLM call shape.**
-- Model: `BIFROST_TRIAGE_MODEL` (default `claude-haiku-4-5-20251001`)
-- System prompt: `TRIAGE_SYSTEM_PROMPT` in `src/bifrost/extraction/prompts.py` — the most-tuned prompt in the codebase
+- Model: `ORGBRAIN_TRIAGE_MODEL` (default `claude-haiku-4-5-20251001`)
+- System prompt: `TRIAGE_SYSTEM_PROMPT` in `src/orgbrain/extraction/prompts.py` — the most-tuned prompt in the codebase
 - JSON schema returns `{ files: [{ path, category, likely_key_component }] }`
 
-**Categories** (`src/bifrost/extraction/prompts.py`):
+**Categories** (`src/orgbrain/extraction/prompts.py`):
 
 | Category | Examples | Downstream consumer |
 |---|---|---|
@@ -147,7 +147,7 @@ stateDiagram-v2
 **Input artefact.** Triage output filtered to `component_definition` + `entry_point`. The pipeline reads each file's content via the caller-supplied `read_file(path)` callback.
 
 **LLM call shape.**
-- Model: `BIFROST_EXTRACTION_MODEL` (default `claude-sonnet-4-6`)
+- Model: `ORGBRAIN_EXTRACTION_MODEL` (default `claude-sonnet-4-6`)
 - System prompt: `COMPONENT_SYSTEM_PROMPT` (`prompts.py`)
 - JSON schema: `ExtractedComponent` (see below)
 - Subprocess: `claude -p` via `cli_client.py`, neutral cwd, MCP stripped
@@ -193,7 +193,7 @@ ExtractedComponent {
 **Failure modes.**
 1. **`ContentTooLargeError`.** A single file exceeds `MAX_CHARS_PER_CALL`. Logged in `output.errors`; the phase continues.
 2. **JSON parse failure.** The LLM returned malformed JSON. The retry loop catches this; after 3 retries the batch is skipped with an error record.
-3. **Subprocess hang.** The `claude -p` invocation never returns. Bounded by `BIFROST_CLAUDE_CLI_TIMEOUT_SECONDS` (default 600).
+3. **Subprocess hang.** The `claude -p` invocation never returns. Bounded by `ORGBRAIN_CLAUDE_CLI_TIMEOUT_SECONDS` (default 600).
 4. **Auth lapsed mid-run.** First failure surfaces as a CLI auth error; subsequent retries fail immediately. Operator must `claude auth login` and resume.
 
 **Cost.** Approximately $0.05-0.20 per file. A 200-file repo runs **$10-30** just for Phase D.
@@ -218,7 +218,7 @@ ExtractedComponent {
 These were hanging the LLM before — the prompt demands a flow but there is nothing flow-like to find, so the model thinks in circles for 90 seconds. The heuristic looks for "behavior markers" (`if`, `for`, `while`, `try`, `await`, `return`, `throw`, `.then(`, `.catch(`) and short-circuits when none are found.
 
 **LLM call shape.**
-- Model: `BIFROST_EXTRACTION_MODEL`
+- Model: `ORGBRAIN_EXTRACTION_MODEL`
 - System prompt: `FLOW_SYSTEM_PROMPT` (`prompts.py`)
 - Hard cap baked into prompt: "≤3 flows, ≤6 segments per flow"
 - Per-call timeout: `PHASE_E_TIMEOUT_SECONDS = 90`
@@ -283,7 +283,7 @@ ExtractedFlow {
 **Input artefact.** Files Phase A flagged as `dependency_manifest`: `package.json`, `pom.xml`, `build.gradle`, `requirements.txt`, `Cargo.toml`, `go.mod`, `*.csproj`, etc.
 
 **LLM call shape.**
-- Model: `BIFROST_EXTRACTION_MODEL`
+- Model: `ORGBRAIN_EXTRACTION_MODEL`
 - System prompt: `DEPENDENCY_SYSTEM_PROMPT`
 - Output schema: `ExtractedDependency` per row
 
@@ -343,8 +343,8 @@ ExtractedDependency {
 **Output schema** (`pipeline.py:271-281`):
 ```python
 ExtractedRelationship {
-  source_urn: str            # urn:bifrost:repo/<name>/component/<X>
-  target_urn: str            # urn:bifrost:repo/<name>/component/<Y>
+  source_urn: str            # urn:orgbrain:repo/<name>/component/<X>
+  target_urn: str            # urn:orgbrain:repo/<name>/component/<Y>
   relationship_type: str     # uses | calls | extends | implements | depends_on | ...
   description: str
   evidence: str              # 1-2 sentences citing why
@@ -354,8 +354,8 @@ ExtractedRelationship {
 **Sample output snippet:**
 ```json
 {
-  "source_urn": "urn:bifrost:repo/orders-service/component/CancelController",
-  "target_urn": "urn:bifrost:repo/orders-service/component/CancelService",
+  "source_urn": "urn:orgbrain:repo/orders-service/component/CancelController",
+  "target_urn": "urn:orgbrain:repo/orders-service/component/CancelService",
   "relationship_type": "calls",
   "description": "CancelController delegates request validation to CancelService.requestCancel.",
   "evidence": "CancelController.cancel() injects CancelService and invokes requestCancel(req) within the post handler."
@@ -397,7 +397,7 @@ KnowledgeIndexEntry {
 **Sample output snippet:**
 ```json
 {
-  "entity_urn": "urn:bifrost:repo/orders-service/component/CancelService",
+  "entity_urn": "urn:orgbrain:repo/orders-service/component/CancelService",
   "summary": "CancelService orchestrates customer-initiated order cancellations. It validates eligibility against the inventory ledger, releases the reserved stock, and emits an order.cancelled event. Wraps two external dependencies (InventoryClient over HTTP, EventPublisher over SNS) with Resilience4j retry decorators. Owned by the orders-platform team. Tier-1 service per its catalog-info.yaml.",
   "key_facts": [
     "Synchronous HTTP release call to the inventory service",
@@ -426,7 +426,7 @@ These rows are later embedded (locally via MiniLM-384 — see admin `/embed/enti
 
 **Job.** Assign a `ConfidenceLevel` to every extracted entity — `low` / `medium` / `high` plus a numeric score and reason.
 
-**Why this exists.** Per spec S3, every answer Bifrost returns must surface confidence. Without this phase, the chat synthesizer would have to guess at each entity's reliability inline. Phase I makes confidence a first-class column.
+**Why this exists.** Per spec S3, every answer OrgBrain returns must surface confidence. Without this phase, the chat synthesizer would have to guess at each entity's reliability inline. Phase I makes confidence a first-class column.
 
 **Input artefact.** All persisted entities from D-H, plus their `known_gaps` arrays (which the model uses to lower confidence).
 
@@ -445,10 +445,10 @@ ConfidenceScore {
 **Sample output snippet:**
 ```json
 [
-  { "entity_urn": "urn:bifrost:.../CancelService",
+  { "entity_urn": "urn:orgbrain:.../CancelService",
     "confidence_level": "high", "confidence_score": 0.92,
     "reason": "Single-file class with explicit method signatures, no known_gaps from Phase D, two corroborating Phase E flows reference it." },
-  { "entity_urn": "urn:bifrost:.../LegacyRetryShim",
+  { "entity_urn": "urn:orgbrain:.../LegacyRetryShim",
     "confidence_level": "low", "confidence_score": 0.31,
     "reason": "Phase D recorded 3 known_gaps about runtime behaviour; no Phase E flow corroboration." }
 ]
@@ -474,7 +474,7 @@ The pipeline is built to resume mid-stream. Every phase has unit-level checkpoin
 - Phase E: per-entry-point file
 - Phases A, F, G, H, I: phase-level (binary done/not-done)
 
-The checkpoint is persisted to `BIFROST_CHECKPOINT_DIR` (default `/tmp/bifrost-checkpoints`) as a JSON file keyed by `repo_id` and `task_id`. On worker restart, `ExtractionPipeline.run()` reads `resume_checkpoint.get_completed_phases()` and skips them.
+The checkpoint is persisted to `ORGBRAIN_CHECKPOINT_DIR` (default `/tmp/orgbrain-checkpoints`) as a JSON file keyed by `repo_id` and `task_id`. On worker restart, `ExtractionPipeline.run()` reads `resume_checkpoint.get_completed_phases()` and skips them.
 
 **Crash mid-batch ≠ skip.** Batches are marked `mark_unit_done("D", batch_key)` *after* successful extraction, not before. So a crash mid-batch re-runs that batch on resume rather than silently skipping it.
 
@@ -524,7 +524,7 @@ The Costs page (`/costs/summary`) groups by phase and shows where the bill goes.
 
 ## 12. Prompt safety — canary tokens
 
-Every phase prompt embeds a random canary: `BIFROST-CANARY-<32 hex chars>` (`prompts.py:14-23`). After parsing, `validate_canary()` checks the **serialized JSON output** (not the assistant text — that gave 95% false positives) for echo:
+Every phase prompt embeds a random canary: `ORGBRAIN-CANARY-<32 hex chars>` (`prompts.py:14-23`). After parsing, `validate_canary()` checks the **serialized JSON output** (not the assistant text — that gave 95% false positives) for echo:
 
 ```python
 parsed_text = json.dumps(completion.parsed)
@@ -544,7 +544,7 @@ A canary echo means user-supplied content (e.g., a malicious string in a code co
 
 ## 13. Mock pipeline (dry-run)
 
-When `BIFROST_EXTRACTION_DRY_RUN=true`, `worker.py::_mock_extraction()` runs in place of the real pipeline. It produces synthetic entities (5 components, 1 flow, 3 dependencies) with `asyncio.sleep()` delays simulating real call latency. Used in:
+When `ORGBRAIN_EXTRACTION_DRY_RUN=true`, `worker.py::_mock_extraction()` runs in place of the real pipeline. It produces synthetic entities (5 components, 1 flow, 3 dependencies) with `asyncio.sleep()` delays simulating real call latency. Used in:
 
 - CI / smoke tests
 - The Phase 0 extraction probe
@@ -552,7 +552,7 @@ When `BIFROST_EXTRACTION_DRY_RUN=true`, `worker.py::_mock_extraction()` runs in 
 
 The fixture is bare-minimum but exercises the same SSE channels and persistence paths, so the UI flow is still validatable.
 
-The restart script (`scripts/restart.sh`) unsets `BIFROST_EXTRACTION_DRY_RUN` on every start so a stale env var does not silently turn real extractions into fixtures.
+The restart script (`scripts/restart.sh`) unsets `ORGBRAIN_EXTRACTION_DRY_RUN` on every start so a stale env var does not silently turn real extractions into fixtures.
 
 ---
 
@@ -652,4 +652,4 @@ The most common failure modes, the symptoms in the log / UI, and how to diagnose
 - **Resume is per-batch, not per-file.** If a batch packing 5 small files crashes after extracting 3 of them, resume re-runs all 5. This is intentional (avoids partial-batch ambiguity) but means batch granularity bounds resume waste.
 - **The triage prompt is the most-tuned prompt in the codebase.** Edit `TRIAGE_SYSTEM_PROMPT` only with a strong before/after on a fixture repo — small wording changes produce wildly different category distributions.
 - **Phase letters in cost charts can confuse new readers.** B and C are missing on purpose; the "phase" column in `llm_cost_log` reflects pipeline phases, not GitAdapter steps. The Spend page already maps these via `_phase_label()` (`A`→Triage, `D`→Components, ...) so the user never sees the raw letter.
-- **Dry-run mode is real and useful.** `BIFROST_EXTRACTION_DRY_RUN=true` lets you smoke-test the entire SSE + persistence path without a single real LLM call. The restart script unsets this on every restart so you do not accidentally ship a no-op.
+- **Dry-run mode is real and useful.** `ORGBRAIN_EXTRACTION_DRY_RUN=true` lets you smoke-test the entire SSE + persistence path without a single real LLM call. The restart script unsets this on every restart so you do not accidentally ship a no-op.

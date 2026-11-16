@@ -17,14 +17,14 @@ tested in test_subgraph_hydrate.py.
 
 from __future__ import annotations
 
-from bifrost.research.bundle_cache import BundleSource, ResearchBundle
-from bifrost.research.coordinator import (
+from orgbrain.research.bundle_cache import BundleSource, ResearchBundle
+from orgbrain.research.coordinator import (
     _build_synthesis_user_message,
     _render_prior_evidence_block,
     _render_prior_research_block,
 )
-from bifrost.research.repo_agent import EntitySnippet, GraphEdge
-from bifrost.research.subgraph_hydrate import (
+from orgbrain.research.repo_agent import EntitySnippet, GraphEdge
+from orgbrain.research.subgraph_hydrate import (
     HydratedRepoSubgraph,
     HydratedSubgraph,
 )
@@ -50,7 +50,7 @@ def _make_bundle(
         repos_used_names=repos_used_names or ["orders"],
         scope_rationale="x",
         subgraph_entity_urns=(
-            ["bifrost://repo/orders/component/RetryQueue"] if urns is _SENTINEL else list(urns)  # type: ignore[arg-type]
+            ["orgbrain://repo/orders/component/RetryQueue"] if urns is _SENTINEL else list(urns)  # type: ignore[arg-type]
         ),
         sources=(
             [BundleSource(kind="jira", ref="SHIP-1", title="retry bug")]
@@ -62,7 +62,7 @@ def _make_bundle(
 
 def test_render_block_includes_question_repos_urns_sources_answer() -> None:
     bundle = _make_bundle(
-        urns=["bifrost://repo/orders/component/Retry"],
+        urns=["orgbrain://repo/orders/component/Retry"],
         sources=[
             BundleSource(kind="jira", ref="SHIP-1", title="retry"),
             BundleSource(kind="confluence", ref="page-9", title="RFC"),
@@ -73,7 +73,7 @@ def test_render_block_includes_question_repos_urns_sources_answer() -> None:
     assert "</prior_research>" in block
     assert "Prior question: how does orders retry?" in block
     assert "Prior repos walked: orders" in block
-    assert "bifrost://repo/orders/component/Retry" in block
+    assert "orgbrain://repo/orders/component/Retry" in block
     assert "SHIP-1" in block
     assert "page-9" in block
     assert "exponential-backoff" in block
@@ -81,13 +81,13 @@ def test_render_block_includes_question_repos_urns_sources_answer() -> None:
 
 def test_render_block_caps_long_urn_list() -> None:
     bundle = _make_bundle(
-        urns=[f"bifrost://urn/{i}" for i in range(60)],
+        urns=[f"orgbrain://urn/{i}" for i in range(60)],
     )
     block = _render_prior_research_block(bundle)
     # Helper trims ResearchBundle on save, so 60 → 60 (the cap is
     # applied here too, at the rendering layer).
     assert "(+ " in block and "more)" in block
-    assert block.count("bifrost://urn/") <= 31
+    assert block.count("orgbrain://urn/") <= 31
 
 
 def test_render_block_caps_long_sources_list() -> None:

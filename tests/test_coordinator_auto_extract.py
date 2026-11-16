@@ -111,7 +111,7 @@ class _FakeResult:
 
 @pytest.mark.asyncio
 async def test_all_succeed_with_entities_are_promoted() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [
         ("t-1", _R_ORDERS, _FakeRepo(id=_R_ORDERS, name="orders")),
@@ -144,7 +144,7 @@ async def test_all_succeed_with_entities_are_promoted() -> None:
 
 @pytest.mark.asyncio
 async def test_success_but_zero_entities_emits_no_entities_event() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [("t-1", _R_EMPTY, _FakeRepo(id=_R_EMPTY, name="empty-repo"))]
     worker = _FakeWorker({"t-1": ("success", 0.01)})
@@ -170,7 +170,7 @@ async def test_success_but_zero_entities_emits_no_entities_event() -> None:
 
 @pytest.mark.asyncio
 async def test_failed_extraction_emits_failed_event() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [("t-1", _R_FAIL, _FakeRepo(id=_R_FAIL, name="fail-repo"))]
     worker = _FakeWorker({"t-1": ("failed", 0.01)})
@@ -195,7 +195,7 @@ async def test_failed_extraction_emits_failed_event() -> None:
 
 @pytest.mark.asyncio
 async def test_timeout_emits_extraction_timeout_event() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [("t-slow", _R_SLOW, _FakeRepo(id=_R_SLOW, name="slow"))]
     # Worker reports completion AFTER 5s, but our budget is 0.1s.
@@ -220,7 +220,7 @@ async def test_timeout_emits_extraction_timeout_event() -> None:
 
 @pytest.mark.asyncio
 async def test_mixed_outcomes_partial_promotion() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [
         ("t-fast", _R_FAST, _FakeRepo(id=_R_FAST, name="fast")),
@@ -257,7 +257,7 @@ async def test_mixed_outcomes_partial_promotion() -> None:
 @pytest.mark.asyncio
 async def test_unknown_state_emits_failed_with_unknown() -> None:
     """Worker returns None (race / not tracked) — treated as unknown."""
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     repos = [("t-?", _R_WEIRD, _FakeRepo(id=_R_WEIRD, name="weird"))]
     worker = _FakeWorker({"t-?": (None, 0.01)})
@@ -280,7 +280,7 @@ async def test_unknown_state_emits_failed_with_unknown() -> None:
 
 @pytest.mark.asyncio
 async def test_empty_queue_yields_nothing() -> None:
-    from bifrost.research.coordinator import _wait_and_integrate_extractions
+    from orgbrain.research.coordinator import _wait_and_integrate_extractions
 
     events = []
     async for evt in _wait_and_integrate_extractions(

@@ -65,7 +65,7 @@ describe("toSlackMrkdwn", () => {
     expect(out).not.toMatch(/\[\^1\]:/);
   });
 
-  it("handles a realistic mixed Bifrost answer end-to-end", () => {
+  it("handles a realistic mixed OrgBrain answer end-to-end", () => {
     const md = [
       "### Findings",
       "",

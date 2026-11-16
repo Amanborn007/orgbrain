@@ -7,8 +7,8 @@ import os
 import pytest
 from cryptography.fernet import Fernet
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.core.crypto import (
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.core.crypto import (
     CIPHERTEXT_PREFIX,
     RESERVED_PREFIX,
     CredentialKeyError,
@@ -78,7 +78,7 @@ def test_legacy_plaintext_reads_back_and_is_encrypted_on_next_write() -> None:
 
 def test_missing_key_refuses_reserved_value_at_bind() -> None:
     for keys in (None, ""):
-        with pytest.raises(CredentialKeyError, match="BIFROST_CREDENTIAL_KEY"):
+        with pytest.raises(CredentialKeyError, match="ORGBRAIN_CREDENTIAL_KEY"):
             _col(keys).process_bind_param({SECRET_KEY: "hunter2"}, None)
 
 
@@ -88,7 +88,7 @@ def test_missing_key_is_fine_without_reserved_values() -> None:
 
 def test_missing_key_cannot_read_ciphertext() -> None:
     stored = _col(KEY_A).process_bind_param({SECRET_KEY: "hunter2"}, None)
-    with pytest.raises(CredentialKeyError, match="BIFROST_CREDENTIAL_KEY"):
+    with pytest.raises(CredentialKeyError, match="ORGBRAIN_CREDENTIAL_KEY"):
         _col(None).process_result_value(stored, None)
 
 
@@ -98,9 +98,9 @@ def test_non_string_reserved_value_is_rejected() -> None:
 
 
 def test_default_key_comes_from_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    from bifrost.cli.config import reset_settings
+    from orgbrain.cli.config import reset_settings
 
-    monkeypatch.setenv("BIFROST_CREDENTIAL_KEY", KEY_A)
+    monkeypatch.setenv("ORGBRAIN_CREDENTIAL_KEY", KEY_A)
     reset_settings()
     try:
         col = SecretJSON()
@@ -114,19 +114,19 @@ def test_default_key_comes_from_settings(monkeypatch: pytest.MonkeyPatch) -> Non
 class TestProductionCredentialKey:
     @pytest.fixture(autouse=True)
     def _isolate_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        for key in [k for k in os.environ if k.startswith("BIFROST_")]:
+        for key in [k for k in os.environ if k.startswith("ORGBRAIN_")]:
             monkeypatch.delenv(key, raising=False)
 
     def _errors(self, **overrides: object) -> list[str]:
-        settings = BifrostSettings(_env_file=None, production_mode=True, **overrides)  # type: ignore[call-arg]
+        settings = OrgBrainSettings(_env_file=None, production_mode=True, **overrides)  # type: ignore[call-arg]
         return settings.validate_production_secrets()
 
     def test_empty_credential_key_fails_in_production(self) -> None:
-        assert any("BIFROST_CREDENTIAL_KEY" in e for e in self._errors())
+        assert any("ORGBRAIN_CREDENTIAL_KEY" in e for e in self._errors())
 
     def test_set_credential_key_passes_that_check(self) -> None:
-        assert not any("BIFROST_CREDENTIAL_KEY" in e for e in self._errors(credential_key=KEY_A))
+        assert not any("ORGBRAIN_CREDENTIAL_KEY" in e for e in self._errors(credential_key=KEY_A))
 
     def test_not_required_outside_production(self) -> None:
-        settings = BifrostSettings(_env_file=None, production_mode=False)  # type: ignore[call-arg]
+        settings = OrgBrainSettings(_env_file=None, production_mode=False)  # type: ignore[call-arg]
         assert settings.validate_production_secrets() == []

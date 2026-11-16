@@ -10,18 +10,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.cli.config import reset_settings
-from bifrost.core.crypto import CIPHERTEXT_PREFIX, RESERVED_PREFIX
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.cli.config import reset_settings
+from orgbrain.core.crypto import CIPHERTEXT_PREFIX, RESERVED_PREFIX
+from orgbrain.storage.repository import EntityRepository
 
 SECRET = "ghp_plaintext_must_never_hit_disk"
 
 
 @pytest.fixture(autouse=True)
 def _credential_key(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
-    monkeypatch.setenv("BIFROST_CREDENTIAL_KEY", Fernet.generate_key().decode())
+    monkeypatch.setenv("ORGBRAIN_CREDENTIAL_KEY", Fernet.generate_key().decode())
     reset_settings()
     yield
     monkeypatch.undo()
@@ -32,7 +32,7 @@ def _credential_key(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
 def _stub_worker():
     from unittest.mock import MagicMock
 
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -114,6 +114,6 @@ async def test_orm_read_decrypts(client: AsyncClient, db_session: AsyncSession) 
     await client.post(
         "/api/v1/repos", json=_payload("orm-read", {f"{RESERVED_PREFIX}token": SECRET})
     )
-    repo = await EntityRepository(db_session).get_repo_by_urn("urn:bifrost:repo:orm-read")
+    repo = await EntityRepository(db_session).get_repo_by_urn("urn:orgbrain:repo:orm-read")
     assert repo is not None
     assert repo.adapter_config[f"{RESERVED_PREFIX}token"] == SECRET

@@ -1,4 +1,4 @@
-# Bifrost dev thin wrappers. All real logic lives in scripts/dev.sh.
+# OrgBrain dev thin wrappers. All real logic lives in scripts/dev.sh.
 # Run `make help` to see everything.
 
 SHELL := /bin/bash

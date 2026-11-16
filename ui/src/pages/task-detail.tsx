@@ -769,7 +769,7 @@ export function TaskDetailPage() {
         />
       )}
 
-      {/* Jira audit trail — every Jira write Bifrost has performed
+      {/* Jira audit trail — every Jira write OrgBrain has performed
           for this task, with per-row retract. Hidden when no audit
           rows exist (read-only or never-Jira-linked tasks). */}
       <JiraAuditPanel taskId={b.id} />

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.cli.config_sections import ConventionsConfig
-from bifrost.manifest.conventions import apply_conventions, is_placeholder_team
-from bifrost.manifest.model import ServiceManifest
+from orgbrain.cli.config_sections import ConventionsConfig
+from orgbrain.manifest.conventions import apply_conventions, is_placeholder_team
+from orgbrain.manifest.model import ServiceManifest
 
 
 @pytest.mark.parametrize(

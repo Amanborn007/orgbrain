@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from bifrost.research.bundle_cache import (
+from orgbrain.research.bundle_cache import (
     BundleCache,
     BundleSource,
     ResearchBundle,
@@ -29,7 +29,7 @@ def _make_bundle(cid: str = "conv-1", **overrides) -> ResearchBundle:
         repos_used=["00000000-0000-0000-0000-000000000001"],
         repos_used_names=["orders"],
         scope_rationale="single repo deep-indexed",
-        subgraph_entity_urns=["bifrost://repo/orders/component/RetryQueue"],
+        subgraph_entity_urns=["orgbrain://repo/orders/component/RetryQueue"],
         sources=[BundleSource(kind="jira", ref="SHIP-123", title="retry bug")],
         last_question_embedding=None,
     )

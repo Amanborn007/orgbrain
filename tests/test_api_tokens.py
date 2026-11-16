@@ -13,10 +13,10 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from typer.testing import CliRunner
 
-import bifrost.api.audit as audit_mod
-from bifrost.api.deps import get_repository
-from bifrost.cli.config import reset_settings
-from bifrost.errors import ConfigError
+import orgbrain.api.audit as audit_mod
+from orgbrain.api.deps import get_repository
+from orgbrain.cli.config import reset_settings
+from orgbrain.errors import ConfigError
 from tests.auth_helpers import (
     AUDIENCE,
     ISSUER,
@@ -98,7 +98,7 @@ async def test_token_compares_against_every_digest(monkeypatch) -> None:
         monkeypatch,
         tokens=[token_entry("a", first), token_entry("b", second), token_entry("c", third)],
     )
-    from bifrost.api.auth import tokens as tokens_mod
+    from orgbrain.api.auth import tokens as tokens_mod
 
     calls: list[tuple[str, str]] = []
     real = tokens_mod.hmac.compare_digest
@@ -245,8 +245,8 @@ def test_duplicate_token_names_fail_startup(monkeypatch) -> None:
 
 
 def test_router_level_api_token_gate_is_gone() -> None:
-    from bifrost.api import deps
-    from bifrost.api.routes import api_router
+    from orgbrain.api import deps
+    from orgbrain.api.routes import api_router
 
     assert not hasattr(deps, "require_api_token")
     assert not hasattr(deps, "require_admin_token")
@@ -257,7 +257,7 @@ def test_router_level_api_token_gate_is_gone() -> None:
 
 
 def test_token_new_prints_token_once_with_its_sha256() -> None:
-    from bifrost.cli.app import app as cli_app
+    from orgbrain.cli.app import app as cli_app
 
     runner = CliRunner()
     first = runner.invoke(cli_app, ["token", "new"])
@@ -271,7 +271,7 @@ def test_token_new_prints_token_once_with_its_sha256() -> None:
 
 
 def test_token_new_prints_a_config_snippet() -> None:
-    from bifrost.cli.app import app as cli_app
+    from orgbrain.cli.app import app as cli_app
 
     out = CliRunner().invoke(cli_app, ["token", "new", "--name", "ci", "--role", "admin"]).output
     token = next(w for w in out.split() if w.startswith("bft_"))
@@ -279,19 +279,19 @@ def test_token_new_prints_a_config_snippet() -> None:
     assert "name: ci" in out and f"sha256: {digest}" in out and "admin" in out
 
 
-def test_cli_client_sends_bifrost_token_when_set(monkeypatch) -> None:
-    from bifrost.cli.commands._http import get_client
+def test_cli_client_sends_orgbrain_token_when_set(monkeypatch) -> None:
+    from orgbrain.cli.commands._http import get_client
 
-    monkeypatch.setenv("BIFROST_TOKEN", "bft_abc")
+    monkeypatch.setenv("ORGBRAIN_TOKEN", "bft_abc")
     reset_settings()
     with get_client() as c:
         assert c.headers["Authorization"] == "Bearer bft_abc"
 
 
 def test_cli_client_sends_no_authorization_without_token(monkeypatch) -> None:
-    from bifrost.cli.commands._http import get_client
+    from orgbrain.cli.commands._http import get_client
 
-    monkeypatch.delenv("BIFROST_TOKEN", raising=False)
+    monkeypatch.delenv("ORGBRAIN_TOKEN", raising=False)
     reset_settings()
     with get_client() as c:
         assert "Authorization" not in c.headers

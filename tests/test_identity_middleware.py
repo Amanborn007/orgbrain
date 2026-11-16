@@ -15,15 +15,15 @@ def reset_identity_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Strip every env var the providers read + reset cached settings.
     Keeps each test isolated."""
     for k in (
-        "BIFROST_OPERATOR_EMAIL",
-        "BIFROST_OPERATOR_GROUPS",
-        "BIFROST_DEMO_MODE",
-        "BIFROST_IDENTITY__PROVIDER",
-        "BIFROST_IDENTITY__TRUSTED_PROXY",
-        "BIFROST_IDENTITY__ROLES",
+        "ORGBRAIN_OPERATOR_EMAIL",
+        "ORGBRAIN_OPERATOR_GROUPS",
+        "ORGBRAIN_DEMO_MODE",
+        "ORGBRAIN_IDENTITY__PROVIDER",
+        "ORGBRAIN_IDENTITY__TRUSTED_PROXY",
+        "ORGBRAIN_IDENTITY__ROLES",
     ):
         monkeypatch.delenv(k, raising=False)
-    from bifrost.cli.config import reset_settings
+    from orgbrain.cli.config import reset_settings
 
     reset_settings()
     yield
@@ -31,7 +31,7 @@ def reset_identity_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 def _build_app() -> object:
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     return create_app()
 
@@ -78,8 +78,8 @@ async def test_env_override_resolves_principal(
     reset_identity_env: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_OPERATOR_EMAIL", "tester@example.com")
-    monkeypatch.setenv("BIFROST_OPERATOR_GROUPS", "bifrost-engineer")
+    monkeypatch.setenv("ORGBRAIN_OPERATOR_EMAIL", "tester@example.com")
+    monkeypatch.setenv("ORGBRAIN_OPERATOR_GROUPS", "orgbrain-engineer")
     app = _build_app()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
         r = await ac.get("/api/v1/auth/me")
@@ -87,7 +87,7 @@ async def test_env_override_resolves_principal(
         body = r.json()
         assert body["email"] == "tester@example.com"
         assert body["source"] == "env_override"
-        assert "bifrost-engineer" in body["groups"]
+        assert "orgbrain-engineer" in body["groups"]
 
 
 @pytest.mark.asyncio
@@ -111,9 +111,9 @@ async def test_trusted_sso_header_accepted_when_trust_on(
     reset_identity_env: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_IDENTITY__PROVIDER", "header")
-    monkeypatch.setenv("BIFROST_IDENTITY__TRUSTED_PROXY", "true")
-    monkeypatch.setenv("BIFROST_IDENTITY__ROLES", '{"admin": []}')
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__PROVIDER", "header")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__TRUSTED_PROXY", "true")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__ROLES", '{"admin": []}')
     app = _build_app()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
         r = await ac.get(
@@ -134,7 +134,7 @@ async def test_demo_mode_resolves_demo_principal(
     reset_identity_env: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_DEMO_MODE", "true")
+    monkeypatch.setenv("ORGBRAIN_DEMO_MODE", "true")
     app = _build_app()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
         # Demo mode → /me returns demo_fallback principal (FE gate
@@ -154,7 +154,7 @@ async def test_logout_clears_principal_and_returns_post_state(
     reset_identity_env: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("BIFROST_DEMO_MODE", "true")
+    monkeypatch.setenv("ORGBRAIN_DEMO_MODE", "true")
     app = _build_app()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
         r = await ac.post("/api/v1/auth/logout")

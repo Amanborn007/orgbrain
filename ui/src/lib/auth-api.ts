@@ -2,7 +2,7 @@
  * Auth client for /auth/me, /auth/refresh and /auth/logout.
  *
  * These endpoints return raw Principal JSON (NOT wrapped in
- * BifrostEnvelope<T>) so they're isolated from the main api.ts request()
+ * OrgBrainEnvelope<T>) so they're isolated from the main api.ts request()
  * helper which assumes envelope unwrapping.
  */
 
@@ -52,7 +52,7 @@ async function fetchJson<T>(
 ): Promise<{ status: number; body: T | null; raw: unknown }> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: init?.method ?? "GET",
-    credentials: "include",                                     // keep bifrost_session cookie
+    credentials: "include",                                     // keep orgbrain_session cookie
     ...init,
     headers: { "Content-Type": "application/json", ...csrfHeaders(), ...init?.headers },
   });

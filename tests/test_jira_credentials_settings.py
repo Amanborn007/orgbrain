@@ -12,25 +12,25 @@ import httpx
 import pytest
 from pydantic import SecretStr
 
-from bifrost.actions import jira_enrich
-from bifrost.cli.config import BifrostSettings, reset_settings, validate_startup
-from bifrost.cli.config_sections import JiraSourceConfig
-from bifrost.errors import ConfigError
+from orgbrain.actions import jira_enrich
+from orgbrain.cli.config import OrgBrainSettings, reset_settings, validate_startup
+from orgbrain.cli.config_sections import JiraSourceConfig
+from orgbrain.errors import ConfigError
 
 TOKEN = "s3cr3t-token-value"
 EMAIL = "bot@acme.test"
 BASE = "https://jira.acme.test"
 LEGACY = [
-    ("JIRA_BASE_URL", "BIFROST_SOURCES__JIRA__BASE_URL"),
-    ("JIRA_EMAIL", "BIFROST_SOURCES__JIRA__EMAIL"),
-    ("JIRA_API_TOKEN", "BIFROST_SOURCES__JIRA__API_TOKEN"),
+    ("JIRA_BASE_URL", "ORGBRAIN_SOURCES__JIRA__BASE_URL"),
+    ("JIRA_EMAIL", "ORGBRAIN_SOURCES__JIRA__EMAIL"),
+    ("JIRA_API_TOKEN", "ORGBRAIN_SOURCES__JIRA__API_TOKEN"),
 ]
 
 
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.setitem(BifrostSettings.model_config, "env_file", None)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
+    monkeypatch.setitem(OrgBrainSettings.model_config, "env_file", None)
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
     for legacy, _ in LEGACY:
         monkeypatch.delenv(legacy, raising=False)
     reset_settings()
@@ -38,11 +38,11 @@ def _isolated(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     reset_settings()
 
 
-def _settings(**jira: Any) -> BifrostSettings:
-    return BifrostSettings(sources={"jira": jira})
+def _settings(**jira: Any) -> OrgBrainSettings:
+    return OrgBrainSettings(sources={"jira": jira})
 
 
-def _configured() -> BifrostSettings:
+def _configured() -> OrgBrainSettings:
     return _settings(base_url=BASE, email=EMAIL, api_token=TOKEN)
 
 
@@ -52,7 +52,7 @@ def _mock_jira(monkeypatch: pytest.MonkeyPatch, handler: Any) -> None:
     def factory(*args: Any, **kwargs: Any) -> httpx.AsyncClient:
         return real(*args, transport=httpx.MockTransport(handler), **kwargs)
 
-    monkeypatch.setattr("bifrost.adapters.jira.httpx.AsyncClient", factory)
+    monkeypatch.setattr("orgbrain.adapters.jira.httpx.AsyncClient", factory)
 
 
 ISSUE = {
@@ -85,9 +85,9 @@ def test_api_token_is_secret() -> None:
 
 
 def test_nested_env_names_are_known_and_read(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__BASE_URL", BASE)
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__EMAIL", EMAIL)
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__API_TOKEN", TOKEN)
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", BASE)
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__EMAIL", EMAIL)
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__API_TOKEN", TOKEN)
     jira = validate_startup().sources.jira
     assert (jira.base_url, jira.email) == (BASE, EMAIL)
     assert jira.api_token is not None
@@ -170,8 +170,8 @@ async def test_live_fetch_credentials_without_base_url_is_an_error(
 
 def test_no_credentials_note_names_the_settings() -> None:
     src = Path(jira_enrich.__file__).read_text(encoding="utf-8")
-    assert "JIRA_BASE_URL" not in src.replace("BIFROST_SOURCES__JIRA__BASE_URL", "")
-    assert "JIRA_API_TOKEN" not in src.replace("BIFROST_SOURCES__JIRA__API_TOKEN", "")
+    assert "JIRA_BASE_URL" not in src.replace("ORGBRAIN_SOURCES__JIRA__BASE_URL", "")
+    assert "JIRA_API_TOKEN" not in src.replace("ORGBRAIN_SOURCES__JIRA__API_TOKEN", "")
 
 
 # ── startup rejects the old names ───────────────────────────────────────
@@ -194,8 +194,8 @@ def test_dotenv_line_fails_startup_naming_the_replacement(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, legacy: str, replacement: str
 ) -> None:
     path = tmp_path / ".env"
-    path.write_text(f"BIFROST_DEMO_MODE=false\n{legacy}=x\n", encoding="utf-8")
-    monkeypatch.setitem(BifrostSettings.model_config, "env_file", str(path))
+    path.write_text(f"ORGBRAIN_DEMO_MODE=false\n{legacy}=x\n", encoding="utf-8")
+    monkeypatch.setitem(OrgBrainSettings.model_config, "env_file", str(path))
     with pytest.raises(ConfigError) as exc:
         validate_startup()
     assert legacy in str(exc.value)
@@ -211,10 +211,10 @@ def test_error_never_contains_the_value(monkeypatch: pytest.MonkeyPatch) -> None
     assert TOKEN not in repr(exc.value.details)
 
 
-def test_unrelated_non_bifrost_dotenv_lines_still_boot(
+def test_unrelated_non_orgbrain_dotenv_lines_still_boot(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     path = tmp_path / ".env"
-    path.write_text("SOMETHING_ELSE=abc\nBIFROST_DEMO_MODE=false\n", encoding="utf-8")
-    monkeypatch.setitem(BifrostSettings.model_config, "env_file", str(path))
+    path.write_text("SOMETHING_ELSE=abc\nORGBRAIN_DEMO_MODE=false\n", encoding="utf-8")
+    monkeypatch.setitem(OrgBrainSettings.model_config, "env_file", str(path))
     validate_startup()

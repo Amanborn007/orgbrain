@@ -1,7 +1,7 @@
 """Shared test fixtures — real PostgreSQL, no mocks.
 
 Requires a running PostgreSQL with pgvector. Set TEST_DATABASE_URL or
-defaults to postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test.
+defaults to postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test.
 """
 
 from __future__ import annotations
@@ -85,7 +85,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test",
+    "postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test",
 )
 
 
@@ -97,7 +97,7 @@ def require_test_database_name(url: str) -> str:
         raise RuntimeError(
             f"refusing to drop the public schema of database {name!r} from {str(parsed)!r}: "
             "the test database name must contain 'test'. Set TEST_DATABASE_URL to a "
-            "throwaway database such as bifrost_test."
+            "throwaway database such as orgbrain_test."
         )
     return name
 
@@ -139,21 +139,21 @@ class _DotenvUnlessRepoRoot:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _bifrost_test_env() -> Generator[None, None, None]:
+def _orgbrain_test_env() -> Generator[None, None, None]:
     """Pin env + run alembic migrations for the whole test session.
 
     Three reasons this exists:
 
-      1. ``BIFROST_DEMO_MODE=true`` so IdentityMiddleware
+      1. ``ORGBRAIN_DEMO_MODE=true`` so IdentityMiddleware
          resolves to the demo principal — otherwise every
          non-public route test would 401. Mocking the resolver in
          50+ tests is the wrong fight.
 
-      2. ``BIFROST_DATABASE_URL`` mirrors TEST_DATABASE_URL so any
+      2. ``ORGBRAIN_DATABASE_URL`` mirrors TEST_DATABASE_URL so any
          test that builds its session factory via
          ``get_session_factory(get_settings())`` lands on the same
          database as the conftest ``engine`` fixture (CI's Postgres
-         service URL — not ``BifrostSettings``'s localhost default).
+         service URL — not ``OrgBrainSettings``'s localhost default).
 
       3. Schema is built by ``alembic upgrade head`` rather than
          ``Base.metadata.create_all`` alone. Migration-only tables
@@ -168,37 +168,37 @@ def _bifrost_test_env() -> Generator[None, None, None]:
     tests that don't request the ``engine`` fixture directly (e.g.
     tests using ``get_session_factory(get_settings())``).
     """
-    os.environ["BIFROST_DEMO_MODE"] = "true"
-    # Keep a stray ./bifrost.yaml from leaking into the suite.
-    os.environ["BIFROST_CONFIG"] = ""
+    os.environ["ORGBRAIN_DEMO_MODE"] = "true"
+    # Keep a stray ./orgbrain.yaml from leaking into the suite.
+    os.environ["ORGBRAIN_CONFIG"] = ""
     # Ignore a developer's repo-root .env, even for create_app calls made at import/collection time.
-    from bifrost.cli.config import BifrostSettings as _Settings
+    from orgbrain.cli.config import OrgBrainSettings as _Settings
 
     _saved_env_file = _Settings.model_config.get("env_file")
     _Settings.model_config["env_file"] = _DotenvUnlessRepoRoot()
-    # create_app rejects BIFROST_* names nothing reads; a developer shell may export some.
-    from bifrost.cli.unknown_settings import find_unknown_env_names
+    # create_app rejects ORGBRAIN_* names nothing reads; a developer shell may export some.
+    from orgbrain.cli.unknown_settings import find_unknown_env_names
 
     stray = sorted(find_unknown_env_names(os.environ))
     if stray:
         warnings.warn(
-            f"removed unread BIFROST_* variables from the test env: {stray}", stacklevel=1
+            f"removed unread ORGBRAIN_* variables from the test env: {stray}", stacklevel=1
         )
         for name in stray:
             os.environ.pop(name)
     # Renamed names make create_app fail; a developer shell may still export them.
-    from bifrost.cli.unknown_settings import RENAMED_ENV
+    from orgbrain.cli.unknown_settings import RENAMED_ENV
 
     renamed = sorted(n for n in RENAMED_ENV if n in os.environ)
     if renamed:
         warnings.warn(f"removed renamed variables from the test env: {renamed}", stacklevel=1)
         for name in renamed:
             os.environ.pop(name)
-    os.environ["BIFROST_DATABASE_URL"] = TEST_DATABASE_URL
-    # Alembic's env.py reads ``DATABASE_URL`` (not BIFROST_*).
+    os.environ["ORGBRAIN_DATABASE_URL"] = TEST_DATABASE_URL
+    # Alembic's env.py reads ``DATABASE_URL`` (not ORGBRAIN_*).
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
-    from bifrost.cli.config import reset_settings
+    from orgbrain.cli.config import reset_settings
 
     reset_settings()
 
@@ -208,11 +208,11 @@ def _bifrost_test_env() -> Generator[None, None, None]:
     # ``env.py`` uses ``asyncio.run`` internally, which is fine
     # because this fixture is sync.
     #
-    # Set BIFROST_SKIP_DB_MIGRATIONS=1 to skip migrations for
+    # Set ORGBRAIN_SKIP_DB_MIGRATIONS=1 to skip migrations for
     # pure-unit test runs that don't need a real Postgres (e.g.
     # test_fast_path.py). All tests that touch DB fixtures still
     # need the migrations and should NOT set this flag.
-    if not os.environ.get("BIFROST_SKIP_DB_MIGRATIONS"):
+    if not os.environ.get("ORGBRAIN_SKIP_DB_MIGRATIONS"):
         # Clean slate, then build the FULL schema via migrations. We DROP here
         # (in this sync fixture, via asyncio.run) rather than in the async
         # ``engine`` fixture, because ``engine`` used to rebuild with
@@ -247,7 +247,7 @@ def _bifrost_test_env() -> Generator[None, None, None]:
         # alembic/env.py calls ``logging.config.fileConfig(...)`` which
         # defaults to ``disable_existing_loggers=True`` — this flips
         # ``.disabled = True`` on EVERY logger imported before the migration
-        # ran (e.g. ``bifrost.storage.repository``, created at import time
+        # ran (e.g. ``orgbrain.storage.repository``, created at import time
         # during collection). A disabled logger short-circuits
         # ``isEnabledFor`` to False, so ``logger.info(...)`` inside production
         # code is silently dropped and ``caplog`` captures nothing — which
@@ -264,8 +264,8 @@ def _bifrost_test_env() -> Generator[None, None, None]:
     yield
 
     _Settings.model_config["env_file"] = _saved_env_file
-    os.environ.pop("BIFROST_DEMO_MODE", None)
-    os.environ.pop("BIFROST_DATABASE_URL", None)
+    os.environ.pop("ORGBRAIN_DEMO_MODE", None)
+    os.environ.pop("ORGBRAIN_DATABASE_URL", None)
     os.environ.pop("DATABASE_URL", None)
     reset_settings()
 
@@ -274,7 +274,7 @@ def _bifrost_test_env() -> Generator[None, None, None]:
 async def engine():
     """Create async engine for the test session.
 
-    The schema is built ONCE by the ``_bifrost_test_env`` autouse fixture via
+    The schema is built ONCE by the ``_orgbrain_test_env`` autouse fixture via
     ``alembic upgrade head`` (full schema incl. the 17 migration-only tables).
     This fixture must NOT rebuild it with ``Base.metadata.create_all`` — that
     only knows ORM-mapped tables and would silently DROP migration-only tables

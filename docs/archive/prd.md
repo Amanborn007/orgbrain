@@ -1,10 +1,10 @@
-# Bifrost — End-to-End Requirements
+# OrgBrain — End-to-End Requirements
 
 **Status:** A requirements document written before the build. The built system is described in docs/handbook/.
 
 ## 1. Product intent
 
-Bifrost must be a system that helps humans and AI agents understand, plan, validate, document, and eventually execute engineering work across repos, domains, and organization-wide flows.
+OrgBrain must be a system that helps humans and AI agents understand, plan, validate, document, and eventually execute engineering work across repos, domains, and organization-wide flows.
 
 It must solve the problem that engineering understanding is fragmented across many sources and many people, and that the right context is rarely assembled at the moment work is being done.
 
@@ -24,7 +24,7 @@ It must support both:
 
 ## 2. Core problem requirements
 
-Bifrost must be designed around these realities:
+OrgBrain must be designed around these realities:
 
 ### 2.1 Knowledge is distributed
 
@@ -91,7 +91,7 @@ The system must support tasks that span:
 
 ## 3. Product outcome requirements
 
-Bifrost must enable users and agents to do all of the following.
+OrgBrain must enable users and agents to do all of the following.
 
 ### 3.1 Understand
 - understand a repo
@@ -227,7 +227,7 @@ Those AI users must be able to:
 
 ### 5.1 Repo-level requirements
 
-For each repo, Bifrost must be able to represent and answer:
+For each repo, OrgBrain must be able to represent and answer:
 - what the repo is for
 - what major modules/components it contains
 - what interfaces it exposes
@@ -243,7 +243,7 @@ For each repo, Bifrost must be able to represent and answer:
 
 ### 5.2 Domain-level requirements
 
-For each domain, Bifrost must be able to represent and answer:
+For each domain, OrgBrain must be able to represent and answer:
 - which repos belong to the domain
 - how those repos work together
 - what end-to-end flows exist inside the domain
@@ -255,7 +255,7 @@ For each domain, Bifrost must be able to represent and answer:
 
 ### 5.3 Org-level requirements
 
-At organization level, Bifrost must be able to represent and answer:
+At organization level, OrgBrain must be able to represent and answer:
 - how domains connect
 - what platform/shared-service dependencies exist
 - what end-to-end paths exist across domains
@@ -595,7 +595,7 @@ If local workspace or local branch state is included, the system must:
 
 ### 13.1 The system must not require full central duplication
 
-Bifrost must support broad knowledge coverage without requiring all raw source content to be copied centrally.
+OrgBrain must support broad knowledge coverage without requiring all raw source content to be copied centrally.
 
 ### 13.2 The system must support multiple storage classes
 
@@ -1011,7 +1011,7 @@ The system should be judged successful if it materially improves:
 
 ## 25. Final requirement summary
 
-Bifrost must be a centralized control plane for a workforce of source-aware engineering specialists that:
+OrgBrain must be a centralized control plane for a workforce of source-aware engineering specialists that:
 - supports plug-and-play sources
 - maintains broad mappings and lightweight knowledge across all relevant surfaces
 - generates and refreshes important human docs

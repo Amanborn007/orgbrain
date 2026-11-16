@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.manifest.files import (
+from orgbrain.manifest.files import (
     GhError,
     GitHubRepoFiles,
     InMemoryRepoFiles,

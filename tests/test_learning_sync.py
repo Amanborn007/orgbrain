@@ -1,7 +1,7 @@
 """Tests for cross-instance learning-weights export/import.
 
 These tests run against a THROWAWAY database (default
-``bifrost_test_sync``) so they never touch the shared test DB. They
+``orgbrain_test_sync``) so they never touch the shared test DB. They
 build only the tables the sync path needs (entities,
 entity_relationships, confidence_deltas) via raw DDL matching the live
 schema, because confidence_deltas is created by the baseline
@@ -9,7 +9,7 @@ Alembic migration and is NOT in ``Base.metadata`` (so conftest's create_all woul
 it).
 
 Run standalone:
-    TEST_DATABASE_URL=postgresql+asyncpg://bifrost:bifrost_dev@localhost:5433/bifrost_test_sync \
+    TEST_DATABASE_URL=postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5433/orgbrain_test_sync \
         uv run pytest tests/test_learning_sync.py -q
 """
 
@@ -23,11 +23,11 @@ import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bifrost.actions import learning_sync as sync
+from orgbrain.actions import learning_sync as sync
 
 SYNC_DB_URL = os.environ.get(
-    "BIFROST_SYNC_TEST_URL",
-    "postgresql+asyncpg://bifrost:bifrost_dev@localhost:5433/bifrost_test_sync",
+    "ORGBRAIN_SYNC_TEST_URL",
+    "postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5433/orgbrain_test_sync",
 )
 
 _DDL = [
@@ -148,7 +148,7 @@ async def _seed_entity(s, urn: str, conf: float) -> str:
 @pytest.mark.asyncio
 async def test_export_roundtrips_learned_weights(sf):
     src = "src-instance"
-    urn = f"urn:bifrost:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
+    urn = f"urn:orgbrain:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
     async with sf() as s:
         eid = await _seed_entity(s, urn, 0.5)
         # Two distinct-conversation confirmations -> auto_upgrade to 0.80.
@@ -183,7 +183,7 @@ async def test_export_roundtrips_learned_weights(sf):
 
 @pytest.mark.asyncio
 async def test_import_single_peer_stages_pending_not_applied(sf):
-    urn = f"urn:bifrost:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
+    urn = f"urn:orgbrain:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
     async with sf() as s:
         await _seed_entity(s, urn, 0.50)
         await s.commit()
@@ -224,7 +224,7 @@ async def test_import_single_peer_stages_pending_not_applied(sf):
 
 @pytest.mark.asyncio
 async def test_import_is_idempotent(sf):
-    urn = f"urn:bifrost:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
+    urn = f"urn:orgbrain:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
     async with sf() as s:
         await _seed_entity(s, urn, 0.50)
         await s.commit()
@@ -272,7 +272,7 @@ async def test_import_is_idempotent(sf):
 
 @pytest.mark.asyncio
 async def test_import_downgrade_applies_then_noops(sf):
-    urn = f"urn:bifrost:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
+    urn = f"urn:orgbrain:repo/sync-test-{_uuid.uuid4().hex[:8]}/component/Svc"
     async with sf() as s:
         await _seed_entity(s, urn, 0.90)
         await s.commit()
@@ -324,7 +324,7 @@ async def test_import_unknown_urn_skipped(sf):
         "weights": [
             {
                 "target_kind": "entity",
-                "urn": "urn:bifrost:repo/never-seen/component/Ghost",
+                "urn": "urn:orgbrain:repo/never-seen/component/Ghost",
                 "confidence": 0.95,
                 "confirmations": 9,
                 "reasons": ["audit_confirmed"],

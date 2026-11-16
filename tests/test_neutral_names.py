@@ -19,7 +19,7 @@ from tests import leak_terms
 
 
 def test_handover_scope_kind_is_neutral() -> None:
-    from bifrost.api.schemas.collaboration import HandoverScopeKind
+    from orgbrain.api.schemas.collaboration import HandoverScopeKind
 
     assert set(typing.get_args(HandoverScopeKind)) == {
         "feature",
@@ -32,7 +32,7 @@ def test_handover_scope_kind_is_neutral() -> None:
 
 
 def test_repo_status_is_neutral() -> None:
-    from bifrost.research.status import RepoStatus, status_summary
+    from orgbrain.research.status import RepoStatus, status_summary
 
     assert set(typing.get_args(RepoStatus)) == {
         "deep_indexed",
@@ -49,16 +49,16 @@ def test_repo_status_is_neutral() -> None:
 
 
 def test_status_helpers_are_neutral() -> None:
-    from bifrost.research import status
+    from orgbrain.research import status
 
     assert hasattr(status, "manifest_only_ids")
     assert [n for n in dir(status) if leak_terms.matches(n)] == []
 
 
 def test_trigger_kind_literal_is_neutral() -> None:
-    from bifrost.actions.tools import bifrost_trigger_extraction
+    from orgbrain.actions.tools import orgbrain_trigger_extraction
 
-    hint = typing.get_type_hints(bifrost_trigger_extraction)["trigger_kind"]
+    hint = typing.get_type_hints(orgbrain_trigger_extraction)["trigger_kind"]
     assert set(typing.get_args(hint)) == {
         "auto_manifest_only",
         "ask_back_gap",
@@ -68,7 +68,7 @@ def test_trigger_kind_literal_is_neutral() -> None:
 
 
 def test_discussion_assumption_source_enum_is_neutral() -> None:
-    from bifrost.actions.discussion_agent import _DISCUSSION_SCHEMA
+    from orgbrain.actions.discussion_agent import _DISCUSSION_SCHEMA
 
     items = _DISCUSSION_SCHEMA["properties"]["assumptions"]["items"]
     enum = items["properties"]["source_type"]["enum"]
@@ -77,7 +77,7 @@ def test_discussion_assumption_source_enum_is_neutral() -> None:
 
 
 def test_confidence_policy_known_types_are_neutral() -> None:
-    from bifrost.research.confidence_policy import _TIER_MAP, SourceType
+    from orgbrain.research.confidence_policy import _TIER_MAP, SourceType
 
     assert "manifest" in typing.get_args(SourceType)
     assert _TIER_MAP["manifest"] == ("confirmed", 0.88)
@@ -89,8 +89,8 @@ def test_confidence_policy_known_types_are_neutral() -> None:
 
 
 def test_catalog_results_use_manifest_hits() -> None:
-    from bifrost.api.routes.catalog import CatalogSyncResponse
-    from bifrost.research.org_catalog import CatalogSyncResult
+    from orgbrain.api.routes.catalog import CatalogSyncResponse
+    from orgbrain.research.org_catalog import CatalogSyncResult
 
     assert "manifest_hits" in CatalogSyncResponse.model_fields
     assert "manifest_hits" in {f.name for f in dataclasses.fields(CatalogSyncResult)}
@@ -103,7 +103,7 @@ def test_catalog_results_use_manifest_hits() -> None:
 def test_orm_columns_and_checks_carry_no_banned_name() -> None:
     from sqlalchemy import CheckConstraint
 
-    from bifrost.storage.models import Base
+    from orgbrain.storage.models import Base
 
     columns = [f"{t.name}.{c.name}" for t in Base.metadata.tables.values() for c in t.columns]
     assert [c for c in columns if leak_terms.matches(c)] == []
@@ -117,7 +117,7 @@ def test_orm_columns_and_checks_carry_no_banned_name() -> None:
 
 
 def test_orm_uses_manifest_columns() -> None:
-    from bifrost.storage.models import Base
+    from orgbrain.storage.models import Base
 
     ownership = Base.metadata.tables["repo_ownership"]
     assert "raw_manifest" in ownership.c
@@ -130,8 +130,8 @@ def test_orm_uses_manifest_columns() -> None:
 
 
 def test_team_handover_symbols_are_neutral() -> None:
-    from bifrost.api.schemas import collaboration as schemas
-    from bifrost.collaboration import cost_estimate, handover_generator
+    from orgbrain.api.schemas import collaboration as schemas
+    from orgbrain.collaboration import cost_estimate, handover_generator
 
     assert callable(handover_generator.generate_team_handover)
     assert callable(cost_estimate.estimate_team_handover_cost)
@@ -142,7 +142,7 @@ def test_team_handover_symbols_are_neutral() -> None:
 
 
 async def test_stream_route_rejects_an_unknown_scope_name() -> None:
-    from bifrost.api.routes.handover_docs import stream_handover_generation
+    from orgbrain.api.routes.handover_docs import stream_handover_generation
 
     with pytest.raises(HTTPException) as exc:
         await stream_handover_generation("galaxy", "squad-a")
@@ -150,7 +150,7 @@ async def test_stream_route_rejects_an_unknown_scope_name() -> None:
 
 
 async def test_stream_route_accepts_team() -> None:
-    from bifrost.api.routes.handover_docs import stream_handover_generation
+    from orgbrain.api.routes.handover_docs import stream_handover_generation
 
     resp = await stream_handover_generation("team", "squad-a")
     assert isinstance(resp, StreamingResponse)
@@ -160,13 +160,13 @@ async def test_stream_route_accepts_team() -> None:
 
 
 def test_tier_badge_says_manifest() -> None:
-    from bifrost.research.coordinator import _render_evidence_block
-    from bifrost.research.repo_agent import EntitySnippet, GraphEdge
+    from orgbrain.research.coordinator import _render_evidence_block
+    from orgbrain.research.repo_agent import EntitySnippet, GraphEdge
 
     edge = GraphEdge(
         rel_type="depends-on",
         other_name="B",
-        other_urn="urn:bifrost:repo/repo-a/component/B",
+        other_urn="urn:orgbrain:repo/repo-a/component/B",
         other_type="component",
         confidence=0.88,
         source_type="manifest",
@@ -178,7 +178,7 @@ def test_tier_badge_says_manifest() -> None:
         purpose="p",
         source_file="src/A.py",
         id="a-id",
-        urn="urn:bifrost:repo/repo-a/component/A",
+        urn="urn:orgbrain:repo/repo-a/component/A",
         outbound=[edge],
         inbound=[],
     )
@@ -188,11 +188,11 @@ def test_tier_badge_says_manifest() -> None:
 
 
 def test_prompt_constants_are_neutral() -> None:
-    from bifrost.actions.discussion_agent import _DISCUSSION_SYSTEM_PROMPT
-    from bifrost.collaboration import handover_generator
-    from bifrost.research.confidence_policy import CODE_IS_TRUTH_POLICY
-    from bifrost.research.deepening import _FOLLOWUP_SYSTEM
-    from bifrost.research.fast_path import _OWNERSHIP_SYNTHESIS_TEMPLATE
+    from orgbrain.actions.discussion_agent import _DISCUSSION_SYSTEM_PROMPT
+    from orgbrain.collaboration import handover_generator
+    from orgbrain.research.confidence_policy import CODE_IS_TRUTH_POLICY
+    from orgbrain.research.deepening import _FOLLOWUP_SYSTEM
+    from orgbrain.research.fast_path import _OWNERSHIP_SYNTHESIS_TEMPLATE
 
     prompts = {
         "_DISCUSSION_SYSTEM_PROMPT": _DISCUSSION_SYSTEM_PROMPT,

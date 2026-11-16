@@ -20,7 +20,7 @@ import { AgentGraph } from "@/components/agent-graph";
 import { cancelAgent, cancelExtractionTask, triggerExtraction } from "@/lib/api";
 import { BlastRadiusGraph } from "@/components/blast-radius-graph";
 
-const _AGENT_VIEW_KEY = "bifrost.agentView";
+const _AGENT_VIEW_KEY = "orgbrain.agentView";
 type AgentView = "graph" | "grid";
 
 /* ── Types ────────────────────────────────────────────────────────── */
@@ -272,7 +272,7 @@ export interface ResearchState {
   synthesisStarted: boolean;
   streamingText: string;
   /** Running activity log — every status / agent_start / agent_done
-   *  gets a line so the user can see what bifrost is doing right now. */
+   *  gets a line so the user can see what orgbrain is doing right now. */
   activityLog: ActivityEntry[];
   /** Already-built advisory: set when the pre-check finds existing
    *  implementations matching a build-request question. Persists
@@ -343,7 +343,7 @@ export function applyResearchEvent(
   switch (eventType) {
     case "plan": {
       // Orchestrator's intent + reasoning + resolved walk params.
-      // Surface as a status line so the user sees "Bifrost classified
+      // Surface as a status line so the user sees "OrgBrain classified
       // this as impact_radius — walking 3 hops upstream from
       // OrderExecutor" before the actual work starts.
       const intent = String(data.intent ?? "discovery");

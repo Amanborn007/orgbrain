@@ -43,7 +43,7 @@ def captured_publishes(monkeypatch):
         calls.append((task_id, event.event_type, dict(event.data)))
 
     monkeypatch.setattr(
-        "bifrost.api.sse.event_bus.publish",
+        "orgbrain.api.sse.event_bus.publish",
         _fake_publish,
     )
     return calls
@@ -65,7 +65,7 @@ def stubbed_repository(monkeypatch):
     fake_factory = MagicMock(return_value=fake_session)
 
     monkeypatch.setattr(
-        "bifrost.storage.repository.EntityRepository",
+        "orgbrain.storage.repository.EntityRepository",
         lambda s: fake_repo,
     )
     return fake_factory, fake_repo
@@ -132,13 +132,13 @@ async def test_forwards_chat_experience_event_types(
     ]
 
     monkeypatch.setattr(
-        "bifrost.research.coordinator.run_research",
+        "orgbrain.research.coordinator.run_research",
         _scripted(events),
     )
 
     import uuid
 
-    from bifrost.extraction.query_worker import QueryWorkerDeps, run_query_turn
+    from orgbrain.extraction.query_worker import QueryWorkerDeps, run_query_turn
 
     deps = QueryWorkerDeps(
         session_factory=factory,
@@ -154,7 +154,7 @@ async def test_forwards_chat_experience_event_types(
 
     fake_repo.get_conversation = AsyncMock(side_effect=_fake_get_conversation)
     monkeypatch.setattr(
-        "bifrost.storage.repository.EntityRepository",
+        "orgbrain.storage.repository.EntityRepository",
         lambda s: fake_repo,
     )
 
@@ -207,7 +207,7 @@ async def test_does_not_forward_internal_underscore_sentinels(
         _evt("done", answer="ok", sources=[], usage={}, confidence="uncertain", reports=[]),
     ]
     monkeypatch.setattr(
-        "bifrost.research.coordinator.run_research",
+        "orgbrain.research.coordinator.run_research",
         _scripted(events),
     )
 
@@ -221,11 +221,11 @@ async def test_does_not_forward_internal_underscore_sentinels(
 
     fake_repo.get_conversation = AsyncMock(side_effect=_fake_get_conversation)
     monkeypatch.setattr(
-        "bifrost.storage.repository.EntityRepository",
+        "orgbrain.storage.repository.EntityRepository",
         lambda s: fake_repo,
     )
 
-    from bifrost.extraction.query_worker import QueryWorkerDeps, run_query_turn
+    from orgbrain.extraction.query_worker import QueryWorkerDeps, run_query_turn
 
     deps = QueryWorkerDeps(
         session_factory=factory,

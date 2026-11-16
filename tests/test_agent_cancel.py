@@ -1,7 +1,7 @@
 """Per-agent cancel registry + tracked-task wrapper.
 
 Tests for the in-process registry helpers in
-``bifrost.research.coordinator``:
+``orgbrain.research.coordinator``:
 
   * ``_register_agent_task`` / ``_unregister_agent_task`` round-trip
   * ``cancel_agent_task`` returns False for missing / done tasks,
@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from bifrost.research.coordinator import (
+from orgbrain.research.coordinator import (
     _AGENT_TASKS,
     _register_agent_task,
     _tracked_external_agent,

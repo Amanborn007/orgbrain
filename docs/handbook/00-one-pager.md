@@ -1,6 +1,6 @@
-# Bifrost — One Pager
+# OrgBrain — One Pager
 
-> **Bifrost is an AI-powered engineering knowledge platform.** It clones
+> **OrgBrain is an AI-powered engineering knowledge platform.** It clones
 > source repos locally, runs Claude through a 7-phase extraction pipeline,
 > persists what it finds in Postgres, and lets engineers ask questions,
 > hand off coding tasks, and broker cross-team work — all sourced and
@@ -97,9 +97,9 @@ agents.
 ## Three concepts to keep in your head
 
 > **URN.** Every entity has a stable identifier shaped like
-> `urn:bifrost:component:<repo_id>:<file_path>::<symbol>`. Citations in
+> `urn:orgbrain:component:<repo_id>:<file_path>::<symbol>`. Citations in
 > chat answers and brief docs are URNs, so a reader can always find the
-> exact source. Defined in `src/bifrost/storage/models.py`. → see
+> exact source. Defined in `src/orgbrain/storage/models.py`. → see
 > [09 §URN](./09-glossary.md#urn).
 
 > **Freshness.** Three states: `fresh` / `stale` / `very_stale`. Auto-flagged
@@ -152,17 +152,17 @@ the user can click through to view the source code in the Knowledge tab.
 
 | Concern | Path |
 |---------|------|
-| API entry | `src/bifrost/api/app.py` |
-| All HTTP routers (mounted) | `src/bifrost/api/routes/__init__.py` |
-| ORM models | `src/bifrost/storage/models.py` |
+| API entry | `src/orgbrain/api/app.py` |
+| All HTTP routers (mounted) | `src/orgbrain/api/routes/__init__.py` |
+| ORM models | `src/orgbrain/storage/models.py` |
 | Schema migrations | `alembic/versions/` |
-| Extraction pipeline (7 phases) | `src/bifrost/extraction/pipeline.py` |
-| Claude CLI subprocess client | `src/bifrost/extraction/cli_client.py` |
-| Chat coordinator (multi-source fan-out) | `src/bifrost/research/coordinator.py` |
-| Handover-doc generator | `src/bifrost/collaboration/handover_generator.py` |
-| Collab clarifier + synthesiser | `src/bifrost/collaboration/{clarifier,synthesizer}.py` |
-| Action layer (tasks lifecycle) | `src/bifrost/actions/` |
-| In-memory SSE bus | `src/bifrost/api/sse.py` |
+| Extraction pipeline (7 phases) | `src/orgbrain/extraction/pipeline.py` |
+| Claude CLI subprocess client | `src/orgbrain/extraction/cli_client.py` |
+| Chat coordinator (multi-source fan-out) | `src/orgbrain/research/coordinator.py` |
+| Handover-doc generator | `src/orgbrain/collaboration/handover_generator.py` |
+| Collab clarifier + synthesiser | `src/orgbrain/collaboration/{clarifier,synthesizer}.py` |
+| Action layer (tasks lifecycle) | `src/orgbrain/actions/` |
+| In-memory SSE bus | `src/orgbrain/api/sse.py` |
 | Frontend route table | `ui/src/App.tsx` |
 | UI pages | `ui/src/pages/` |
 | Dev scripts | `scripts/` (`dev.sh`, `restart.sh`, `health_check.sh`) |
@@ -179,7 +179,7 @@ docker compose up -d
 uv run alembic upgrade head
 
 # 3. Backend (single async process)
-uv run uvicorn bifrost.api.app:create_app --factory --reload
+uv run uvicorn orgbrain.api.app:create_app --factory --reload
 
 # 4. Frontend (Vite, in a second terminal)
 cd ui && npm run dev          # http://localhost:5173
@@ -205,7 +205,7 @@ spawn `claude -p` and inherit that session. → see [10 §Setup](./10-operations
 | If you want to… | Read |
 |-----------------|------|
 | Skim the whole thing | [`README.md`](./README.md) |
-| Understand why Bifrost exists | [`01-vision-and-overview.md`](./01-vision-and-overview.md) |
+| Understand why OrgBrain exists | [`01-vision-and-overview.md`](./01-vision-and-overview.md) |
 | Trace what runs where | [`02-architecture.md`](./02-architecture.md) |
 | Look up a table or column | [`03-data-model.md`](./03-data-model.md) |
 | Look up an API route | [`04-api-surface.md`](./04-api-surface.md) |
@@ -218,7 +218,7 @@ spawn `claude -p` and inherit that session. → see [10 §Setup](./10-operations
 
 ---
 
-## What Bifrost is not
+## What OrgBrain is not
 
 - **Not a wiki.** Pages are generated, not authored. If you want to edit
   prose, you edit a handover doc or a brief — both are first-class

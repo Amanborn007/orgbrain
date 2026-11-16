@@ -5,16 +5,16 @@
 | Spec ID      | S6                           |
 | Title        | Dependency and Impact Model  |
 | Status       | Draft                        |
-| Authors      | Bifrost Core Team            |
+| Authors      | OrgBrain Core Team            |
 | Depends On   | S1 (Knowledge Model), S3 (Freshness Model) |
 
 ---
 
 ## 1. Purpose and Scope
 
-This specification defines how Bifrost discovers, stores, queries, and reasons about dependencies between engineering entities (repositories, components, interfaces, domains) and how it computes the impact — or blast radius — of a proposed or observed change.
+This specification defines how OrgBrain discovers, stores, queries, and reasons about dependencies between engineering entities (repositories, components, interfaces, domains) and how it computes the impact — or blast radius — of a proposed or observed change.
 
-The dependency and impact model is the backbone of several core Bifrost capabilities:
+The dependency and impact model is the backbone of several core OrgBrain capabilities:
 - Answering "what depends on X?" and "what does X depend on?"
 - Computing blast radius for a change set
 - Surfacing hidden or stale dependencies
@@ -77,9 +77,9 @@ This specification addresses the following requirements from `docs/prd.md`:
 ### Non-Goals
 
 1. **Real-time runtime dependency tracking.** V1 uses static discovery only. Runtime trace integration is deferred to V2.
-2. **Automatic dependency remediation.** Bifrost identifies and reports dependencies; it does not automatically fix or migrate them.
-3. **Build system integration.** Bifrost does not replace build dependency graphs (Bazel, Gradle). It may consume them as a source.
-4. **Semantic versioning enforcement.** Bifrost tracks that a dependency exists and its type; it does not enforce version compatibility policies.
+2. **Automatic dependency remediation.** OrgBrain identifies and reports dependencies; it does not automatically fix or migrate them.
+3. **Build system integration.** OrgBrain does not replace build dependency graphs (Bazel, Gradle). It may consume them as a source.
+4. **Semantic versioning enforcement.** OrgBrain tracks that a dependency exists and its type; it does not enforce version compatibility policies.
 
 ---
 

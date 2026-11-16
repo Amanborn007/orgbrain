@@ -1,7 +1,7 @@
 """Regression tests for ``SourceCitation`` legacy-data deserialization.
 
 The chat-not-loading bug: ``conversation_messages.sources``
-JSONB rows from older runs stored only ``{'urn': 'urn:bifrost:...'}``
+JSONB rows from older runs stored only ``{'urn': 'urn:orgbrain:...'}``
 without a ``name``. The route layer's ``SourceCitation(**s)`` raised
 ``ValidationError: name field required`` and returned 500. The fix
 makes ``name`` optional with a URN-tail-derived default.
@@ -13,15 +13,15 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.api.schemas.conversations import SourceCitation
+from orgbrain.api.schemas.conversations import SourceCitation
 
 
 def test_legacy_urn_only_shape_deserializes() -> None:
     """The shape that broke production:
-    ``{'urn': 'urn:bifrost:service:OrderService'}`` should round-trip with
+    ``{'urn': 'urn:orgbrain:service:OrderService'}`` should round-trip with
     name auto-derived to ``OrderService``."""
-    sc = SourceCitation(urn="urn:bifrost:service:OrderService")
-    assert sc.urn == "urn:bifrost:service:OrderService"
+    sc = SourceCitation(urn="urn:orgbrain:service:OrderService")
+    assert sc.urn == "urn:orgbrain:service:OrderService"
     assert sc.name == "OrderService"
 
 
@@ -29,7 +29,7 @@ def test_explicit_name_wins_over_derivation() -> None:
     """When the row carries an explicit ``name``, do NOT overwrite
     it with the URN tail — the coordinator's emitted name is more
     accurate (it knows the human label)."""
-    sc = SourceCitation(urn="urn:bifrost:service:foo", name="Foo Service")
+    sc = SourceCitation(urn="urn:orgbrain:service:foo", name="Foo Service")
     assert sc.name == "Foo Service"
 
 
@@ -48,10 +48,10 @@ def test_empty_urn_yields_unknown_placeholder() -> None:
 
 
 def test_multi_segment_urn_uses_last_segment() -> None:
-    """``urn:bifrost:repo/OrderService/component/Foo`` → ``component/Foo``
+    """``urn:orgbrain:repo/OrderService/component/Foo`` → ``component/Foo``
     (the tail after the last ``:``). This is the worst-case shape;
     callers can override with explicit name when they want better."""
-    sc = SourceCitation(urn="urn:bifrost:repo:OrderService:component:Bar")
+    sc = SourceCitation(urn="urn:orgbrain:repo:OrderService:component:Bar")
     assert sc.name == "Bar"
 
 
@@ -59,7 +59,7 @@ def test_legacy_with_relevance_string_still_works() -> None:
     """An older row carries ``relevance`` as a string label
     ('high'/'medium'/'low'). Schema accepts both float and str."""
     sc = SourceCitation(
-        urn="urn:bifrost:service:OrderService",
+        urn="urn:orgbrain:service:OrderService",
         relevance="high",
     )
     assert sc.relevance == "high"
@@ -69,11 +69,11 @@ def test_legacy_with_relevance_string_still_works() -> None:
 @pytest.mark.parametrize(
     "raw,expected_name",
     [
-        ({"urn": "urn:bifrost:service:OrderService"}, "OrderService"),
-        ({"urn": "urn:bifrost:repo:foo", "name": "Foo"}, "Foo"),
-        ({"urn": "urn:bifrost:repo:foo", "files": ["a.py"]}, "foo"),
+        ({"urn": "urn:orgbrain:service:OrderService"}, "OrderService"),
+        ({"urn": "urn:orgbrain:repo:foo", "name": "Foo"}, "Foo"),
+        ({"urn": "urn:orgbrain:repo:foo", "files": ["a.py"]}, "foo"),
         # extra unknown fields don't break (Pydantic ignores them)
-        ({"urn": "urn:bifrost:service:X", "weird": 1}, "X"),
+        ({"urn": "urn:orgbrain:service:X", "weird": 1}, "X"),
     ],
 )
 def test_dict_unwrapping_legacy_and_current_shapes(

@@ -1,6 +1,6 @@
 """Real end-to-end benchmark for the demo path.
 
-Exercises the live Bifrost backend + live Claude CLI. No mocks, no
+Exercises the live OrgBrain backend + live Claude CLI. No mocks, no
 seeded data, no API keys. Costs real money (~$0.50 per full run).
 
 What it checks:
@@ -10,8 +10,8 @@ What it checks:
   4. Chat query against "All repositories" scope
 
 Outputs:
-  * JSON summary at ``.bifrost-out/demo-validation.json``
-  * Markdown report at ``.bifrost-out/demo-validation.md``
+  * JSON summary at ``.orgbrain-out/demo-validation.json``
+  * Markdown report at ``.orgbrain-out/demo-validation.md``
   * Timings measured on this run, so the demo talking points can
     quote real numbers.
 
@@ -22,7 +22,7 @@ Design decisions:
   * Each phase is timed separately so we can price each Claude call
     individually. Total wall time ≠ sum of phases (overlap), but each
     phase number alone is meaningful.
-  * Scratch repo lives in ``/tmp/bifrost-demo-validation-<ts>/``;
+  * Scratch repo lives in ``/tmp/orgbrain-demo-validation-<ts>/``;
     cleaned up on success, left behind on failure so you can triage.
   * The scratch repo ships a tiny Python app + pytest so the executor
     has something to edit + the verifier has something to run.
@@ -49,11 +49,11 @@ from pathlib import Path
 from typing import Any
 
 
-API = os.environ.get("BIFROST_API", "http://localhost:8000/api/v1")
+API = os.environ.get("ORGBRAIN_API", "http://localhost:8000/api/v1")
 TS = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OUT_JSON = REPO_ROOT / ".bifrost-out" / "demo-validation.json"
-OUT_MD = REPO_ROOT / ".bifrost-out" / "demo-validation.md"
+OUT_JSON = REPO_ROOT / ".orgbrain-out" / "demo-validation.json"
+OUT_MD = REPO_ROOT / ".orgbrain-out" / "demo-validation.md"
 
 
 # ── HTTP helpers ───────────────────────────────────────────────────
@@ -130,7 +130,7 @@ def _setup_scratch_repo(root: Path) -> None:
     (root / ".gitignore").write_text(".venv/\n__pycache__/\n*.pyc\n.claude/\n")
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(
-        ["git", "config", "user.email", "demo@bifrost.local"],
+        ["git", "config", "user.email", "demo@orgbrain.local"],
         cwd=root, check=True,
     )
     subprocess.run(
@@ -610,7 +610,7 @@ def main() -> int:
         backend_git_sha=_git_sha(),
     )
 
-    print(f"\n== Bifrost demo validation ==")
+    print(f"\n== OrgBrain demo validation ==")
     print(f"   api:     {API}")
     print(f"   git sha: {result.backend_git_sha}")
     print(f"   started: {started}")
@@ -621,7 +621,7 @@ def main() -> int:
     _print_phase(result.phases[-1])
 
     # Phase 2 — /quick
-    scratch_q = Path(f"/tmp/bifrost-demo-validation-{TS}-quick")
+    scratch_q = Path(f"/tmp/orgbrain-demo-validation-{TS}-quick")
     print("\n[2/4] /quick end-to-end…")
     with contextlib.suppress(Exception):
         result.phases.append(run_quick_end_to_end(scratch_q))
@@ -631,7 +631,7 @@ def main() -> int:
 
     # Phase 3 — full task (optional)
     if not args.skip_full_task:
-        scratch_b = Path(f"/tmp/bifrost-demo-validation-{TS}-task")
+        scratch_b = Path(f"/tmp/orgbrain-demo-validation-{TS}-task")
         print("\n[3/4] full task flow (discuss → plan → execute → verify)…")
         with contextlib.suppress(Exception):
             result.phases.append(run_full_task_flow(scratch_b))

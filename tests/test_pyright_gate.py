@@ -17,7 +17,7 @@ _SPEC.loader.exec_module(gate)
 
 def _diag(rule: str | None, line0: int = 4, message: str = "boom") -> dict:
     d = {
-        "file": "/repo/src/bifrost/x.py",
+        "file": "/repo/src/orgbrain/x.py",
         "severity": "error",
         "message": message,
         "range": {"start": {"line": line0, "character": 0}, "end": {"line": line0, "character": 1}},
@@ -30,7 +30,7 @@ def _diag(rule: str | None, line0: int = 4, message: str = "boom") -> dict:
 @pytest.mark.parametrize("rule", sorted(gate.GATED_RULES))
 def test_gated_rules_are_reported(rule: str) -> None:
     assert gate.find_violations({"generalDiagnostics": [_diag(rule)]}) == [
-        f"/repo/src/bifrost/x.py:5:{rule}:boom"
+        f"/repo/src/orgbrain/x.py:5:{rule}:boom"
     ]
 
 
@@ -53,7 +53,7 @@ def test_multiline_message_is_collapsed_and_only_gated_kept() -> None:
         ]
     }
     assert gate.find_violations(report) == [
-        '/repo/src/bifrost/x.py:10:reportAttributeAccessIssue:Cannot access "rowcount" Attribute unknown'
+        '/repo/src/orgbrain/x.py:10:reportAttributeAccessIssue:Cannot access "rowcount" Attribute unknown'
     ]
 
 

@@ -24,8 +24,8 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.coordinator import _catalog_candidates_for_domain
-from bifrost.storage.models import Domain, OrgRepo
+from orgbrain.research.coordinator import _catalog_candidates_for_domain
+from orgbrain.storage.models import Domain, OrgRepo
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def session_factory_for(engine):
 
 
 async def _make_domain(session, name: str) -> Domain:
-    d = Domain(id=uuid.uuid4(), name=name, urn=f"urn:bifrost:domain:{name.lower()}")
+    d = Domain(id=uuid.uuid4(), name=name, urn=f"urn:orgbrain:domain:{name.lower()}")
     session.add(d)
     await session.flush()
     return d

@@ -1,6 +1,6 @@
 """SSRF guard for git URLs: literal-IP checks, resolve-then-check, scheme rules.
 
-No network: the resolver seam ``bifrost.adapters.git._resolve_host`` is monkeypatched.
+No network: the resolver seam ``orgbrain.adapters.git._resolve_host`` is monkeypatched.
 """
 
 from __future__ import annotations
@@ -10,21 +10,21 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.adapters import git as git_mod
-from bifrost.adapters.git import (
+from orgbrain.adapters import git as git_mod
+from orgbrain.adapters.git import (
     GitAdapter,
     GitAdapterError,
     GitCloneError,
     _assert_resolves_public,
     _validate_repo_url,
 )
-from bifrost.cli.config import reset_settings
+from orgbrain.cli.config import reset_settings
 
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", raising=False)
-    monkeypatch.delenv("BIFROST_PRODUCTION_MODE", raising=False)
+    monkeypatch.delenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", raising=False)
+    monkeypatch.delenv("ORGBRAIN_PRODUCTION_MODE", raising=False)
     reset_settings()
     yield
     reset_settings()
@@ -97,7 +97,7 @@ class TestSchemes:
             _validate_repo_url("http://github.com/o/r.git")
 
     def test_http_allowed_only_under_private_opt_in(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
         _validate_repo_url("http://localhost:3000/o/r.git")
 
     def test_local_path_not_a_network_scheme(self) -> None:
@@ -106,8 +106,8 @@ class TestSchemes:
 
 class TestProductionOptOut:
     def test_opt_in_refused_in_production(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
-        monkeypatch.setenv("BIFROST_PRODUCTION_MODE", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_PRODUCTION_MODE", "true")
         reset_settings()
         with pytest.raises(GitAdapterError, match="production"):
             _validate_repo_url("https://10.0.0.5/o/r.git")
@@ -115,14 +115,14 @@ class TestProductionOptOut:
     def test_opt_in_refused_in_production_even_for_public_url(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
-        monkeypatch.setenv("BIFROST_PRODUCTION_MODE", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_PRODUCTION_MODE", "true")
         reset_settings()
         with pytest.raises(GitAdapterError, match="production"):
             _validate_repo_url("https://github.com/o/r.git")
 
     def test_opt_in_still_works_outside_production(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
         _validate_repo_url("https://10.0.0.5/o/r.git")
 
 
@@ -180,7 +180,7 @@ class TestResolveThenCheck:
         assert calls == []
 
     async def test_opt_in_skips_resolution(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
         calls = _resolver(monkeypatch, AssertionError("resolver must not be called"))
         await _assert_resolves_public("https://internal.example.com/o/r.git")
         assert calls == []

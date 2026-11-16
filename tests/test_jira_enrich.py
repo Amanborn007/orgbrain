@@ -1,4 +1,4 @@
-"""Unit tests for ``bifrost.actions.jira_enrich`` parsers.
+"""Unit tests for ``orgbrain.actions.jira_enrich`` parsers.
 
 The three extractors are where real user-visible value lives:
   * ``extract_acceptance_criteria`` — pulls bullet-pointed ACs out of
@@ -14,7 +14,7 @@ Pure-logic tests, no network, no DB.
 
 from __future__ import annotations
 
-from bifrost.actions.jira_enrich import (
+from orgbrain.actions.jira_enrich import (
     extract_acceptance_criteria,
     extract_confluence_links,
     extract_related_jira_keys,

@@ -11,30 +11,30 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from bifrost.cli.config import reset_settings
+from orgbrain.cli.config import reset_settings
 
 _IDENTITY_ENV = (
-    "BIFROST_DEMO_MODE",
-    "BIFROST_OPERATOR_EMAIL",
-    "BIFROST_OPERATOR_GROUPS",
-    "BIFROST_API_TOKENS",
-    "BIFROST_IDENTITY__PROVIDER",
-    "BIFROST_IDENTITY__TRUSTED_PROXY",
-    "BIFROST_IDENTITY__ROLES",
-    "BIFROST_IDENTITY__HEADER",
-    "BIFROST_IDENTITY__HEADER__EMAIL",
-    "BIFROST_IDENTITY__HEADER__GROUPS",
-    "BIFROST_IDENTITY__HEADER__TRUSTED_PROXY_CIDRS",
-    "BIFROST_IDENTITY__OIDC__JWKS_URL",
-    "BIFROST_IDENTITY__OIDC__ISSUER",
-    "BIFROST_IDENTITY__OIDC__AUDIENCE",
-    "BIFROST_IDENTITY__OIDC__GROUPS_CLAIM",
-    "BIFROST_TOKEN",
+    "ORGBRAIN_DEMO_MODE",
+    "ORGBRAIN_OPERATOR_EMAIL",
+    "ORGBRAIN_OPERATOR_GROUPS",
+    "ORGBRAIN_API_TOKENS",
+    "ORGBRAIN_IDENTITY__PROVIDER",
+    "ORGBRAIN_IDENTITY__TRUSTED_PROXY",
+    "ORGBRAIN_IDENTITY__ROLES",
+    "ORGBRAIN_IDENTITY__HEADER",
+    "ORGBRAIN_IDENTITY__HEADER__EMAIL",
+    "ORGBRAIN_IDENTITY__HEADER__GROUPS",
+    "ORGBRAIN_IDENTITY__HEADER__TRUSTED_PROXY_CIDRS",
+    "ORGBRAIN_IDENTITY__OIDC__JWKS_URL",
+    "ORGBRAIN_IDENTITY__OIDC__ISSUER",
+    "ORGBRAIN_IDENTITY__OIDC__AUDIENCE",
+    "ORGBRAIN_IDENTITY__OIDC__GROUPS_CLAIM",
+    "ORGBRAIN_TOKEN",
 )
 
 JWKS_URL = "https://idp.example.com/.well-known/jwks.json"
 ISSUER = "https://idp.example.com/"
-AUDIENCE = "bifrost"
+AUDIENCE = "orgbrain"
 
 
 def new_token() -> tuple[str, str]:
@@ -70,30 +70,30 @@ def boot(
         monkeypatch.delenv(key, raising=False)
     if demo is None:
         demo = provider == "none" and operator_email is None
-    monkeypatch.setenv("BIFROST_DEMO_MODE", "true" if demo else "false")
-    monkeypatch.setenv("BIFROST_IDENTITY__PROVIDER", provider)
+    monkeypatch.setenv("ORGBRAIN_DEMO_MODE", "true" if demo else "false")
+    monkeypatch.setenv("ORGBRAIN_IDENTITY__PROVIDER", provider)
     if provider == "header":
-        monkeypatch.setenv("BIFROST_IDENTITY__TRUSTED_PROXY", "true")
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__TRUSTED_PROXY", "true")
     if operator_email:
-        monkeypatch.setenv("BIFROST_OPERATOR_EMAIL", operator_email)
+        monkeypatch.setenv("ORGBRAIN_OPERATOR_EMAIL", operator_email)
     if roles is not None:
-        monkeypatch.setenv("BIFROST_IDENTITY__ROLES", json.dumps(roles))
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__ROLES", json.dumps(roles))
     if tokens is not None:
-        monkeypatch.setenv("BIFROST_API_TOKENS", json.dumps(tokens))
+        monkeypatch.setenv("ORGBRAIN_API_TOKENS", json.dumps(tokens))
     if cidrs is not None:
-        monkeypatch.setenv("BIFROST_IDENTITY__HEADER__TRUSTED_PROXY_CIDRS", json.dumps(cidrs))
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__HEADER__TRUSTED_PROXY_CIDRS", json.dumps(cidrs))
     if groups_header:
-        monkeypatch.setenv("BIFROST_IDENTITY__HEADER__GROUPS", groups_header)
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__HEADER__GROUPS", groups_header)
     if email_header:
-        monkeypatch.setenv("BIFROST_IDENTITY__HEADER__EMAIL", email_header)
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__HEADER__EMAIL", email_header)
     if oidc or provider == "oidc_jwt":
-        monkeypatch.setenv("BIFROST_IDENTITY__OIDC__JWKS_URL", JWKS_URL)
-        monkeypatch.setenv("BIFROST_IDENTITY__OIDC__ISSUER", ISSUER)
-        monkeypatch.setenv("BIFROST_IDENTITY__OIDC__AUDIENCE", AUDIENCE)
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__JWKS_URL", JWKS_URL)
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__ISSUER", ISSUER)
+        monkeypatch.setenv("ORGBRAIN_IDENTITY__OIDC__AUDIENCE", AUDIENCE)
     for key, value in (extra_env or {}).items():
         monkeypatch.setenv(key, value)
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     return create_app()
 

@@ -8,8 +8,8 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import text
 
-from bifrost.actions import asks_router
-from bifrost.actions.asks_router import (
+from orgbrain.actions import asks_router
+from orgbrain.actions.asks_router import (
     cancel_ask,
     create_ask,
     get_ask,
@@ -19,8 +19,8 @@ from bifrost.actions.asks_router import (
     mark_sent,
     resolve_route,
 )
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ async def _seed_repo(factory, *, name: str) -> str:
             ),
             {
                 "id": repo_id,
-                "urn": f"urn:bifrost:repo:{name}",
+                "urn": f"urn:orgbrain:repo:{name}",
                 "name": name,
                 "url": f"https://github.com/AcmeCo/{name}",
             },

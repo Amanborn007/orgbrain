@@ -6,19 +6,19 @@ from typing import Any
 
 import pytest
 
-from bifrost.api.auth.providers import OidcJwtProvider, build_identity_provider
-from bifrost.cli.config import BifrostSettings, reset_settings
+from orgbrain.api.auth.providers import OidcJwtProvider, build_identity_provider
+from orgbrain.cli.config import OrgBrainSettings, reset_settings
 
 OIDC = {
     "jwks_url": "https://idp.example.com/.well-known/jwks.json",
     "issuer": "https://idp.example.com/",
-    "audience": "bifrost",
+    "audience": "orgbrain",
 }
 
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> Any:
-    for key in ("BIFROST_DEMO_MODE", "BIFROST_HTTP_TIMEOUT_SECONDS"):
+    for key in ("ORGBRAIN_DEMO_MODE", "ORGBRAIN_HTTP_TIMEOUT_SECONDS"):
         monkeypatch.delenv(key, raising=False)
     reset_settings()
     yield
@@ -27,7 +27,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 @pytest.mark.parametrize("seconds", [12.5, 1.0])
 def test_oidc_verifier_receives_configured_timeout(seconds: float) -> None:
-    settings = BifrostSettings(
+    settings = OrgBrainSettings(
         _env_file=None,  # type: ignore[call-arg]
         http_timeout_seconds=seconds,
         identity={"provider": "oidc_jwt", "oidc": OIDC, "roles": {"admin": []}},

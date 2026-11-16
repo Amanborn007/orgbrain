@@ -6,10 +6,10 @@ import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
-from bifrost.manifest.model import ServiceManifest
-from bifrost.research.fast_path import _build_ownership_prompt
-from bifrost.research.ownership_sync import manifest_to_ownership_values
-from bifrost.storage.models import RepoOwnership
+from orgbrain.manifest.model import ServiceManifest
+from orgbrain.research.fast_path import _build_ownership_prompt
+from orgbrain.research.ownership_sync import manifest_to_ownership_values
+from orgbrain.storage.models import RepoOwnership
 
 _BASELINE = Path(__file__).resolve().parent.parent / "alembic" / "versions" / "001_baseline.py"
 _OLD_COLUMNS = ("is_pci_in_scope", "is_sox_in_scope")

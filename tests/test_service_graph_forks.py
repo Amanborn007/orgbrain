@@ -6,9 +6,9 @@ from typing import Any
 
 from sqlalchemy.dialects import postgresql
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.manifest.graph_apply import collect_manifests
-from bifrost.storage.models import OrgRepo
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.manifest.graph_apply import collect_manifests
+from orgbrain.storage.models import OrgRepo
 
 
 class _Result:
@@ -39,7 +39,7 @@ async def test_catalog_query_excludes_forks_and_archived() -> None:
     await collect_manifests(
         lambda: _Session(seen),  # type: ignore[arg-type]
         include_catalog=True,
-        settings=BifrostSettings(),
+        settings=OrgBrainSettings(),
     )
     catalog = [s for s in seen if any(d.get("entity") is OrgRepo for d in s.column_descriptions)]
     assert len(catalog) == 1

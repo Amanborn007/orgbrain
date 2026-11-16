@@ -364,8 +364,8 @@ export function QueryPage() {
   // localStorage so a page-refresh-mid-stream retry can reuse it
   // (Phase 3 per-agent cache reads from the same key to skip
   // already-completed agents). Storage shape:
-  //   bifrost.idem.<convId> = "<uuid>"
-  const _idemStorageKey = (convId: string) => `bifrost.idem.${convId}`;
+  //   orgbrain.idem.<convId> = "<uuid>"
+  const _idemStorageKey = (convId: string) => `orgbrain.idem.${convId}`;
   const generateIdempotencyKey = useCallback(
     (convId: string): string => {
       const k = (window.crypto?.randomUUID?.() ?? `idk-${Date.now()}-${Math.random()}`);
@@ -461,11 +461,11 @@ export function QueryPage() {
       intent: IntentClassification | undefined,
     ) => {
       // Prompt for target repo once — most chats happen against a
-      // specific repo/domain scope but Bifrost doesn't know the local
+      // specific repo/domain scope but OrgBrain doesn't know the local
       // checkout path, so we ask inline.
       const savedPath =
         (typeof window !== "undefined" &&
-          window.localStorage.getItem("bifrost.quickTargetRepo")) ||
+          window.localStorage.getItem("orgbrain.quickTargetRepo")) ||
         "";
       const path = window.prompt(
         "Target repo path for quick mode (absolute path of a git repo):",
@@ -481,7 +481,7 @@ export function QueryPage() {
       if (!path.trim()) return;
       const trimmed = path.trim();
       try {
-        window.localStorage?.setItem("bifrost.quickTargetRepo", trimmed);
+        window.localStorage?.setItem("orgbrain.quickTargetRepo", trimmed);
       } catch {
         // ignore quota errors
       }
@@ -888,7 +888,7 @@ export function QueryPage() {
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-bg-0 px-6">
           <div className="min-w-0">
             <h1 className="truncate text-[15px] font-semibold text-fg-0">
-              {active.data?.title ?? "Ask Bifrost"}
+              {active.data?.title ?? "Ask OrgBrain"}
             </h1>
             <ChatScopeLine
               scopeRepoIds={active.data?.scope_repo_ids}
@@ -1328,10 +1328,10 @@ function EmptyStarterView({
           org-aware research agent
         </div>
         <h2 className="text-[28px] font-semibold tracking-tight text-fg-0">
-          Bifrost Chat
+          OrgBrain Chat
         </h2>
         <p className="mt-3 text-[14.5px] leading-relaxed text-fg-2">
-          Ask anything about your codebase. For each question, Bifrost fans out
+          Ask anything about your codebase. For each question, OrgBrain fans out
           per-repo research agents that read live source + Jira + Confluence,
           then synthesizes one cited answer. Not just Claude — Claude that
           knows your systems, squads, and docs.
@@ -1732,7 +1732,7 @@ function ResearchInProgress({
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-fg-2">Bifrost</span>
+          <span className="text-[11px] font-medium text-fg-2">OrgBrain</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">
             <span className="h-1 w-1 animate-pulse rounded-full bg-accent" />
             {synthesisStreaming ? "writing" : "researching"}
@@ -1797,7 +1797,7 @@ function AssistantStreaming({
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-fg-2">Bifrost</span>
+          <span className="text-[11px] font-medium text-fg-2">OrgBrain</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">
             <span className="h-1 w-1 animate-pulse rounded-full bg-accent" />
             {tools.length > 0 ? "exploring" : "streaming"}
@@ -2140,7 +2140,7 @@ const AssistantMessage = memo(function AssistantMessage({
     <div className="flex items-start gap-3">
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg"
-        title="Bifrost"
+        title="OrgBrain"
       >
         <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
       </div>
@@ -2151,7 +2151,7 @@ const AssistantMessage = memo(function AssistantMessage({
             render as faded em-dashes when data is missing so the
             absence is visible without jarring layout. */}
         <div className="flex min-h-[22px] flex-wrap items-center gap-2">
-          <span className="text-[11px] font-medium text-fg-2">Bifrost</span>
+          <span className="text-[11px] font-medium text-fg-2">OrgBrain</span>
           {msg.confidence ? (
             <ConfidenceBadge level={msg.confidence} />
           ) : (
@@ -2622,7 +2622,7 @@ function ResearchPipelineSkeleton({
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-fg-2">Bifrost</span>
+          <span className="text-[11px] font-medium text-fg-2">OrgBrain</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">
             <span className="h-1 w-1 animate-pulse rounded-full bg-accent" />
             researching
@@ -2661,7 +2661,7 @@ function ResearchPipelineSkeleton({
 function ResearchErrorBlock({
   message,
   onRetry,
-  title = "Bifrost couldn't run research",
+  title = "OrgBrain couldn't run research",
   retryLabel = "Retry search",
 }: {
   message: string;

@@ -16,13 +16,13 @@ import uuid
 
 import pytest
 
-from bifrost.api import _cookie_signing as cs
-from bifrost.cli.config import reset_settings
+from orgbrain.api import _cookie_signing as cs
+from orgbrain.cli.config import reset_settings
 
 
 @pytest.fixture(autouse=True)
 def _signing_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "test-key-chat-lifecycle")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "test-key-chat-lifecycle")
     reset_settings()
     cs.reset_signing_key()
     yield
@@ -70,7 +70,7 @@ def test_default_confidence_is_uncertain() -> None:
     """When the coordinator's `done` event omits or sends a non-
     canonical confidence, ``_normalise_confidence`` must coerce it
     to ``uncertain``, not the misleading ``inferred``."""
-    from bifrost.extraction.query_worker import _normalise_confidence
+    from orgbrain.extraction.query_worker import _normalise_confidence
 
     # Missing / empty / None → uncertain
     assert _normalise_confidence(None) == "uncertain"

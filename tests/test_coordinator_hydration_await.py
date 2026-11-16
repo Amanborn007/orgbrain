@@ -12,9 +12,9 @@ import asyncio
 
 import pytest
 
-from bifrost.research.coordinator import _await_prior_hydration
-from bifrost.research.repo_agent import EntitySnippet
-from bifrost.research.subgraph_hydrate import (
+from orgbrain.research.coordinator import _await_prior_hydration
+from orgbrain.research.repo_agent import EntitySnippet
+from orgbrain.research.subgraph_hydrate import (
     HydratedRepoSubgraph,
     HydratedSubgraph,
 )

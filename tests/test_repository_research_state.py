@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ class TestResearchState:
             "repos_used": ["00000000-0000-0000-0000-000000000001"],
             "repos_used_names": ["orders"],
             "scope_rationale": "single repo, deep-indexed",
-            "subgraph_entity_urns": ["bifrost://repo/orders/component/X"],
+            "subgraph_entity_urns": ["orgbrain://repo/orders/component/X"],
             "sources": [{"kind": "jira", "ref": "SHIP-1", "title": ""}],
             "last_question_embedding": None,
             "created_at": "2026-04-25T10:00:00+00:00",
@@ -111,7 +111,7 @@ class TestResearchState:
         the FK CASCADE."""
         from sqlalchemy import delete as _delete
 
-        from bifrost.storage.models import Conversation
+        from orgbrain.storage.models import Conversation
 
         conv = await _make_conversation(repo, "cascade")
         await repo.save_research_state(

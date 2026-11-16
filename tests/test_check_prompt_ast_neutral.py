@@ -104,14 +104,14 @@ def _git(repo: Path, *args: str) -> None:
 
 def _make_repo(tmp_path: Path, new_policy: str) -> Path:
     repo = tmp_path / "repo"
-    research = repo / "src" / "bifrost" / "research"
+    research = repo / "src" / "orgbrain" / "research"
     research.mkdir(parents=True)
     (research / "confidence_policy.py").write_text('CODE_IS_TRUTH_POLICY = """policy text"""\n')
     (research / "diagram_standards.py").write_text('DIAGRAM_RULES_BLOCK = """diagram text"""\n')
     (research / "coordinator.py").write_text(
         '_SYNTHESIS_SYSTEM_PROMPT = """base prompt"""\n'
-        "from bifrost.research.confidence_policy import CODE_IS_TRUTH_POLICY\n"
-        "from bifrost.research.diagram_standards import DIAGRAM_RULES_BLOCK\n"
+        "from orgbrain.research.confidence_policy import CODE_IS_TRUTH_POLICY\n"
+        "from orgbrain.research.diagram_standards import DIAGRAM_RULES_BLOCK\n"
         "_SYNTHESIS_SYSTEM_PROMPT = (_SYNTHESIS_SYSTEM_PROMPT + CODE_IS_TRUTH_POLICY + DIAGRAM_RULES_BLOCK)\n"
     )
     _git(repo, "init", "-q")
@@ -141,12 +141,12 @@ def test_cli_fails_and_names_the_file_on_code_change(tmp_path, monkeypatch, caps
     repo = _make_repo(tmp_path, 'CODE_IS_TRUTH_POLICY = """policy text"""\nEXTRA = 1\n')
     monkeypatch.chdir(repo)
     assert tool.main(["base"]) == 1
-    assert "src/bifrost/research/confidence_policy.py" in capsys.readouterr().err
+    assert "src/orgbrain/research/confidence_policy.py" in capsys.readouterr().err
 
 
 def test_cli_reports_unmeasurable_prompt_and_flags_the_deleted_file(tmp_path, monkeypatch, capsys):
     repo = _make_repo(tmp_path, 'CODE_IS_TRUTH_POLICY = """changed"""\n')
-    _git(repo, "rm", "-q", "src/bifrost/research/diagram_standards.py")
+    _git(repo, "rm", "-q", "src/orgbrain/research/diagram_standards.py")
     _git(repo, "commit", "-q", "-m", "drop diagrams")
     monkeypatch.chdir(repo)
     assert tool.main(["base"]) == 1
@@ -158,4 +158,4 @@ def test_cli_reports_unmeasurable_prompt_and_flags_the_deleted_file(tmp_path, mo
 def test_only_filter_limits_the_check(tmp_path, monkeypatch):
     repo = _make_repo(tmp_path, 'CODE_IS_TRUTH_POLICY = """policy text"""\nEXTRA = 1\n')
     monkeypatch.chdir(repo)
-    assert tool.main(["base", "--only", "src/bifrost/other/"]) == 0
+    assert tool.main(["base", "--only", "src/orgbrain/other/"]) == 0

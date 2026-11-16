@@ -8,7 +8,7 @@ import pytest
 
 # OBSOLETE: the depth-tiering helper `_split_rankings_by_depth` (deep/deferred
 # "split, never drop" relevance split) was removed from
-# bifrost.research.coordinator when fan-out scope-narrowing was refactored to
+# orgbrain.research.coordinator when fan-out scope-narrowing was refactored to
 # the EXTEND_BUNDLE filtering model (`_maybe_narrow_to_extension`). The symbol
 # no longer exists in production code, so this module can no longer be imported.
 # Skipped at collection time rather than deleted, pending a rewrite against the
@@ -19,7 +19,7 @@ pytest.skip(
     allow_module_level=True,
 )
 
-from bifrost.research.coordinator import _split_rankings_by_depth  # noqa: E402
+from orgbrain.research.coordinator import _split_rankings_by_depth  # noqa: E402
 
 
 @dataclass

@@ -1,6 +1,6 @@
 # 09 — Glossary
 
-Domain terms used by the Bifrost codebase, schema, and other handbook chapters. Where a term has a canonical definition elsewhere (F1 spec, the collaboration feature docs, a model docstring), that source is linked. Where the term is used in multiple contexts with subtly different meanings, the differences are surfaced here rather than glossed over.
+Domain terms used by the OrgBrain codebase, schema, and other handbook chapters. Where a term has a canonical definition elsewhere (F1 spec, the collaboration feature docs, a model docstring), that source is linked. Where the term is used in multiple contexts with subtly different meanings, the differences are surfaced here rather than glossed over.
 
 > **TL;DR.** Roughly 80 entries, alphabetised. Use the cluster index below to navigate by category. Terms with overloaded meanings (Brief, Task, Tier, Dependency, Artifact) spell out each meaning on a separate numbered line. Cross-references hyperlink within this document and out to the data-model / architecture chapters.
 
@@ -14,7 +14,7 @@ Domain terms used by the Bifrost codebase, schema, and other handbook chapters. 
 Jump to a thematic group. Within each cluster terms remain alphabetised, but the cluster header points you to the relevant section of the canonical alphabetical entries below.
 
 ### Concepts (the model)
-[Action layer](#a) · [Belief DAG](#b) · [Bifrost](#b) · [Brief](#b) · [Component](#c) · [Confidence](#c) · [Confidence level](#c) · [Dependency](#d) · [Domain](#d) · [Entity](#e) · [Entity tier](#e) · [Flow](#f) · [Knowledge tier](#k) · [Region](#r) · [Repo](#r) · [Scope kind](#s) · [Scope value](#s) · [URN](#u)
+[Action layer](#a) · [Belief DAG](#b) · [OrgBrain](#b) · [Brief](#b) · [Component](#c) · [Confidence](#c) · [Confidence level](#c) · [Dependency](#d) · [Domain](#d) · [Entity](#e) · [Entity tier](#e) · [Flow](#f) · [Knowledge tier](#k) · [Region](#r) · [Repo](#r) · [Scope kind](#s) · [Scope value](#s) · [URN](#u)
 
 ### Roles (agents)
 [`AgentRuntime`](#a) · [`AgentStateBackend`](#a) · [Clarifier](#c) · [Confluence agent](#c) · [Coordinator](#c) · [Discussion agent](#d) · [Executor](#e) · [GitHub agent](#g) · [Intent router](#i) · [Jira agent](#j) · [Plan agent](#p) · [Repo agent](#r) · [Researcher](#r) · [Router (chat)](#r) · [Router (intent)](#r) · [Slack agent](#s) · [Synthesizer (chat)](#s) · [Synthesizer (collaboration)](#s) · [Triage](#t)
@@ -35,13 +35,13 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 ## A
 
-**Action layer.** The "do" side of Bifrost — the code that turns a user intent into an end-to-end coding change. Lives in `src/bifrost/actions/`. Anchored by the four-step loop ([Discuss](#d) → [Plan](#p) → [Execute](#e) → [Verify](#v)) running inside one or more phases of a [Task](#t).
+**Action layer.** The "do" side of OrgBrain — the code that turns a user intent into an end-to-end coding change. Lives in `src/orgbrain/actions/`. Anchored by the four-step loop ([Discuss](#d) → [Plan](#p) → [Execute](#e) → [Verify](#v)) running inside one or more phases of a [Task](#t).
 *Where you encounter it.* `/tasks/:id` page; intent router; plan agent; executor; verifier.
 
-**`AgentRuntime`.** Abstract interface in `src/bifrost/agents/` that lets the action layer and research coordinator call into a Claude session. Track A's implementation is the `claude -p` subprocess client; Track B's implementation will be the Anthropic Managed Agents API. Higher layers should not depend on which is in use.
+**`AgentRuntime`.** Abstract interface in `src/orgbrain/agents/` that lets the action layer and research coordinator call into a Claude session. Track A's implementation is the `claude -p` subprocess client; Track B's implementation will be the Anthropic Managed Agents API. Higher layers should not depend on which is in use.
 *Don't confuse with.* [`AgentStateBackend`](#a) — runtime is *how to call*, backend is *where memory is stored*.
 
-**`AgentStateBackend`.** Abstract interface in `src/bifrost/storage/backend.py` for persisting an agent's working memory (intermediate text, partial reasoning). Track A backs it with `knowledge_text_cache`; Track B will back it with Anthropic Memory Stores. Drop-in.
+**`AgentStateBackend`.** Abstract interface in `src/orgbrain/storage/backend.py` for persisting an agent's working memory (intermediate text, partial reasoning). Track A backs it with `knowledge_text_cache`; Track B will back it with Anthropic Memory Stores. Drop-in.
 *Don't confuse with.* [`AgentRuntime`](#a).
 
 **Archive (handover doc).** Soft-archival — non-NULL `archived_at` column on the row, on-disk file untouched. Hidden from the default list view. Restoring is an `UPDATE archived_at = NULL`.
@@ -64,13 +64,13 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Belief DAG.** The directed acyclic graph formed by `task_artifacts` + `task_assumptions` + `task_assumption_uses`. Lets the system invalidate downstream artifacts cleanly when an assumption is retracted.
 
-**Bifrost.** The platform itself. The naming refers to the bridge between the structured world of code and the unstructured world of human discussion — the rainbow bridge in Norse mythology. Every external system (Jira, Slack, Confluence, GitHub) is one footing of the bridge; the agent runtime is the span.
+**OrgBrain.** The platform itself, formerly named Bifrost. It is one memory of how an organisation's code fits together, built from the repos and from the systems around them (Jira, Slack, Confluence, GitHub), and the agent runtime answers questions from it.
 
 **Brief.** Two senses (commonly conflated — be careful):
 1. **Action layer (legacy).** Pre-rename name for what is now a [Task](#t). Every `brief_*` table and column was renamed to `task_*`. The codebase no longer uses this term; it persists only in older history.
-2. **Collaboration.** The final artifact a collaboration session produces — a Markdown document the requester can take to the owning team. Stored in `collab_artifacts` with `kind=final_brief`. Source: `src/bifrost/collaboration/synthesizer.py`.
+2. **Collaboration.** The final artifact a collaboration session produces — a Markdown document the requester can take to the owning team. Stored in `collab_artifacts` with `kind=final_brief`. Source: `src/orgbrain/collaboration/synthesizer.py`.
 
-*Don't confuse with.* This is the most overloaded term in Bifrost. When in doubt, qualify as "session brief" or refer to "task" instead of "brief" for the action layer.
+*Don't confuse with.* This is the most overloaded term in OrgBrain. When in doubt, qualify as "session brief" or refer to "task" instead of "brief" for the action layer.
 
 **Bundle.** Short for `ResearchBundle`. The cached output of a chat research turn — the list of per-source reports plus entity snippets — persisted to `conversation_research_state` so a follow-up turn does not have to re-research from scratch.
 
@@ -78,17 +78,17 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 ## C
 
-**Canary.** A known token injected into the user message before an LLM call, then searched for in the *parsed* output. If the canary echoes back inside the structured JSON, the system flags possible prompt injection. See `src/bifrost/extraction/cli_client.py` and `src/bifrost/extraction/prompts.py:build_canary` / `validate_canary`. → See [06 §12](./06-extraction-pipeline.md#12-prompt-safety--canary-tokens).
+**Canary.** A known token injected into the user message before an LLM call, then searched for in the *parsed* output. If the canary echoes back inside the structured JSON, the system flags possible prompt injection. See `src/orgbrain/extraction/cli_client.py` and `src/orgbrain/extraction/prompts.py:build_canary` / `validate_canary`. → See [06 §12](./06-extraction-pipeline.md#12-prompt-safety--canary-tokens).
 
 **Catalog.** The org-wide repo catalog populated by `POST /catalog/sync` paging `gh api orgs/<org>/repos` for each org in `sources.github.orgs`. Lives in `org_repos`. Orthogonal to `repos` (which holds *registered* repos the operator has explicitly opted into).
 *Don't confuse with.* [Repo](#r) — catalog is the universe of all repos in the org; `repos` is the subset the operator has registered for extraction.
 
-**Checkpoint.** An extraction's mid-pipeline cursor. Persisted to `repo_freshness.checkpoint_phase` + `checkpoint_file_cursor`. Lets a partial extraction resume mid-pipeline after a crash. The on-disk `ExtractionCheckpoint` dataclass in `src/bifrost/extraction/checkpoint.py` is the in-memory shape. → See [06 §9](./06-extraction-pipeline.md#9-resumability--extractioncheckpoint).
+**Checkpoint.** An extraction's mid-pipeline cursor. Persisted to `repo_freshness.checkpoint_phase` + `checkpoint_file_cursor`. Lets a partial extraction resume mid-pipeline after a crash. The on-disk `ExtractionCheckpoint` dataclass in `src/orgbrain/extraction/checkpoint.py` is the in-memory shape. → See [06 §9](./06-extraction-pipeline.md#9-resumability--extractioncheckpoint).
 
 **Clarification.** An action-layer Q&A row in `task_clarifications`. Distinct from a [doubt](#d) (collaboration sessions) — same idea, different table because the action layer's clarification model is older and richer (multi-choice options, blocking-state semantics).
 *Don't confuse with.* [Doubt](#d).
 
-**Clarifier.** The agent in `src/bifrost/collaboration/clarifier.py` that runs after each `requester` turn in a collaboration session. Asks 1-3 specific clarifying questions OR signals `requirement_is_concrete=True` to advance the session. → See [07 §1](./07-collaboration-system.md#1-a-realistic-session-end-to-end).
+**Clarifier.** The agent in `src/orgbrain/collaboration/clarifier.py` that runs after each `requester` turn in a collaboration session. Asks 1-3 specific clarifying questions OR signals `requirement_is_concrete=True` to advance the session. → See [07 §1](./07-collaboration-system.md#1-a-realistic-session-end-to-end).
 
 **Clone (`git clone`).** The operator's local working tree of a registered repo. `repos.local_clone_path` records its location. Extraction reads from this. A "fresh clone" means the working tree's HEAD matches the remote's default branch.
 
@@ -96,16 +96,16 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Community.** A Louvain-clustered group of entities, with an LLM-generated summary and a centroid embedding. Lives in `entity_communities`. Powers domain-scoped chat queries that under-retrieve when ranking individual entities.
 
-**Component.** A type of entity — a unit of code (class / module / package) extracted in [Phase D](#p) of the pipeline. URN form `bifrost:repo:foo/bar:component:auth.controller`.
+**Component.** A type of entity — a unit of code (class / module / package) extracted in [Phase D](#p) of the pipeline. URN form `orgbrain:repo:foo/bar:component:auth.controller`.
 
 **Confidence.** A float in [0.0, 1.0] on every entity, relationship, and assumption. Stored alongside a `confidence_level` enum.
 *Don't confuse with.* [Confidence level](#c) — confidence is the float, level is the enum bucket.
 
 **Confidence level.** Enum on entities and relationships: `confirmed` / `inferred` / `stale` / `uncertain` / `unknown` / `conflicting`. Authoritative definition in S3.
 
-**Confluence agent.** A research sub-agent (`src/bifrost/research/confluence_agent.py`) that wraps the Atlassian MCP server via `claude -p` calls with `inherit_user_mcp=True`. Reads the cache (`confluence_pages`) first, falls back to live MCP only on miss.
+**Confluence agent.** A research sub-agent (`src/orgbrain/research/confluence_agent.py`) that wraps the Atlassian MCP server via `claude -p` calls with `inherit_user_mcp=True`. Reads the cache (`confluence_pages`) first, falls back to live MCP only on miss.
 
-**Coordinator.** The chat-side orchestrator (`src/bifrost/research/coordinator.py:ResearchCoordinator`) that runs scope-resolution → router → fan-out → synthesis for a chat turn.
+**Coordinator.** The chat-side orchestrator (`src/orgbrain/research/coordinator.py:ResearchCoordinator`) that runs scope-resolution → router → fan-out → synthesis for a chat turn.
 
 **Cost log.** The `llm_cost_log` table. One row per LLM call. → See [10 §4.2](./10-operations.md#42-the-source-table).
 
@@ -119,7 +119,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 1. A type of entity in the knowledge graph — extracted in [Phase F](#p) of the pipeline.
 2. A row in `entity_relationships` with `rel_type` indicating an inter-component relationship.
 
-**Discussion agent.** The action-layer agent in `src/bifrost/actions/discussion_agent.py` that drives the *Discuss* step of a phase — gathers context, surfaces ambiguities, produces a context artifact for the planner to consume.
+**Discussion agent.** The action-layer agent in `src/orgbrain/actions/discussion_agent.py` that drives the *Discuss* step of a phase — gathers context, surfaces ambiguities, produces a context artifact for the planner to consume.
 
 **Domain.** A logical grouping of repos. Each repo belongs to at most one domain (`repos.domain_id`). Examples: "delivery", "platform".
 
@@ -137,7 +137,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 **Entity tier.** A 0-3 small-int on every entity classifying knowledge breadth (broad-to-deep). Tier 0 is a lightweight pointer (mapping); tier 3 is a deeply-extracted full entity. Authoritative definition in F1 §7.1.
 *Don't confuse with.* [Tier](#t) — that entry disambiguates the action-layer "assumption tier" (1-5 provenance grade) from this one (0-3 knowledge breadth).
 
-**Executor.** The action-layer agent in `src/bifrost/actions/executor.py` that drives the *Execute* step of a phase — runs each `task_plans` row's `action_body` in the worktree.
+**Executor.** The action-layer agent in `src/orgbrain/actions/executor.py` that drives the *Execute* step of a phase — runs each `task_plans` row's `action_body` in the worktree.
 
 **Extraction.** The process of running the 7-phase pipeline against a repo to populate the knowledge graph. One row per run in `extraction_tasks`. → See [06](./06-extraction-pipeline.md).
 
@@ -164,7 +164,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 ## G
 
-**GitHub agent.** A research sub-agent (`src/bifrost/research/github_agent.py`) wrapping the GitHub MCP server. Surfaces issues, PRs, and discussions for a repo.
+**GitHub agent.** A research sub-agent (`src/orgbrain/research/github_agent.py`) wrapping the GitHub MCP server. Surfaces issues, PRs, and discussions for a repo.
 
 **Global rule.** A behavioural rule injected into agent system prompts. Stored in `global_rules`. `applies_to` is a Postgres `text[]` of agent kinds.
 
@@ -180,7 +180,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Handover body history.** A row in `handover_body_history`. A pre-overwrite snapshot of a handover doc's body Markdown. Bounded at 20 rows per doc. → See [07 §14](./07-collaboration-system.md#14-v110--audit-timeline--diff-viewer).
 
-**HNSW index.** The pgvector index type used for embeddings. Parameters `m=16, ef_construction=64`, cosine ops. See `src/bifrost/storage/models.py:182-188`.
+**HNSW index.** The pgvector index type used for embeddings. Parameters `m=16, ef_construction=64`, cosine ops. See `src/orgbrain/storage/models.py:182-188`.
 
 ---
 
@@ -190,13 +190,13 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Intent.** The user's original ask, stored as `intent_text` on a Task row. May be augmented by `acceptance_criteria` parsed from the discussion or from the upstream Jira issue.
 
-**Intent router.** The action-layer router (`src/bifrost/actions/intent_router.py`) that classifies a freshly created task — whether it's a research question, a coding task, a documentation update, etc. — and routes to the appropriate sub-agent.
+**Intent router.** The action-layer router (`src/orgbrain/actions/intent_router.py`) that classifies a freshly created task — whether it's a research question, a coding task, a documentation update, etc. — and routes to the appropriate sub-agent.
 
 ---
 
 ## J
 
-**Jira agent.** A research sub-agent (`src/bifrost/research/jira_agent.py`) wrapping the Atlassian MCP for Jira. Reads `jira_issues` cache first.
+**Jira agent.** A research sub-agent (`src/orgbrain/research/jira_agent.py`) wrapping the Atlassian MCP for Jira. Reads `jira_issues` cache first.
 
 ---
 
@@ -214,21 +214,21 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Learning loop.** The continuous-learning cycle that compounds verify outcomes back into the knowledge graph. A verify pass nudges confidences up; a verify fail nudges them down. The audit trail lives in `confidence_deltas`; the admin surface is `/admin/learning`.
 
-**Lifespan.** The FastAPI async lifespan (`src/bifrost/api/app.py:28-131`). Runs once at startup and once at shutdown. See architecture §2.1.
+**Lifespan.** The FastAPI async lifespan (`src/orgbrain/api/app.py:28-131`). Runs once at startup and once at shutdown. See architecture §2.1.
 
-**Loop-back.** The pattern where a doubt that recurs across many collaboration sessions becomes a candidate update to the parent handover doc. The substrate (handover doc) gets enriched by the interaction (sessions). Implemented in `src/bifrost/collaboration/loopback.py`. → See [07 §18](./07-collaboration-system.md#18-end-to-end-loop-back-v13-w2--v14-w2).
+**Loop-back.** The pattern where a doubt that recurs across many collaboration sessions becomes a candidate update to the parent handover doc. The substrate (handover doc) gets enriched by the interaction (sessions). Implemented in `src/orgbrain/collaboration/loopback.py`. → See [07 §18](./07-collaboration-system.md#18-end-to-end-loop-back-v13-w2--v14-w2).
 
 ---
 
 ## M
 
-**Manifest.** The per-repo metadata file Bifrost reads for ownership and runtime settings: Backstage `catalog-info.yaml`, `CODEOWNERS`, or a YAML file mapped by the `generic_yaml` provider. Providers are listed in `manifest.providers` in `bifrost.yaml`. Parsed into `repo_ownership` (with the merged result in `raw_manifest`).
+**Manifest.** The per-repo metadata file OrgBrain reads for ownership and runtime settings: Backstage `catalog-info.yaml`, `CODEOWNERS`, or a YAML file mapped by the `generic_yaml` provider. Providers are listed in `manifest.providers` in `orgbrain.yaml`. Parsed into `repo_ownership` (with the merged result in `raw_manifest`).
 
 **Manifest hash.** Sha256 of `(sorted source URNs + extraction timestamps)` on a handover doc. Stale-detection signal: when the underlying sources change, the hash changes, and the handover is flagged stale.
 
-**Matching.** The phase at the start of a collaboration session that finds the handover docs the session is grounded in. Hybrid TSVECTOR + pgvector lookup; `src/bifrost/collaboration/matching.py`.
+**Matching.** The phase at the start of a collaboration session that finds the handover docs the session is grounded in. Hybrid TSVECTOR + pgvector lookup; `src/orgbrain/collaboration/matching.py`.
 
-**MCP server.** Model Context Protocol server. Subprocesses of the Claude CLI that expose external tools (Atlassian, Slack, GitHub). Bifrost does not run MCP servers itself — it spawns the CLI with `inherit_user_mcp=True` and the CLI inherits the operator's authenticated MCP servers.
+**MCP server.** Model Context Protocol server. Subprocesses of the Claude CLI that expose external tools (Atlassian, Slack, GitHub). OrgBrain does not run MCP servers itself — it spawns the CLI with `inherit_user_mcp=True` and the CLI inherits the operator's authenticated MCP servers.
 
 **MCP tool.** A specific tool exposed by an MCP server (e.g. `mcp__atlassian__searchJiraIssuesUsingJql`). Called from inside the spawned Claude CLI's reasoning loop.
 
@@ -254,26 +254,26 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Parent path (handover).** The canonical parent slot a handover doc takes in the doc tree. The DAG (a feature can belong to multiple domains) is collapsed to a tree by picking one parent; cross-references to non-parent scopes are links, not parents.
 
-**pgvector.** The Postgres extension providing the `Vector(N)` column type and ANN indexes (HNSW + IVFFlat). Bifrost uses `Vector(384)` and HNSW.
+**pgvector.** The Postgres extension providing the `Vector(N)` column type and ANN indexes (HNSW + IVFFlat). OrgBrain uses `Vector(384)` and HNSW.
 
 **Phase (extraction).** See *[Extraction phase](#e)*.
 
 **Phase (task).** A unit inside a Task. Each task has an ordered list of phases; each phase runs the four-step loop. See `task_phases`.
 *Don't confuse with.* [Extraction phase](#e) — that is the A-I letter sequence; this is an integer ordinal within a task.
 
-**Plan agent.** The action-layer agent (`src/bifrost/actions/plan_agent.py`) that drives the *Plan* step of a phase. Drafts and revises the plan artifact, then parses it into `task_plans` rows.
+**Plan agent.** The action-layer agent (`src/orgbrain/actions/plan_agent.py`) that drives the *Plan* step of a phase. Drafts and revises the plan artifact, then parses it into `task_plans` rows.
 
 **Plan key.** The stable identifier of a `task_plans` row within a phase, e.g. `P1-T3` (Phase 1, Task 3).
 
 **Primary repo.** A repo with `is_primary=true` (or the manifest sets `is_primary`). The canonical answer for chat queries when a domain has multiple repos.
 
-**Prompt safety.** Helpers in `src/bifrost/actions/_prompt_safety.py` that wrap untrusted text in a clearly-delimited boundary so the LLM treats it as data rather than instruction. Used everywhere a user-supplied or external-source string ends up in a prompt.
+**Prompt safety.** Helpers in `src/orgbrain/actions/_prompt_safety.py` that wrap untrusted text in a clearly-delimited boundary so the LLM treats it as data rather than instruction. Used everywhere a user-supplied or external-source string ends up in a prompt.
 
 ---
 
 ## Q
 
-**Quick action.** The action-layer's fast-path for trivial requests that do not need full Discuss / Plan / Execute / Verify. See `src/bifrost/actions/quick.py`. Exits the loop early when the intent router classifies a task as quick.
+**Quick action.** The action-layer's fast-path for trivial requests that do not need full Discuss / Plan / Execute / Verify. See `src/orgbrain/actions/quick.py`. Exits the loop early when the intent router classifies a task as quick.
 
 ---
 
@@ -283,7 +283,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Repo.** A registered source repository. Row in `repos`. URN-keyed. Distinct from an *[org repo](#o)* (a row in `org_repos`).
 
-**Repo agent.** A research sub-agent (`src/bifrost/research/repo_agent.py`) that searches a single cloned repo for relevant code snippets, given a question and a scope.
+**Repo agent.** A research sub-agent (`src/orgbrain/research/repo_agent.py`) that searches a single cloned repo for relevant code snippets, given a question and a scope.
 
 **Repo freshness.** The `repo_freshness` row tracking a repo's extraction state — last-indexed commit, files analysed, current `freshness_state`, mid-pipeline checkpoint cursors.
 
@@ -295,7 +295,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Retracted (assumption).** State `retracted` on `task_assumptions`. Set when a downstream artifact contradicts the assumption. `retracted_by_artifact_id` records which artifact retracted it.
 
-**Router (chat).** The Haiku-grade ranker (`src/bifrost/research/router.py:rank_repos`) that picks the top-K repos relevant to a question before fan-out.
+**Router (chat).** The Haiku-grade ranker (`src/orgbrain/research/router.py:rank_repos`) that picks the top-K repos relevant to a question before fan-out.
 *Don't confuse with.* [Router (intent)](#r).
 
 **Router (intent).** See *[Intent router](#i)*.
@@ -312,7 +312,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Section (handover).** One of the canonical sections of a handover doc: executive summary, ownership map, architecture, critical flows, dependencies, KTLO surface, domain entities, active work, documentation index, collaboration playbook, glossary. Section presence is adaptive to scope kind.
 
-**Secret scanner.** `src/bifrost/extraction/secrets.py`. Runs over file content before extraction. Redacts detected secrets in-place; emits `RedactionEvent`s for audit.
+**Secret scanner.** `src/orgbrain/extraction/secrets.py`. Runs over file content before extraction. Redacts detected secrets in-place; emits `RedactionEvent`s for audit.
 
 **Service tier.** A column on `repo_ownership` (and `org_repos`) classifying a service's criticality (`tier-0` / `tier-1` / etc.). Sourced from the repo manifest.
 
@@ -324,9 +324,9 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 
 **Skim search.** A chat fallback when the question can't be answered from registered repos alone. Searches `org_repos` and surfaces candidate repos to register.
 
-**Slack agent.** A research sub-agent (`src/bifrost/research/slack_agent.py`) wrapping the Slack MCP. Looks up channel discussions for a repo (channel resolved via `repo_ownership.slack_channel`).
+**Slack agent.** A research sub-agent (`src/orgbrain/research/slack_agent.py`) wrapping the Slack MCP. Looks up channel discussions for a repo (channel resolved via `repo_ownership.slack_channel`).
 
-**SSE.** Server-Sent Events. The streaming push channel from backend to UI for extraction progress, chat tokens, and collaboration session updates. See `src/bifrost/api/sse.py`.
+**SSE.** Server-Sent Events. The streaming push channel from backend to UI for extraction progress, chat tokens, and collaboration session updates. See `src/orgbrain/api/sse.py`.
 
 **Stale.** Freshness state meaning "the underlying source has changed since we last refreshed." Multiple shades: `stale` / `very_stale` / `stale_due_to_children` (handover docs only).
 
@@ -337,7 +337,7 @@ Jump to a thematic group. Within each cluster terms remain alphabetised, but the
 **Synthesizer (chat).** The final agent in the chat coordinator. Takes the per-source reports and produces a streamed answer with citations.
 *Don't confuse with.* [Synthesizer (collaboration)](#s).
 
-**Synthesizer (collaboration).** The agent (`src/bifrost/collaboration/synthesizer.py`) that runs once when a session reaches `resolved` and produces the final brief Markdown.
+**Synthesizer (collaboration).** The agent (`src/orgbrain/collaboration/synthesizer.py`) that runs once when a session reaches `resolved` and produces the final brief Markdown.
 
 ---
 
@@ -362,7 +362,7 @@ The codebase is unambiguous — `extraction_tasks` and `tasks` are distinct tabl
 
 **Track B.** The future implementation. Anthropic Managed Agents + Memory Stores + MCP. Gated on Research Preview access. Drop-in by design.
 
-**Triage.** Phase A of the extraction pipeline. Haiku-grade file classification — picks which files are worth full extraction and which are skippable (vendored code, generated stubs, etc.). `src/bifrost/extraction/triage.py`. → See [06 §2](./06-extraction-pipeline.md#2-phase-a--triage-haiku).
+**Triage.** Phase A of the extraction pipeline. Haiku-grade file classification — picks which files are worth full extraction and which are skippable (vendored code, generated stubs, etc.). `src/orgbrain/extraction/triage.py`. → See [06 §2](./06-extraction-pipeline.md#2-phase-a--triage-haiku).
 
 **TSVECTOR.** Postgres full-text search vector. Used on `handover_docs.search_tsv` (Postgres-generated, GIN-indexed, used with `@@` and `ts_rank` for keyword search).
 
@@ -370,7 +370,7 @@ The codebase is unambiguous — `extraction_tasks` and `tasks` are distinct tabl
 
 ## U
 
-**URN.** Bifrost's canonical identifier scheme. Form `bifrost:org:{orgId}:{kind}:{kind-specific-id}`. Every Source, SourceObject, Repo, Domain, Entity, Relationship, etc. has one. Used as the unique key on most tables.
+**URN.** OrgBrain's canonical identifier scheme. Form `orgbrain:org:{orgId}:{kind}:{kind-specific-id}`. Every Source, SourceObject, Repo, Domain, Entity, Relationship, etc. has one. Used as the unique key on most tables.
 
 ---
 
@@ -398,8 +398,8 @@ The codebase is unambiguous — `extraction_tasks` and `tasks` are distinct tabl
 ## What's not in this glossary
 
 - Anything that is a pure UI concept (button labels, page sections) — those are covered by the operational chapters.
-- API request/response field names — read `src/bifrost/api/schemas/` directly when constructing requests.
-- Spec-only terms that do not appear in code (e.g. "Specialist" from F1 §4 — Bifrost code uses "agent" exclusively).
+- API request/response field names — read `src/orgbrain/api/schemas/` directly when constructing requests.
+- Spec-only terms that do not appear in code (e.g. "Specialist" from F1 §4 — OrgBrain code uses "agent" exclusively).
 - Anthropic-platform terms (Sonnet, Haiku, Memory Store, Managed Agent) — Anthropic's documentation is the authoritative source.
 
 ---

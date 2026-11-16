@@ -22,9 +22,9 @@ import ast
 import subprocess
 import sys
 
-COORDINATOR = "src/bifrost/research/coordinator.py"
-POLICY = "src/bifrost/research/confidence_policy.py"
-DIAGRAMS = "src/bifrost/research/diagram_standards.py"
+COORDINATOR = "src/orgbrain/research/coordinator.py"
+POLICY = "src/orgbrain/research/confidence_policy.py"
+DIAGRAMS = "src/orgbrain/research/diagram_standards.py"
 PROMPT_NAME = "_SYNTHESIS_SYSTEM_PROMPT"
 # coordinator.py imports these two blocks and appends them to the prompt.
 IMPORTED = {"CODE_IS_TRUTH_POLICY": POLICY, "DIAGRAM_RULES_BLOCK": DIAGRAMS}

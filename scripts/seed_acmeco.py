@@ -8,10 +8,10 @@ reproducible and historical questions have something to find.
 
 Usage: ``uv run python scripts/seed_acmeco.py [TARGET] [--register] [--extract]``.
 TARGET defaults to ``$TMPDIR/acmeco``. ``--register`` also runs
-``bifrost repo add <abs path>`` for each repo; extraction git-clones the
+``orgbrain repo add <abs path>`` for each repo; extraction git-clones the
 registered URL, so each path must be (and is) a real git repo. Registering
 does not extract: ``--extract`` (needs ``--register``) then runs
-``bifrost extract run <id>`` for each repo and fails on the first failure.
+``orgbrain extract run <id>`` for each repo and fails on the first failure.
 """
 
 from __future__ import annotations
@@ -271,8 +271,8 @@ def seed_repo(name: str, target_root: Path) -> Path:
 
 
 def _repo_ids(names: list[str]) -> dict[str, str]:
-    # `bifrost repo add` ignores `-o json`, so read the ids back from the API.
-    from bifrost.cli.commands._http import get_client, unwrap
+    # `orgbrain repo add` ignores `-o json`, so read the ids back from the API.
+    from orgbrain.cli.commands._http import get_client, unwrap
 
     with get_client() as client:
         registered = {r["name"]: r["id"] for r in unwrap(client.get("/repos"))}
@@ -294,17 +294,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--register",
         action="store_true",
-        help="run `bifrost repo add <abs path>` for each seeded repo",
+        help="run `orgbrain repo add <abs path>` for each seeded repo",
     )
     parser.add_argument(
         "--extract",
         action="store_true",
-        help="after --register, run `bifrost extract run <id>` for each repo",
+        help="after --register, run `orgbrain extract run <id>` for each repo",
     )
     parser.add_argument(
-        "--bifrost-cmd",
-        default="bifrost",
-        help="bifrost CLI invocation, e.g. 'uv run bifrost' (default: bifrost)",
+        "--orgbrain-cmd",
+        default="orgbrain",
+        help="orgbrain CLI invocation, e.g. 'uv run orgbrain' (default: orgbrain)",
     )
     args = parser.parse_args(argv)
     if args.extract and not args.register:
@@ -318,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"seeded {path}")
 
     if args.register:
-        cmd = args.bifrost_cmd.split()
+        cmd = args.orgbrain_cmd.split()
         for path in seeded:
             subprocess.run([*cmd, "repo", "add", str(path)], check=True)
         if args.extract:

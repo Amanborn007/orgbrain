@@ -1,4 +1,4 @@
-"""bifrost.yaml configuration: loading, precedence, defaults, validation, helpers."""
+"""orgbrain.yaml configuration: loading, precedence, defaults, validation, helpers."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import (
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import (
     ConventionsConfig,
     IdentityConfig,
     JiraSourceConfig,
     ManifestConfig,
     McpConfig,
 )
-from bifrost.errors import ConfigError
+from orgbrain.errors import ConfigError
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -31,25 +31,25 @@ EXPECTED_MCP_PREFIXES = {
 
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Run in an empty CWD with no BIFROST_CONFIG and no nested BIFROST_* overrides."""
+    """Run in an empty CWD with no ORGBRAIN_CONFIG and no nested ORGBRAIN_* overrides."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
     for key in list(os.environ):
         if key.startswith(
             (
-                "BIFROST_ORG",
-                "BIFROST_SOURCES",
-                "BIFROST_MCP",
-                "BIFROST_MANIFEST",
-                "BIFROST_LINKING",
-                "BIFROST_CONVENTIONS",
-                "BIFROST_IDENTITY",
+                "ORGBRAIN_ORG",
+                "ORGBRAIN_SOURCES",
+                "ORGBRAIN_MCP",
+                "ORGBRAIN_MANIFEST",
+                "ORGBRAIN_LINKING",
+                "ORGBRAIN_CONVENTIONS",
+                "ORGBRAIN_IDENTITY",
             )
         ):
             monkeypatch.delenv(key)
 
 
-def _write(tmp_path: Path, text: str, name: str = "bifrost.yaml") -> Path:
+def _write(tmp_path: Path, text: str, name: str = "orgbrain.yaml") -> Path:
     path = tmp_path / name
     path.write_text(text, encoding="utf-8")
     return path
@@ -58,48 +58,50 @@ def _write(tmp_path: Path, text: str, name: str = "bifrost.yaml") -> Path:
 # ── Loading ──────────────────────────────────────────────────────────
 
 
-def test_yaml_loads_via_bifrost_config_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_yaml_loads_via_orgbrain_config_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     path = _write(
         tmp_path,
         "org:\n  name: widgetco\nsources:\n  github:\n    host: ghe.example.com\n",
         "custom.yaml",
     )
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
+    s = OrgBrainSettings()
     assert s.org.name == "widgetco"
     assert s.sources.github.host == "ghe.example.com"
 
 
-def test_empty_bifrost_config_means_no_file(
+def test_empty_orgbrain_config_means_no_file(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _write(tmp_path, "org:\n  name: ignored\n")
-    monkeypatch.setenv("BIFROST_CONFIG", "")
-    assert BifrostSettings().org.name == ""
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
+    assert OrgBrainSettings().org.name == ""
 
 
 def test_missing_configured_path_raises_config_error(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     missing = tmp_path / "nope.yaml"
-    monkeypatch.setenv("BIFROST_CONFIG", str(missing))
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(missing))
     with pytest.raises(ConfigError, match="nope.yaml"):
-        BifrostSettings()
+        OrgBrainSettings()
 
 
-def test_cwd_bifrost_yaml_used_when_env_unset(
+def test_cwd_orgbrain_yaml_used_when_env_unset(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     _write(tmp_path, "org:\n  name: from-cwd\n")
-    monkeypatch.delenv("BIFROST_CONFIG")
-    assert BifrostSettings().org.name == "from-cwd"
+    monkeypatch.delenv("ORGBRAIN_CONFIG")
+    assert OrgBrainSettings().org.name == "from-cwd"
 
 
 def test_no_file_and_env_unset_uses_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("BIFROST_CONFIG")
-    assert BifrostSettings().org.name == ""
+    monkeypatch.delenv("ORGBRAIN_CONFIG")
+    assert OrgBrainSettings().org.name == ""
 
 
 # ── Precedence: init kwargs > env > .env > YAML > defaults ──────────
@@ -107,16 +109,16 @@ def test_no_file_and_env_unset_uses_defaults(
 
 def test_precedence_chain(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     path = _write(tmp_path, "org:\n  name: yaml\n", "custom.yaml")
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
-    assert BifrostSettings().org.name == "yaml"
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
+    assert OrgBrainSettings().org.name == "yaml"
 
-    (tmp_path / ".env").write_text("BIFROST_ORG__NAME=dotenv\n", encoding="utf-8")
-    assert BifrostSettings().org.name == "dotenv"
+    (tmp_path / ".env").write_text("ORGBRAIN_ORG__NAME=dotenv\n", encoding="utf-8")
+    assert OrgBrainSettings().org.name == "dotenv"
 
-    monkeypatch.setenv("BIFROST_ORG__NAME", "env")
-    assert BifrostSettings().org.name == "env"
+    monkeypatch.setenv("ORGBRAIN_ORG__NAME", "env")
+    assert OrgBrainSettings().org.name == "env"
 
-    assert BifrostSettings(org={"name": "init"}).org.name == "init"
+    assert OrgBrainSettings(org={"name": "init"}).org.name == "init"
 
 
 def test_nested_env_overrides_yaml_and_keeps_siblings(
@@ -127,17 +129,17 @@ def test_nested_env_overrides_yaml_and_keeps_siblings(
         "sources:\n  jira:\n    base_url: https://yaml.example.com\n  github:\n    host: ghe.example.com\n",
         "custom.yaml",
     )
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__BASE_URL", "https://env.example.com")
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", "https://env.example.com")
+    s = OrgBrainSettings()
     assert s.sources.jira.base_url == "https://env.example.com"
     assert s.sources.github.host == "ghe.example.com"
 
 
 def test_flat_env_vars_still_work(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_LOG_LEVEL", "DEBUG")
-    monkeypatch.setenv("BIFROST_MAX_CONCURRENT_CLI_CALLS", "7")
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_LOG_LEVEL", "DEBUG")
+    monkeypatch.setenv("ORGBRAIN_MAX_CONCURRENT_CLI_CALLS", "7")
+    s = OrgBrainSettings()
     assert s.log_level == "DEBUG"
     assert s.max_concurrent_cli_calls == 7
 
@@ -146,7 +148,7 @@ def test_flat_env_vars_still_work(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_section_defaults() -> None:
-    s = BifrostSettings()
+    s = OrgBrainSettings()
     assert s.org.name == ""
     assert s.sources.github.host == "github.com"
     assert s.sources.github.orgs == []
@@ -158,11 +160,11 @@ def test_section_defaults() -> None:
 
 
 def test_mcp_tool_prefix_defaults() -> None:
-    assert BifrostSettings().mcp.tool_prefix == EXPECTED_MCP_PREFIXES
+    assert OrgBrainSettings().mcp.tool_prefix == EXPECTED_MCP_PREFIXES
 
 
 def test_conventions_defaults() -> None:
-    c = BifrostSettings().conventions
+    c = OrgBrainSettings().conventions
     assert c.jira_project_key == "{TEAM}"
     assert c.confluence_space_key == "{TEAM}"
     assert c.slack_channel == "#{team}"
@@ -170,7 +172,7 @@ def test_conventions_defaults() -> None:
 
 
 def test_manifest_section_shape() -> None:
-    m = BifrostSettings().manifest
+    m = OrgBrainSettings().manifest
     assert m.config_globs == [
         "config/*.env",
         ".env.example",
@@ -191,7 +193,7 @@ def test_manifest_section_shape() -> None:
 
 
 def test_mutable_defaults_are_not_shared() -> None:
-    a, b = BifrostSettings(), BifrostSettings()
+    a, b = OrgBrainSettings(), OrgBrainSettings()
     a.sources.github.orgs.append("x")
     assert b.sources.github.orgs == []
 
@@ -221,9 +223,9 @@ def test_invalid_yaml_value_fails_settings_construction(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     path = _write(tmp_path, "identity:\n  provider: ldap\n", "custom.yaml")
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
     with pytest.raises(ValidationError):
-        BifrostSettings()
+        OrgBrainSettings()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -263,15 +265,15 @@ def test_conventions_model_standalone() -> None:
 
 
 def test_example_yaml_loads(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_CONFIG", str(REPO_ROOT / "bifrost.example.yaml"))
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(REPO_ROOT / "orgbrain.example.yaml"))
+    s = OrgBrainSettings()
     assert s.mcp.tool_prefix == EXPECTED_MCP_PREFIXES
     assert s.manifest.providers == ["backstage", "codeowners"]
 
 
 def test_acmeco_yaml_loads(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_CONFIG", str(REPO_ROOT / "examples" / "acmeco" / "bifrost.yaml"))
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(REPO_ROOT / "examples" / "acmeco" / "orgbrain.yaml"))
+    s = OrgBrainSettings()
     assert s.org.name == "acmeco"
     assert s.sources.github.orgs == ["acmeco"]
     assert s.sources.jira.base_url == "https://acmeco.atlassian.net"

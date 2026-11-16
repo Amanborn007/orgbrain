@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from bifrost.actions.review_queue import build_review_queue
+from orgbrain.actions.review_queue import build_review_queue
 
 
 class _Rows:

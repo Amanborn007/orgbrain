@@ -2,7 +2,7 @@
  * Wiring test for the blast-radius client (S6 dependency-impact).
  *
  * Confirms `getBlastRadius` POSTs to /dependencies/blast-radius with
- * the seed urn + options in the body, and unwraps the BifrostEnvelope
+ * the seed urn + options in the body, and unwraps the OrgBrainEnvelope
  * `.data` payload. The endpoint itself is exercised separately; this
  * guards the client contract so the Knowledge UI affordance keeps
  * hitting the right route with the right shape.
@@ -12,14 +12,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getBlastRadius, type BlastRadiusResponse } from "./api";
 
 const SAMPLE: BlastRadiusResponse = {
-  seed_urn: "urn:bifrost:repo/svc/component/Foo",
+  seed_urn: "urn:orgbrain:repo/svc/component/Foo",
   seed_name: "Foo",
   direction: "downstream",
   depth: 2,
   impacted_count: 1,
   impacts: [
     {
-      urn: "urn:bifrost:repo/svc/component/Bar",
+      urn: "urn:orgbrain:repo/svc/component/Bar",
       name: "Bar",
       entity_type: "component",
       repo_id: "r1",
@@ -31,9 +31,9 @@ const SAMPLE: BlastRadiusResponse = {
       qualified_name: "svc.bar.Bar",
       path: [
         {
-          from_urn: "urn:bifrost:repo/svc/component/Foo",
+          from_urn: "urn:orgbrain:repo/svc/component/Foo",
           from_name: "Foo",
-          to_urn: "urn:bifrost:repo/svc/component/Bar",
+          to_urn: "urn:orgbrain:repo/svc/component/Bar",
           to_name: "Bar",
           rel_type: "calls",
           confidence: 0.8,
@@ -50,7 +50,7 @@ const SAMPLE: BlastRadiusResponse = {
   nodes: [
     {
       id: "n1",
-      urn: "urn:bifrost:repo/svc/component/Bar",
+      urn: "urn:orgbrain:repo/svc/component/Bar",
       name: "Bar",
       entity_type: "component",
       repo_id: "r1",
@@ -80,7 +80,7 @@ describe("getBlastRadius", () => {
     } as Response);
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await getBlastRadius("urn:bifrost:repo/svc/component/Foo", {
+    const result = await getBlastRadius("urn:orgbrain:repo/svc/component/Foo", {
       direction: "downstream",
       depth: 2,
     });
@@ -91,7 +91,7 @@ describe("getBlastRadius", () => {
     expect(init?.method).toBe("POST");
     const body = JSON.parse(String(init?.body));
     expect(body).toMatchObject({
-      urn: "urn:bifrost:repo/svc/component/Foo",
+      urn: "urn:orgbrain:repo/svc/component/Foo",
       direction: "downstream",
       depth: 2,
     });

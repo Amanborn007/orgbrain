@@ -27,10 +27,10 @@ import pytest
 from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bifrost.research.bundle_cache import BundleSource, ResearchBundle
-from bifrost.research.coordinator import _build_synthesis_user_message
-from bifrost.research.subgraph_hydrate import hydrate_prior_subgraph
-from bifrost.storage.models import Entity, EntityRelationship, Repo
+from orgbrain.research.bundle_cache import BundleSource, ResearchBundle
+from orgbrain.research.coordinator import _build_synthesis_user_message
+from orgbrain.research.subgraph_hydrate import hydrate_prior_subgraph
+from orgbrain.storage.models import Entity, EntityRelationship, Repo
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ async def _delete_committed_rows(engine):
 async def _make_repo(session: AsyncSession, *, name: str) -> Repo:
     repo = Repo(
         id=uuid.uuid4(),
-        urn=f"urn:bifrost:repo:{name}",
+        urn=f"urn:orgbrain:repo:{name}",
         name=name,
         url=f"https://github.com/test/{name}",
     )
@@ -88,7 +88,7 @@ async def _make_entity(
         metadata["source_file"] = source_file
     e = Entity(
         id=uuid.uuid4(),
-        urn=f"urn:bifrost:{entity_type}:{repo.name}::{short_name}",
+        urn=f"urn:orgbrain:{entity_type}:{repo.name}::{short_name}",
         name=short_name,
         entity_type=entity_type,
         scope_repo_id=repo.id,

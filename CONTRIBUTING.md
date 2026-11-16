@@ -1,4 +1,4 @@
-# Contributing to Bifrost
+# Contributing to OrgBrain
 
 ## Run the checks only
 
@@ -11,7 +11,7 @@ make migrate
 make test
 ```
 
-`docker compose` creates only the `bifrost` database. The test fixtures create `bifrost_test` if it is missing, and refuse any database whose name does not contain `test`. `uv sync` creates `.venv` in the repo root. pyright reads `venvPath = "."` and `venv = ".venv"` from `pyproject.toml`, so a venv elsewhere fails `tests/e2e/test_quality_gates.py::test_type_safety_gate`. The leak gate needs no database. Without `LEAK_DENYLIST` set it skips its one term test and runs the other four: the secret scan of tracked files, a check of the term-list loader, a check of the word-prefix matcher and a check that its exemptions are tracked files:
+`docker compose` creates only the `orgbrain` database. The test fixtures create `orgbrain_test` if it is missing, and refuse any database whose name does not contain `test`. `uv sync` creates `.venv` in the repo root. pyright reads `venvPath = "."` and `venv = ".venv"` from `pyproject.toml`, so a venv elsewhere fails `tests/e2e/test_quality_gates.py::test_type_safety_gate`. The leak gate needs no database. Without `LEAK_DENYLIST` set it skips its one term test and runs the other four: the secret scan of tracked files, a check of the term-list loader, a check of the word-prefix matcher and a check that its exemptions are tracked files:
 
 ```bash
 uv run python -m pytest -q -p no:cacheprovider --noconftest tests/test_leak_gate.py
@@ -21,7 +21,7 @@ uv run python -m pytest -q -p no:cacheprovider --noconftest tests/test_leak_gate
 
 Follow [RUNNING.md](RUNNING.md). For tests you need two things: `uv sync --all-extras` and Postgres with pgvector running (`docker compose up -d`).
 
-The backend tests connect to `postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test`. Set `TEST_DATABASE_URL` to use a different database. If its role cannot create databases, create the database yourself first. Without a reachable Postgres most of the suite errors at collection or setup.
+The backend tests connect to `postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test`. Set `TEST_DATABASE_URL` to use a different database. If its role cannot create databases, create the database yourself first. Without a reachable Postgres most of the suite errors at collection or setup.
 
 ## Run the checks
 
@@ -33,7 +33,7 @@ cd ui && npx vitest run
 pre-commit install          # once; runs the same checks on commit
 ```
 
-`npx tsc -b` reports 27 type errors, so `npm run build` fails and is not in this list. CI runs the same set, with `npx tsc --noEmit` as its UI typecheck, which checks no source file because `ui/tsconfig.json` has `"files": []`. It also runs a pyright gate (`scripts/pyright_gate.py`), an import of every `bifrost.*` module, a shadow-import audit (`scripts/pr-stability-check.sh`), `pip-audit`, `npm audit`, an Alembic single-head check and a gate that rejects browser-automation packages.
+`npx tsc -b` reports 27 type errors, so `npm run build` fails and is not in this list. CI runs the same set, with `npx tsc --noEmit` as its UI typecheck, which checks no source file because `ui/tsconfig.json` has `"files": []`. It also runs a pyright gate (`scripts/pyright_gate.py`), an import of every `orgbrain.*` module, a shadow-import audit (`scripts/pr-stability-check.sh`), `pip-audit`, `npm audit`, an Alembic single-head check and a gate that rejects browser-automation packages.
 
 ## Write the test first
 

@@ -1,7 +1,7 @@
 """Tests for the fail-fast config gate.
 
 The gate folds three previously-scattered ``os.getenv`` knobs into bounded
-``BifrostSettings`` fields and added ``validate_startup()`` as the single
+``OrgBrainSettings`` fields and added ``validate_startup()`` as the single
 boot-time config gate. The contract these lock:
 
   * the new knobs read from the validated surface (with bounds),
@@ -14,13 +14,13 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.cli.config import (
-    BifrostSettings,
+from orgbrain.cli.config import (
+    OrgBrainSettings,
     get_settings,
     reset_settings,
     validate_startup,
 )
-from bifrost.errors import ConfigError
+from orgbrain.errors import ConfigError
 
 
 @pytest.fixture(autouse=True)
@@ -34,17 +34,17 @@ def _reset_settings():
 
 
 def test_new_knob_defaults() -> None:
-    s = BifrostSettings()
+    s = OrgBrainSettings()
     assert s.auto_extract_wait_s == 90.0
     assert s.cache_sim_threshold == 0.85
     assert s.doubt_cluster_threshold == 0.85
 
 
 def test_knobs_read_from_env(monkeypatch) -> None:
-    monkeypatch.setenv("BIFROST_AUTO_EXTRACT_WAIT_S", "30")
-    monkeypatch.setenv("BIFROST_CACHE_SIM_THRESHOLD", "0.7")
-    monkeypatch.setenv("BIFROST_DOUBT_CLUSTER_THRESHOLD", "0.6")
-    s = BifrostSettings()
+    monkeypatch.setenv("ORGBRAIN_AUTO_EXTRACT_WAIT_S", "30")
+    monkeypatch.setenv("ORGBRAIN_CACHE_SIM_THRESHOLD", "0.7")
+    monkeypatch.setenv("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "0.6")
+    s = OrgBrainSettings()
     assert s.auto_extract_wait_s == 30.0
     assert s.cache_sim_threshold == 0.7
     assert s.doubt_cluster_threshold == 0.6
@@ -53,17 +53,17 @@ def test_knobs_read_from_env(monkeypatch) -> None:
 @pytest.mark.parametrize(
     ("env", "value"),
     [
-        ("BIFROST_CACHE_SIM_THRESHOLD", "2.0"),  # > 1.0
-        ("BIFROST_CACHE_SIM_THRESHOLD", "-0.1"),  # < 0.0
-        ("BIFROST_DOUBT_CLUSTER_THRESHOLD", "5"),  # > 1.0
-        ("BIFROST_AUTO_EXTRACT_WAIT_S", "-1"),  # < 0.0
+        ("ORGBRAIN_CACHE_SIM_THRESHOLD", "2.0"),  # > 1.0
+        ("ORGBRAIN_CACHE_SIM_THRESHOLD", "-0.1"),  # < 0.0
+        ("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "5"),  # > 1.0
+        ("ORGBRAIN_AUTO_EXTRACT_WAIT_S", "-1"),  # < 0.0
     ],
 )
 def test_out_of_range_rejected(monkeypatch, env, value) -> None:
     """Bounds are enforced — no silent clamp like the old raw os.getenv path."""
     monkeypatch.setenv(env, value)
     with pytest.raises(ValueError):  # pydantic ValidationError is a ValueError
-        BifrostSettings()
+        OrgBrainSettings()
 
 
 @pytest.mark.parametrize(
@@ -71,9 +71,9 @@ def test_out_of_range_rejected(monkeypatch, env, value) -> None:
     ["not-a-number", ""],
 )
 def test_non_numeric_threshold_rejected(monkeypatch, value) -> None:
-    monkeypatch.setenv("BIFROST_CACHE_SIM_THRESHOLD", value)
+    monkeypatch.setenv("ORGBRAIN_CACHE_SIM_THRESHOLD", value)
     with pytest.raises(ValueError):
-        BifrostSettings()
+        OrgBrainSettings()
 
 
 # ── validate_startup gate ────────────────────────────────────────────
@@ -81,13 +81,13 @@ def test_non_numeric_threshold_rejected(monkeypatch, value) -> None:
 
 def test_validate_startup_returns_settings_when_valid() -> None:
     s = validate_startup()
-    assert isinstance(s, BifrostSettings)
+    assert isinstance(s, OrgBrainSettings)
     # Returns the cached singleton.
     assert s is get_settings()
 
 
 def test_validate_startup_raises_configerror_on_bad_value(monkeypatch) -> None:
-    monkeypatch.setenv("BIFROST_CACHE_SIM_THRESHOLD", "2.0")
+    monkeypatch.setenv("ORGBRAIN_CACHE_SIM_THRESHOLD", "2.0")
     with pytest.raises(ConfigError) as ei:
         validate_startup()
     err = ei.value
@@ -101,8 +101,8 @@ def test_validate_startup_raises_configerror_on_bad_value(monkeypatch) -> None:
 
 def test_validate_startup_aggregates_multiple_problems(monkeypatch) -> None:
     """All bad fields are reported at once, not just the first."""
-    monkeypatch.setenv("BIFROST_CACHE_SIM_THRESHOLD", "2.0")
-    monkeypatch.setenv("BIFROST_DOUBT_CLUSTER_THRESHOLD", "9.0")
+    monkeypatch.setenv("ORGBRAIN_CACHE_SIM_THRESHOLD", "2.0")
+    monkeypatch.setenv("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "9.0")
     with pytest.raises(ConfigError) as ei:
         validate_startup()
     msg = str(ei.value)

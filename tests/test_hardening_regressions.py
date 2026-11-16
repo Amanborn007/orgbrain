@@ -8,8 +8,8 @@ from __future__ import annotations
 import pydantic
 import pytest
 
-from bifrost.api.routes import admin_router_top, api_router
-from bifrost.api.routes.handover_docs import (
+from orgbrain.api.routes import admin_router_top, api_router
+from orgbrain.api.routes.handover_docs import (
     _BACKGROUND_TASKS,
     _append_qa_entry,
     _demote_h2_lines,
@@ -17,7 +17,7 @@ from bifrost.api.routes.handover_docs import (
     _scrub_body,
     _spawn_background,
 )
-from bifrost.api.schemas.collaboration import (
+from orgbrain.api.schemas.collaboration import (
     AppendCollabMessageRequest,
     CreateCollabSessionRequest,
     PatchHandoverBodyRequest,

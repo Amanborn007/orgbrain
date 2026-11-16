@@ -1,4 +1,4 @@
-"""Alembic env.py — async migrations for Bifrost PostgreSQL."""
+"""Alembic env.py — async migrations for OrgBrain PostgreSQL."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from bifrost.cli.config import resolve_migration_database_url
-from bifrost.storage.models import Base
+from orgbrain.cli.config import resolve_migration_database_url
+from orgbrain.storage.models import Base
 
 config = context.config
 
@@ -19,7 +19,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Order: DATABASE_URL, BIFROST_DATABASE_URL, ./.env, then alembic.ini.
+# Order: DATABASE_URL, ORGBRAIN_DATABASE_URL, ./.env, then alembic.ini.
 database_url = resolve_migration_database_url()
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)

@@ -41,16 +41,16 @@ from typing import Any
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.bundle_cache import (
+from orgbrain.research.bundle_cache import (
     ResearchBundle,
     reset_bundle_cache_for_tests,
 )
-from bifrost.research.coordinator import (
+from orgbrain.research.coordinator import (
     _load_prior_bundle,
     _persist_research_bundle,
 )
-from bifrost.research.router import RepoRanking
-from bifrost.storage.repository import EntityRepository
+from orgbrain.research.router import RepoRanking
+from orgbrain.storage.repository import EntityRepository
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

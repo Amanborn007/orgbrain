@@ -236,7 +236,7 @@ def upgrade() -> None:
             "answer_conversation_id",
             postgresql.UUID(as_uuid=True),
             nullable=True,
-            comment="If the answer was captured in a Bifrost chat conversation (the common case via the 'Discuss' button), points at that conv. NULL when the answer lives only in Slack.",
+            comment="If the answer was captured in a OrgBrain chat conversation (the common case via the 'Discuss' button), points at that conv. NULL when the answer lives only in Slack.",
         ),
         sa.Column(
             "status",
@@ -1960,13 +1960,13 @@ def upgrade() -> None:
             "before_state",
             sa.Text(),
             nullable=True,
-            comment="Bifrost task state at the moment of the write — lets retract reverse a stale transition without re-fetching.",
+            comment="OrgBrain task state at the moment of the write — lets retract reverse a stale transition without re-fetching.",
         ),
         sa.Column(
             "after_state",
             sa.Text(),
             nullable=True,
-            comment="Bifrost state the action attempted to put it in.",
+            comment="OrgBrain state the action attempted to put it in.",
         ),
         sa.Column(
             "jira_state_before",

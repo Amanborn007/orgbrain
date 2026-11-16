@@ -79,7 +79,7 @@ export function DashboardPage() {
       <header className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight text-fg-0">
-            State of the bridge
+            State of the brain
           </h1>
           <p className="mt-1 text-[13.5px] text-fg-2">
             System overview and live activity.
@@ -118,7 +118,7 @@ export function DashboardPage() {
       {(repos.isError || tasks.isError || domains.isError) && (
         <div className="rounded-lg border border-err-soft bg-err-soft px-4 py-3 text-[12.5px]">
           <div className="font-semibold text-err">
-            Couldn't reach the Bifrost API
+            Couldn't reach the OrgBrain API
           </div>
           <ul className="mt-1 space-y-0.5 font-mono text-[11.5px] text-fg-1">
             {repos.isError && (
@@ -456,7 +456,7 @@ const RepoCard = memo(function RepoCard({
   const handleDelete = async () => {
     if (
       !confirm(
-        `Deregister "${repo.name}"? This removes it from Bifrost (entities and extractions stay in the DB).`,
+        `Deregister "${repo.name}"? This removes it from OrgBrain (entities and extractions stay in the DB).`,
       )
     )
       return;

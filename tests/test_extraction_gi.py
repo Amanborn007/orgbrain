@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from bifrost.extraction.pipeline import (
+from orgbrain.extraction.pipeline import (
     ConfidenceScore,
     ExtractedRelationship,
     ExtractionPipeline,
@@ -174,8 +174,8 @@ class TestFullAIPipeline:
             _make_relationship_response(
                 [
                     {
-                        "source_urn": "urn:bifrost:repo/test-repo/component/ShipmentService",
-                        "target_urn": "urn:bifrost:repo/test-repo/component/CarrierGateway",
+                        "source_urn": "urn:orgbrain:repo/test-repo/component/ShipmentService",
+                        "target_urn": "urn:orgbrain:repo/test-repo/component/CarrierGateway",
                         "relationship_type": "calls",
                         "description": "ShipmentService calls CarrierGateway for shipment creation",
                         "evidence": "sample_module.py: ShipmentService.create_shipment calls gateway.book()()",
@@ -186,7 +186,7 @@ class TestFullAIPipeline:
             _make_knowledge_index_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/component/ShipmentService",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/component/ShipmentService",
                         "summary": "ShipmentService processes orders through a gateway. It exposes create_shipment and cancel_shipment interfaces.",
                         "key_facts": [
                             "Processes orders",
@@ -196,13 +196,13 @@ class TestFullAIPipeline:
                         "search_keywords": ["shipment", "book", "cancel", "gateway"],
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/component/CarrierGateway",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/component/CarrierGateway",
                         "summary": "CarrierGateway is an external carrier provider client that exposes a book interface.",
                         "key_facts": ["External API client", "Booking capability"],
                         "search_keywords": ["gateway", "external", "carrier provider"],
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/flow/Shipment Creation Flow",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/flow/Shipment Creation Flow",
                         "summary": "Request-response flow: ShipmentService receives shipment, calls CarrierGateway, stores result.",
                         "key_facts": ["3 steps", "Involves external API call", "Writes to DB"],
                         "search_keywords": ["shipment flow", "processing", "request-response"],
@@ -213,19 +213,19 @@ class TestFullAIPipeline:
             _make_confidence_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/component/ShipmentService",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/component/ShipmentService",
                         "confidence_level": "confirmed",
                         "confidence_score": 0.92,
                         "reason": "Clear class definition with explicit interfaces, confirmed by flow and dependency data",
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/component/CarrierGateway",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/component/CarrierGateway",
                         "confidence_level": "inferred",
                         "confidence_score": 0.70,
                         "reason": "Referenced by ShipmentService but implementation details not fully visible",
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test-repo/flow/Shipment Creation Flow",
+                        "entity_urn": "urn:orgbrain:repo/test-repo/flow/Shipment Creation Flow",
                         "confidence_level": "inferred",
                         "confidence_score": 0.75,
                         "reason": "Flow reconstructed from component analysis, not directly observed",
@@ -257,15 +257,15 @@ class TestFullAIPipeline:
         assert len(output.relationships) >= 1
         rel = output.relationships[0]
         assert isinstance(rel, ExtractedRelationship)
-        assert "urn:bifrost:repo/test-repo/component/" in rel.source_urn
-        assert "urn:bifrost:repo/test-repo/component/" in rel.target_urn
+        assert "urn:orgbrain:repo/test-repo/component/" in rel.source_urn
+        assert "urn:orgbrain:repo/test-repo/component/" in rel.target_urn
         assert rel.relationship_type == "calls"
 
         # Verify Phase H: Knowledge index
         assert len(output.knowledge_index) == 3
         for entry in output.knowledge_index:
             assert isinstance(entry, KnowledgeIndexEntry)
-            assert entry.entity_urn.startswith("urn:bifrost:")
+            assert entry.entity_urn.startswith("urn:orgbrain:")
             # 5K token limit ~ 20K chars
             assert len(entry.summary) <= 20000
             assert len(entry.key_facts) <= 10
@@ -318,7 +318,7 @@ class TestFullAIPipeline:
                 _make_knowledge_index_response(
                     [
                         {
-                            "entity_urn": "urn:bifrost:repo/test/component/App",
+                            "entity_urn": "urn:orgbrain:repo/test/component/App",
                             "summary": "Main application module",
                             "key_facts": ["Entry point"],
                             "search_keywords": ["app", "main"],
@@ -329,7 +329,7 @@ class TestFullAIPipeline:
                 _make_confidence_response(
                     [
                         {
-                            "entity_urn": "urn:bifrost:repo/test/component/App",
+                            "entity_urn": "urn:orgbrain:repo/test/component/App",
                             "confidence_level": "inferred",
                             "confidence_score": 0.65,
                             "reason": "Single source file extraction",
@@ -414,8 +414,8 @@ class TestRelationshipSynthesis:
             _make_relationship_response(
                 [
                     {
-                        "source_urn": "urn:bifrost:repo/test/component/ServiceA",
-                        "target_urn": "urn:bifrost:repo/test/component/ServiceB",
+                        "source_urn": "urn:orgbrain:repo/test/component/ServiceA",
+                        "target_urn": "urn:orgbrain:repo/test/component/ServiceB",
                         "relationship_type": "depends-on",
                         "description": "ServiceA imports ServiceB",
                         "evidence": "import statement in svc.py",
@@ -425,13 +425,13 @@ class TestRelationshipSynthesis:
             _make_knowledge_index_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/test/component/ServiceA",
+                        "entity_urn": "urn:orgbrain:repo/test/component/ServiceA",
                         "summary": "Does A",
                         "key_facts": [],
                         "search_keywords": [],
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test/component/ServiceB",
+                        "entity_urn": "urn:orgbrain:repo/test/component/ServiceB",
                         "summary": "Does B",
                         "key_facts": [],
                         "search_keywords": [],
@@ -441,13 +441,13 @@ class TestRelationshipSynthesis:
             _make_confidence_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/test/component/ServiceA",
+                        "entity_urn": "urn:orgbrain:repo/test/component/ServiceA",
                         "confidence_level": "inferred",
                         "confidence_score": 0.7,
                         "reason": "Single file",
                     },
                     {
-                        "entity_urn": "urn:bifrost:repo/test/component/ServiceB",
+                        "entity_urn": "urn:orgbrain:repo/test/component/ServiceB",
                         "confidence_level": "inferred",
                         "confidence_score": 0.7,
                         "reason": "Single file",
@@ -464,8 +464,8 @@ class TestRelationshipSynthesis:
 
         assert len(output.relationships) == 1
         rel = output.relationships[0]
-        assert rel.source_urn.startswith("urn:bifrost:")
-        assert rel.target_urn.startswith("urn:bifrost:")
+        assert rel.source_urn.startswith("urn:orgbrain:")
+        assert rel.target_urn.startswith("urn:orgbrain:")
         assert rel.relationship_type in {
             "calls",
             "uses",
@@ -485,19 +485,19 @@ class TestRelationshipSynthesis:
 class TestKnowledgeIndexCompression:
     def test_knowledge_index_entry_fields(self) -> None:
         entry = KnowledgeIndexEntry(
-            entity_urn="urn:bifrost:repo/test/component/Svc",
+            entity_urn="urn:orgbrain:repo/test/component/Svc",
             summary="A service that does things",
             key_facts=["Fact 1", "Fact 2"],
             search_keywords=["service", "things"],
         )
-        assert entry.entity_urn.startswith("urn:bifrost:")
+        assert entry.entity_urn.startswith("urn:orgbrain:")
         assert len(entry.summary) <= 20000
         assert len(entry.key_facts) <= 10
 
     def test_summary_truncation(self) -> None:
         """Summaries exceeding 20K chars should be truncated in pipeline."""
         entry = KnowledgeIndexEntry(
-            entity_urn="urn:bifrost:repo/test/component/Big",
+            entity_urn="urn:orgbrain:repo/test/component/Big",
             summary="x" * 25000,
         )
         # The pipeline truncates at parse time, but the dataclass itself doesn't enforce
@@ -510,7 +510,7 @@ class TestKnowledgeIndexCompression:
 class TestConfidenceScoring:
     def test_confidence_score_fields(self) -> None:
         score = ConfidenceScore(
-            entity_urn="urn:bifrost:repo/test/component/Svc",
+            entity_urn="urn:orgbrain:repo/test/component/Svc",
             confidence_level="confirmed",
             confidence_score=0.92,
             reason="Multiple sources agree",
@@ -569,7 +569,7 @@ class TestPhaseCallback:
             _make_knowledge_index_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/cb/component/App",
+                        "entity_urn": "urn:orgbrain:repo/cb/component/App",
                         "summary": "Main",
                         "key_facts": [],
                         "search_keywords": [],
@@ -579,7 +579,7 @@ class TestPhaseCallback:
             _make_confidence_response(
                 [
                     {
-                        "entity_urn": "urn:bifrost:repo/cb/component/App",
+                        "entity_urn": "urn:orgbrain:repo/cb/component/App",
                         "confidence_level": "inferred",
                         "confidence_score": 0.6,
                         "reason": "Test",

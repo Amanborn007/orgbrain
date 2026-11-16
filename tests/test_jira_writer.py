@@ -16,8 +16,8 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import text
 
-import bifrost.actions.jira_writer as jw
-from bifrost.actions.jira_writer import (
+import orgbrain.actions.jira_writer as jw
+from orgbrain.actions.jira_writer import (
     JiraIssueCreate,
     JiraWriteFailed,
     JiraWriteSkipped,
@@ -25,8 +25,8 @@ from bifrost.actions.jira_writer import (
     create_issue,
     transition_issue,
 )
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
 
 
 @pytest.fixture
@@ -297,7 +297,7 @@ async def test_add_comment_audits(factory, monkeypatch) -> None:
                 session,
                 task_id=task_id,
                 jira_key="DLVR-1234",
-                body="Bifrost is now executing on branch `bifrost/abc`.",
+                body="OrgBrain is now executing on branch `orgbrain/abc`.",
             )
             await session.commit()
 

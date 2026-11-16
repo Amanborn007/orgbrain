@@ -651,7 +651,7 @@ export function CollaborationNewPage() {
           Start a collaboration session
         </h1>
         <p className="mt-1 text-[13.5px] text-fg-2">
-          Describe the feature or change you need from another team. Bifrost
+          Describe the feature or change you need from another team. OrgBrain
           will clarify the ask, surface open doubts, and produce a brief you
           can take to the owning team.
         </p>
@@ -745,7 +745,7 @@ export function CollaborationSessionPage() {
   const [reopening, setReopening] = useState(false);
   const [showTaskPanel, setShowTaskPanel] = useState(false);
   // Tracks which agent (if any) is currently running an LLM call so
-  // the UI can show a "Bifrost is thinking…" pill. Cleared on
+  // the UI can show a "OrgBrain is thinking…" pill. Cleared on
   // ``agent_done`` event. Not a ref because the JSX needs to re-render.
   const [agentRunning, setAgentRunning] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
@@ -1438,10 +1438,10 @@ const SessionRailItem = memo(function SessionRailItem({
 function AgentThinking({ agent }: { agent: string }) {
   const label =
     agent === "clarifier"
-      ? "Bifrost · Clarifier"
+      ? "OrgBrain · Clarifier"
       : agent === "synthesizer"
-        ? "Bifrost · Synthesizer"
-        : "Bifrost";
+        ? "OrgBrain · Synthesizer"
+        : "OrgBrain";
   const verb = agent === "synthesizer" ? "writing the brief" : "thinking";
   return (
     <div className="flex items-start gap-3" aria-live="polite" aria-busy="true">
@@ -1807,8 +1807,8 @@ function roleLabel(role: CollabMessage["role"]): string {
   return {
     requester: "You",
     system: "System",
-    clarifier_agent: "Bifrost · Clarifier",
-    synthesizer_agent: "Bifrost · Synthesizer",
+    clarifier_agent: "OrgBrain · Clarifier",
+    synthesizer_agent: "OrgBrain · Synthesizer",
   }[role];
 }
 

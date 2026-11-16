@@ -1,6 +1,6 @@
-# Bifrost decisions
+# OrgBrain decisions
 
-> **Read this when** you want to know why a part of Bifrost looks the way it does, what failed along the way, or what comes next.
+> **Read this when** you want to know why a part of OrgBrain looks the way it does, what failed along the way, or what comes next.
 > **Skip if** you want how it works today. The [handbook](handbook/README.md) covers that.
 
 ADR ids such as D8, D9 and D11 refer to the [tech-stack ADR](archive/specs/tech-stack-adr.md), which was committed with the first code commit (97afe50) and no longer matches the code in several rows. Experiment decisions D1 to D4 are in [roadmap section 13](roadmap.md#13-decisions-taken-2026-11-05).
@@ -12,7 +12,7 @@ ADR ids such as D8, D9 and D11 refer to the [tech-stack ADR](archive/specs/tech-
 ### 1. Every model call is a `claude -p` subprocess, not the SDK
 
 **Context.** The original plan called the Messages API with an SDK key (ADR D8). The shipped client replaces that with a subprocess per call, using the operator's Claude login.
-**Decision.** `src/bifrost/extraction/cli_client.py` spawns `claude -p` with `--no-session-persistence`. Structured calls (`call_with_json_schema`) also pass `--json-schema`; the streaming text path (`stream_text`) does not. Cost comes from the CLI's `total_cost_usd` ([handbook 02 section 3.1](handbook/02-architecture.md#31-the-claude--p-subprocess-pattern)).
+**Decision.** `src/orgbrain/extraction/cli_client.py` spawns `claude -p` with `--no-session-persistence`. Structured calls (`call_with_json_schema`) also pass `--json-schema`; the streaming text path (`stream_text`) does not. Cost comes from the CLI's `total_cost_usd` ([handbook 02 section 3.1](handbook/02-architecture.md#31-the-claude--p-subprocess-pattern)).
 **Alternative rejected.** The `anthropic` SDK with an API key. The package is still in `pyproject.toml`, and only `extraction_probe/agent.py` imports it.
 **Why.** There is no API key to provision, store or rotate, and usage rides on the operator's Claude login ([handbook 02 section 3.1](handbook/02-architecture.md#31-the-claude--p-subprocess-pattern)).
 **Costs.** Every call is a new process. Calls from `stream_text` and the default `call_with_json_schema` pass an empty MCP config with `--strict-mcp-config` and no setting sources, so a spawn loads about 200 tokens of baseline instead of 50K (handbook 02, same section). The per-source research agents and the external indexer pass `inherit_user_mcp=True`, which skips `--strict-mcp-config` and loads the operator's user MCP servers. The server needs a logged-in Claude Code on the machine that runs it, so every user of that server spends from one login. The benchmark runner does not record the CLI version, so an upgrade between two runs does not show in the results.
@@ -20,9 +20,9 @@ ADR ids such as D8, D9 and D11 refer to the [tech-stack ADR](archive/specs/tech-
 ### 2. One async process, no Celery or Redis
 
 **Context.** Extraction, chat and the janitors all need background work.
-**Decision.** They run as `asyncio` tasks inside the FastAPI process, started from the lifespan in `src/bifrost/api/app.py`.
+**Decision.** They run as `asyncio` tasks inside the FastAPI process, started from the lifespan in `src/orgbrain/api/app.py`.
 **Alternative rejected.** Celery with Redis. ADR D9 gives the reason "Heavier job model than V1 needs". The ADR's own pick, an `event_log` table with `LISTEN/NOTIFY`, was never built; the bus is in memory.
-**Tradeoff.** The SSE bus in `src/bifrost/api/sse.py` is a dict of queues, so a second worker process would not see the first one's events. Handbook 02 section 10, item 1, says multi-worker scaling needs Redis or a sidecar.
+**Tradeoff.** The SSE bus in `src/orgbrain/api/sse.py` is a dict of queues, so a second worker process would not see the first one's events. Handbook 02 section 10, item 1, says multi-worker scaling needs Redis or a sidecar.
 **Why.** [Handbook 02 section 2.2](handbook/02-architecture.md#22-why-single-process) gives three reasons: operator simplicity, no cross-process state, and Claude CLI wall time dominating latency.
 
 ### 3. Postgres with pgvector HNSW, and local MiniLM vectors at 384 dimensions
@@ -65,7 +65,7 @@ Phases A and D to I are the seven the handbook describes. Phase J writes a short
 
 ### 8. Startup fails fast on configuration
 
-**Decision.** A `BIFROST_` name or top-level `bifrost.yaml` key that nothing reads stops startup and suggests the closest name. Production mode refuses the dev database URL. The dev defaults must agree across compose, `alembic.ini`, `.env.example` and CI.
+**Decision.** A `ORGBRAIN_` name or top-level `orgbrain.yaml` key that nothing reads stops startup and suggests the closest name. Production mode refuses the dev database URL. The dev defaults must agree across compose, `alembic.ini`, `.env.example` and CI.
 **Why.** `tests/test_unknown_settings.py`: "pydantic-settings ignores unknown keys, so a typo (or a name from an older release) silently leaves a gate off."
 **Tradeoff.** An old `.env` with a removed name blocks startup until you edit it.
 **Evidence.** `test_unknown_settings::test_error_suggests_the_closest_name`, `tests/test_production_mode.py::TestProductionModeOn::test_dev_database_url_errors`, `test_dev_defaults_agree::test_env_example_matches_compose`.
@@ -104,7 +104,7 @@ Two failures are still open and have plans but no fix. The adversarial verifier 
 - Follow the order in [roadmap section 2](roadmap.md#2-decided-plan), where P1.1, the planner floor, ships first as a bug fix. [Section 8.3](roadmap.md#83-top-ten) ranks the same items with measurement first: E0.1 noise floor, E0.2 calibrated judge and E0.3 citation existence check, then P1.1. The tree-sitter symbol layer (P2.3) is not in the top ten; typed cross-service edges (P2.2) come ahead of it ([section 8.2](roadmap.md#82-why-the-order-looks-like-this)).
 - Before more than one user, work through the [standing security gate](roadmap.md#812-standing-security-gate-before-multi-user-use), which includes the executor's `bypassPermissions`.
 - Fix the 27 `npx tsc -b` errors, then point the CI typecheck at `tsc -b`. Today it runs `tsc --noEmit` against a `tsconfig.json` with `"files": []` and checks nothing.
-- Split `src/bifrost/research/coordinator.py`, which is 6301 lines. [Roadmap section 8.2](roadmap.md#82-why-the-order-looks-like-this) notes that AI help shrinks this kind of refactor the least.
+- Split `src/orgbrain/research/coordinator.py`, which is 6301 lines. [Roadmap section 8.2](roadmap.md#82-why-the-order-looks-like-this) notes that AI help shrinks this kind of refactor the least.
 - Replace the process-local SSE bus for a multi-worker setup (handbook 02 section 10, item 1).
 - Delete or merge the second research pipeline and `extraction_probe/` (decision 10), then drop `anthropic` from `pyproject.toml`.
 - Record the Claude CLI version with every benchmark run. The runner does not do this today.

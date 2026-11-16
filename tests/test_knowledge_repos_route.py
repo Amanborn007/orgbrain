@@ -10,9 +10,9 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db
-from bifrost.storage.models import Conversation, Repo
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db
+from orgbrain.storage.models import Conversation, Repo
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
 async def _repo(db: AsyncSession, name: str) -> Repo:
     repo = Repo(
         id=uuid.uuid4(),
-        urn=f"urn:bifrost:repo:{name}",
+        urn=f"urn:orgbrain:repo:{name}",
         name=name,
         url=f"https://github.com/test/{name}",
         adapter_config={},

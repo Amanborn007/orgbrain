@@ -15,7 +15,7 @@
 
 ```bash
 # Clone + change into repo
-cd bifrost
+cd orgbrain
 
 # Python deps via uv (pyproject.toml)
 uv sync
@@ -49,7 +49,7 @@ INFO  [alembic.runtime.migration] Running upgrade  -> 001, baseline
 
 ```bash
 scripts/restart.sh                # API only on :8000
-scripts/restart.sh --tail         # API + tail /tmp/bifrost_server.log
+scripts/restart.sh --tail         # API + tail /tmp/orgbrain_server.log
 scripts/restart.sh --ui           # API + Vite dev server on :5173
 scripts/restart.sh --ui --tail    # both, then tail
 ```
@@ -65,9 +65,9 @@ scripts/restart.sh --ui --tail    # both, then tail
 
 What it does (`scripts/restart.sh:25-87`):
 1. Kills anything listening on `:8000` (and `:5173` with `--ui`).
-2. Unsets the stale `BIFROST_EXTRACTION_DRY_RUN` so the `.env` value wins.
+2. Unsets the stale `ORGBRAIN_EXTRACTION_DRY_RUN` so the `.env` value wins.
 3. Double-fork via Python so `uv run uvicorn …` runs detached.
-4. Redirects stdout/stderr to `/tmp/bifrost_server.log`.
+4. Redirects stdout/stderr to `/tmp/orgbrain_server.log`.
 5. Polls `:8000` for up to 30s and prints `up after Xs`.
 6. Hits `/api/v1/health/claude-cli` and dumps the response.
 7. Greps the log for `dry_run` / `worker_started` lines as a smoke test.
@@ -75,7 +75,7 @@ What it does (`scripts/restart.sh:25-87`):
 ### 1.3 Manual start (if you want stdout)
 
 ```bash
-uv run uvicorn bifrost.api.app:create_app --factory --port 8000
+uv run uvicorn orgbrain.api.app:create_app --factory --port 8000
 ```
 
 Useful when you want to see logs in the terminal directly (the script logs to file).
@@ -92,14 +92,14 @@ The Vite proxy forwards `/api/v1/*` to `:8000` (configured in `ui/vite.config.ts
 ### 1.5 CLI
 
 ```bash
-uv run bifrost --help
+uv run orgbrain --help
 ```
 
 **Expected output:**
 ```
-Usage: bifrost [OPTIONS] COMMAND [ARGS]...
+Usage: orgbrain [OPTIONS] COMMAND [ARGS]...
 
-  Bifrost CLI — knowledge graph operations.
+  OrgBrain CLI — knowledge graph operations.
 
 Commands:
   extract        Trigger an extraction for a registered repo.
@@ -109,73 +109,73 @@ Commands:
   ...
 ```
 
-The CLI entry point is `bifrost.cli.app:app` (Typer). See `pyproject.toml:43-44`.
+The CLI entry point is `orgbrain.cli.app:app` (Typer). See `pyproject.toml:43-44`.
 
 ### If you remember nothing else
 - `scripts/restart.sh --tail` is the one command you bookmark.
-- `claude auth login` once per machine; Bifrost never carries an API key.
+- `claude auth login` once per machine; OrgBrain never carries an API key.
 
 ---
 
 ## 2. Environment variables
 
-All read by `BifrostSettings` (`src/bifrost/cli/config.py`). Pydantic-settings prefix: `BIFROST_`.
+All read by `OrgBrainSettings` (`src/orgbrain/cli/config.py`). Pydantic-settings prefix: `ORGBRAIN_`.
 
 ### 2.1 Required
 
 | Var | Default | Notes |
 |---|---|---|
-| `BIFROST_DATABASE_URL` | `postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost` | Async URL; production should rotate from Vault / AWS Secrets Manager. |
+| `ORGBRAIN_DATABASE_URL` | `postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain` | Async URL; production should rotate from Vault / AWS Secrets Manager. |
 
 ### 2.2 Models (Anthropic)
 
 | Var | Default | Used by |
 |---|---|---|
-| `BIFROST_TRIAGE_MODEL` | `claude-haiku-4-5-20251001` | Phase A, intent router, scope matcher, planner classifier, quick fix |
-| `BIFROST_EXTRACTION_MODEL` | `claude-sonnet-4-6` | Phases D-I |
-| `BIFROST_AGENT_MODEL` | `claude-sonnet-4-6` | All reasoning agents (research, action, collab) |
-| `BIFROST_CLAUDE_CLI_PATH` | `claude` | Path to the Claude Code CLI binary |
-| `BIFROST_CLAUDE_CLI_TIMEOUT_SECONDS` | `600` | Per-call wall-clock cap |
+| `ORGBRAIN_TRIAGE_MODEL` | `claude-haiku-4-5-20251001` | Phase A, intent router, scope matcher, planner classifier, quick fix |
+| `ORGBRAIN_EXTRACTION_MODEL` | `claude-sonnet-4-6` | Phases D-I |
+| `ORGBRAIN_AGENT_MODEL` | `claude-sonnet-4-6` | All reasoning agents (research, action, collab) |
+| `ORGBRAIN_CLAUDE_CLI_PATH` | `claude` | Path to the Claude Code CLI binary |
+| `ORGBRAIN_CLAUDE_CLI_TIMEOUT_SECONDS` | `600` | Per-call wall-clock cap |
 
-> **No API keys.** Auth comes from `claude auth login`. If you find yourself reaching for `ANTHROPIC_API_KEY`, you are on the wrong path — Bifrost runs subprocesses against the logged-in CLI.
+> **No API keys.** Auth comes from `claude auth login`. If you find yourself reaching for `ANTHROPIC_API_KEY`, you are on the wrong path — OrgBrain runs subprocesses against the logged-in CLI.
 
 ### 2.3 Extraction worker
 
 | Var | Default | Notes |
 |---|---|---|
-| `BIFROST_MAX_CONCURRENT_EXTRACTIONS` | `1` | Per-host cap. Each extraction can spawn ~5 concurrent `claude -p` subprocesses (Phase D). |
-| `BIFROST_CHECKPOINT_DIR` | `/tmp/bifrost-checkpoints` | Per-task resume state. |
-| `BIFROST_CLONE_DIR` | `/tmp/bifrost-clones` | Where `git clone` lands. |
-| `BIFROST_EXTRACTION_DRY_RUN` | `false` | When `true`, runs `_mock_extraction()` instead of real LLM calls. The restart script unsets this on every start. |
+| `ORGBRAIN_MAX_CONCURRENT_EXTRACTIONS` | `1` | Per-host cap. Each extraction can spawn ~5 concurrent `claude -p` subprocesses (Phase D). |
+| `ORGBRAIN_CHECKPOINT_DIR` | `/tmp/orgbrain-checkpoints` | Per-task resume state. |
+| `ORGBRAIN_CLONE_DIR` | `/tmp/orgbrain-clones` | Where `git clone` lands. |
+| `ORGBRAIN_EXTRACTION_DRY_RUN` | `false` | When `true`, runs `_mock_extraction()` instead of real LLM calls. The restart script unsets this on every start. |
 
 ### 2.4 Roles and API tokens
 
-Identity, roles and tokens live in `bifrost.yaml`, not env vars.
+Identity, roles and tokens live in `orgbrain.yaml`, not env vars.
 
 | Setting | Notes |
 |---|---|
 | `identity.roles` | Required with `header` and `oidc_jwt`: `roles: {admin: [<idp-group>]}`. `{admin: []}` means admin comes only from API tokens. |
-| `api_tokens` | List of `{name, sha256, roles}`. Mint with `bifrost token new`; several can be active for rotation. |
-| `BIFROST_TOKEN` | Client side: the token the CLI sends as `Authorization: Bearer`. |
+| `api_tokens` | List of `{name, sha256, roles}`. Mint with `orgbrain token new`; several can be active for rotation. |
+| `ORGBRAIN_TOKEN` | Client side: the token the CLI sends as `Authorization: Bearer`. |
 
 ### 2.5 Cost ceiling + rate limits
 
 | Var | Default | Notes |
 |---|---|---|
-| `BIFROST_HANDOVER_MAX_COST_USD` | `10.0` | Tree-decomp generations exceeding this require `?force=true`. Roughly = 100 child Sonnet calls. |
-| `BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE` | `6` | Per-cookie rate limit on `…/generate` calls. `0` disables. |
-| `BIFROST_DOUBT_CLUSTER_THRESHOLD` | `0.85` | Cosine similarity threshold for the loop-back clusterer. Lower = more aggressive clustering. |
+| `ORGBRAIN_HANDOVER_MAX_COST_USD` | `10.0` | Tree-decomp generations exceeding this require `?force=true`. Roughly = 100 child Sonnet calls. |
+| `ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE` | `6` | Per-cookie rate limit on `…/generate` calls. `0` disables. |
+| `ORGBRAIN_DOUBT_CLUSTER_THRESHOLD` | `0.85` | Cosine similarity threshold for the loop-back clusterer. Lower = more aggressive clustering. |
 
 ### 2.6 Integrations
 
 | Var | Default | Used for |
 |---|---|---|
-| `BIFROST_SOURCES__JIRA__BASE_URL` | unset | Jira links and live fetch (`actions/jira_enrich.py`) |
-| `BIFROST_SOURCES__JIRA__EMAIL` | unset | Jira API auth; set together with the token |
-| `BIFROST_SOURCES__JIRA__API_TOKEN` | unset | Jira API auth (secret) |
-| `BIFROST_SOURCES__JIRA__EPIC_LINK_FIELD` | unset | Older Jira only: `customfield_NNNNN` Epic Link; unset uses `parent` |
-| `BIFROST_SOURCES__CONFLUENCE__BASE_URL` | unset | Self-hosted Confluence root for page links; Cloud always matches |
-| `BIFROST_SLACK_ESCALATION_CHANNEL` | unset | When set, doubt escalations auto-post to this Slack channel/id through the Slack Web API (needs `BIFROST_SLACK_BOT_TOKEN`). Unset = on-disk artifact only. |
+| `ORGBRAIN_SOURCES__JIRA__BASE_URL` | unset | Jira links and live fetch (`actions/jira_enrich.py`) |
+| `ORGBRAIN_SOURCES__JIRA__EMAIL` | unset | Jira API auth; set together with the token |
+| `ORGBRAIN_SOURCES__JIRA__API_TOKEN` | unset | Jira API auth (secret) |
+| `ORGBRAIN_SOURCES__JIRA__EPIC_LINK_FIELD` | unset | Older Jira only: `customfield_NNNNN` Epic Link; unset uses `parent` |
+| `ORGBRAIN_SOURCES__CONFLUENCE__BASE_URL` | unset | Self-hosted Confluence root for page links; Cloud always matches |
+| `ORGBRAIN_SLACK_ESCALATION_CHANNEL` | unset | When set, doubt escalations auto-post to this Slack channel/id through the Slack Web API (needs `ORGBRAIN_SLACK_BOT_TOKEN`). Unset = on-disk artifact only. |
 
 The old `JIRA_BASE_URL`, `JIRA_EMAIL` and `JIRA_API_TOKEN` names are rejected at startup.
 
@@ -183,15 +183,15 @@ The old `JIRA_BASE_URL`, `JIRA_EMAIL` and `JIRA_API_TOKEN` names are rejected at
 
 | Var | Default | Notes |
 |---|---|---|
-| `BIFROST_API_BASE_URL` | `http://localhost:8000` | Self-reference base URL for the API |
-| `BIFROST_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
-| `BIFROST_DISABLE_AUTO_ARCHIVE` | unset | Set to `1` in tests to disable the scheduled task auto-archiver |
-| `BIFROST_EMBEDDING_CACHE` | unset | Optional cache path for sentence-transformers downloads |
-| `BIFROST_HANDOVERS_DIR` | `docs/handovers` | Filesystem root for generated handovers (per-machine) |
-| `BIFROST_TRACK` | `A` | Track A (Postgres) or Track B (Managed Agents). Track B is gated on Research Preview access. |
+| `ORGBRAIN_API_BASE_URL` | `http://localhost:8000` | Self-reference base URL for the API |
+| `ORGBRAIN_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
+| `ORGBRAIN_DISABLE_AUTO_ARCHIVE` | unset | Set to `1` in tests to disable the scheduled task auto-archiver |
+| `ORGBRAIN_EMBEDDING_CACHE` | unset | Optional cache path for sentence-transformers downloads |
+| `ORGBRAIN_HANDOVERS_DIR` | `docs/handovers` | Filesystem root for generated handovers (per-machine) |
+| `ORGBRAIN_TRACK` | `A` | Track A (Postgres) or Track B (Managed Agents). Track B is gated on Research Preview access. |
 
 ### If you remember nothing else
-- In any shared / staging / production environment use `header` or `oidc_jwt` with `identity.roles`, and give scripts `bft_` tokens from `bifrost token new`.
+- In any shared / staging / production environment use `header` or `oidc_jwt` with `identity.roles`, and give scripts `bft_` tokens from `orgbrain token new`.
 
 ---
 
@@ -256,9 +256,9 @@ ORDER BY p.entered_at;
 ### 3.3 Schema introspection
 
 ```bash
-psql $BIFROST_DATABASE_URL -c "\d handover_docs"
-psql $BIFROST_DATABASE_URL -c "\d collaboration_sessions"
-psql $BIFROST_DATABASE_URL -c "\d entities"
+psql $ORGBRAIN_DATABASE_URL -c "\d handover_docs"
+psql $ORGBRAIN_DATABASE_URL -c "\d collaboration_sessions"
+psql $ORGBRAIN_DATABASE_URL -c "\d entities"
 ```
 
 **Expected output of `\d handover_docs` (truncated):**
@@ -308,7 +308,7 @@ If the local estimate diverges from CLI-reported cost by >50%, a warning is logg
 
 ```bash
 # Look at the most expensive single calls in the last hour
-psql $BIFROST_DATABASE_URL -c "
+psql $ORGBRAIN_DATABASE_URL -c "
   SELECT model, phase, repo_id, estimated_cost_usd, input_tokens, output_tokens
   FROM llm_cost_log
   WHERE call_timestamp > now() - interval '1 hour'
@@ -337,9 +337,9 @@ psql $BIFROST_DATABASE_URL -c "
 ## 5. Observability
 
 ### 5.1 Logs
-- API: `/tmp/bifrost_server.log` (set by the restart script)
-- UI dev: `/tmp/bifrost_ui.log`
-- Set `BIFROST_LOG_LEVEL=DEBUG` for verbose Phase D / E / G traces
+- API: `/tmp/orgbrain_server.log` (set by the restart script)
+- UI dev: `/tmp/orgbrain_ui.log`
+- Set `ORGBRAIN_LOG_LEVEL=DEBUG` for verbose Phase D / E / G traces
 
 ### 5.2 Health endpoints
 
@@ -437,20 +437,20 @@ The table below is the operator's first-stop quick reference. Each row links to 
 
 **Likely causes:**
 1. The `body_md` field is null. Check: `SELECT id, length(body_md) FROM handover_docs WHERE id='<id>'`.
-2. Generation failed silently. Check `bifrost_server.log` for `"used_fallback=True"` — that is the signal that the synthesis fell back to a stub.
+2. Generation failed silently. Check `orgbrain_server.log` for `"used_fallback=True"` — that is the signal that the synthesis fell back to a stub.
 3. Mermaid validation stripped *every* block. Less common but possible. Look for `stripped invalid mermaid` debug log lines.
 
-**Fix:** Re-generate via `POST /handover-docs/<kind>/<value>/generate?force=true`. If still failing, check the cost ceiling — `BIFROST_HANDOVER_MAX_COST_USD` may be blocking.
+**Fix:** Re-generate via `POST /handover-docs/<kind>/<value>/generate?force=true`. If still failing, check the cost ceiling — `ORGBRAIN_HANDOVER_MAX_COST_USD` may be blocking.
 
 ### 6.2 Clarifier didn't fire
 **Symptoms:** User posted a message in a collab session; no clarifier response appeared.
 
 **Likely causes:**
 1. CLI auth lapsed. Check `/health/claude-cli`.
-2. Clarifier hit the 45s timeout. Check `bifrost_server.log` for `clarifier failed` warnings.
+2. Clarifier hit the 45s timeout. Check `orgbrain_server.log` for `clarifier failed` warnings.
 3. The fallback message was displayed but the user did not notice (it is a stub: "Got it — let me know more.").
 
-**Fix:** Re-post the message. If it consistently fails, run `claude auth login`. Confirm the Sonnet model is configured (`BIFROST_AGENT_MODEL`).
+**Fix:** Re-post the message. If it consistently fails, run `claude auth login`. Confirm the Sonnet model is configured (`ORGBRAIN_AGENT_MODEL`).
 
 ### 6.3 SSE stalled
 **Symptoms:** UI shows "agent running" but never updates. Browser network tab shows the SSE stream is open but no events.
@@ -468,10 +468,10 @@ The table below is the operator's first-stop quick reference. Each row links to 
 **Symptoms:** `POST /handover-docs/bulk/refresh-stale` returns immediately but only some scopes regen.
 
 **Likely causes:**
-1. Per-cookie rate limit (`BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE=6` by default) is throttling subsequent regens.
+1. Per-cookie rate limit (`ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE=6` by default) is throttling subsequent regens.
 2. Cost ceiling is rejecting tree-decomp scopes that lack `?force=true`.
 
-**Fix:** Run with `BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE=0` (disable rate limit) and `?force=true` *if* you have already verified the cost is acceptable. Otherwise, run sequentially.
+**Fix:** Run with `ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE=0` (disable rate limit) and `?force=true` *if* you have already verified the cost is acceptable. Otherwise, run sequentially.
 
 ### 6.5 Phase E hangs at 90s timeout repeatedly
 **Symptoms:** `Phase E retry 1/3 ... Phase E retry 2/3 ... Phase E failed` in the logs.
@@ -525,7 +525,7 @@ curl -X POST http://localhost:8000/api/v1/extraction-tasks/<task_id>/resume
 
 **Likely cause:** The request carries `Authorization: Bearer <value>` and the value is not a configured `bft_` token. A bearer that is not a `bft_` token is only accepted under `identity.provider: oidc_jwt`.
 
-**Fix:** Mint a token with `bifrost token new`, add its entry to `api_tokens` in `bifrost.yaml`, restart, and send the token (the CLI reads `BIFROST_TOKEN`). A `401 identity_required` means no credentials arrived: under `none`, call from the same machine.
+**Fix:** Mint a token with `orgbrain token new`, add its entry to `api_tokens` in `orgbrain.yaml`, restart, and send the token (the CLI reads `ORGBRAIN_TOKEN`). A `401 identity_required` means no credentials arrived: under `none`, call from the same machine.
 
 ### 6.9 Admin endpoints return 403
 **Symptoms:** Every `/admin/*` call, or a repo or extraction mutation, returns 403 with `auth.role_required`.
@@ -535,7 +535,7 @@ curl -X POST http://localhost:8000/api/v1/extraction-tasks/<task_id>/resume
 **Fix:** Add the caller's IdP group to `identity.roles.admin`, or mint an admin token and probe with it.
 
 ```bash
-bifrost token new --name ops --role admin   # add the printed entry to api_tokens, restart
+orgbrain token new --name ops --role admin   # add the printed entry to api_tokens, restart
 curl -H "Authorization: Bearer <token>" http://localhost:8000/api/v1/admin/learning/stats
 ```
 
@@ -553,7 +553,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:8000/api/v1/admin/learn
 ps aux | grep "claude -p" | grep -v grep
 
 # Tail the log for Phase G specifically
-grep -i "phase G" /tmp/bifrost_server.log | tail -20
+grep -i "phase G" /tmp/orgbrain_server.log | tail -20
 ```
 
 **Fix:**
@@ -573,7 +573,7 @@ grep -i "phase G" /tmp/bifrost_server.log | tail -20
 ps aux | grep "claude -p" | grep -v grep
 
 # Look at the recent generation events
-psql $BIFROST_DATABASE_URL -c "
+psql $ORGBRAIN_DATABASE_URL -c "
   SELECT generated_at, scope_kind, scope_value, freshness
   FROM handover_docs
   WHERE generated_at > now() - interval '20 minutes'
@@ -596,7 +596,7 @@ psql $BIFROST_DATABASE_URL -c "
 **Diagnosis:**
 ```bash
 # Are repos extracted in the scope?
-psql $BIFROST_DATABASE_URL -c "
+psql $ORGBRAIN_DATABASE_URL -c "
   SELECT slug, freshness_state, last_extracted_at
   FROM repos
   WHERE freshness_state IN ('unknown', 'stale')
@@ -617,7 +617,7 @@ psql $BIFROST_DATABASE_URL -c "
 
 **Diagnosis:**
 ```bash
-psql $BIFROST_DATABASE_URL -c "
+psql $ORGBRAIN_DATABASE_URL -c "
   SELECT pid, state, query_start, left(query, 80) AS query
   FROM pg_stat_activity
   WHERE datname = current_database()
@@ -650,20 +650,20 @@ A 30-second sanity check before doing real work:
 **Expected output of `docker ps`:**
 ```
 CONTAINER ID   IMAGE              STATUS         PORTS                    NAMES
-abc123def456   pgvector/pgvector  Up 12 minutes  127.0.0.1:5432->5432/tcp bifrost-postgres-1
+abc123def456   pgvector/pgvector  Up 12 minutes  127.0.0.1:5432->5432/tcp orgbrain-postgres-1
 ```
 
 ---
 
 ## 8. Things you'll wish you knew
 
-- **The restart script unsets `BIFROST_EXTRACTION_DRY_RUN`.** Do not be surprised when env-set dry-run flags do not survive a restart — that is intentional.
-- **`/tmp/bifrost-checkpoints` is per-machine.** Resume only works on the host that originally started the extraction. Cross-host resume = re-run from scratch.
-- **`/tmp/bifrost-clones` can grow unbounded.** Production deploys should put this on a managed volume with cleanup.
-- **The auto-archive job runs in-process.** If `BIFROST_DISABLE_AUTO_ARCHIVE=1` is set in tests but accidentally also in prod, terminal tasks pile up forever.
+- **The restart script unsets `ORGBRAIN_EXTRACTION_DRY_RUN`.** Do not be surprised when env-set dry-run flags do not survive a restart — that is intentional.
+- **`/tmp/orgbrain-checkpoints` is per-machine.** Resume only works on the host that originally started the extraction. Cross-host resume = re-run from scratch.
+- **`/tmp/orgbrain-clones` can grow unbounded.** Production deploys should put this on a managed volume with cleanup.
+- **The auto-archive job runs in-process.** If `ORGBRAIN_DISABLE_AUTO_ARCHIVE=1` is set in tests but accidentally also in prod, terminal tasks pile up forever.
 - **Postgres timestamps are `TIMESTAMP WITHOUT TIME ZONE`.** When comparing, strip tz from your `datetime.now(UTC)` first or asyncpg will reject the comparison. Source: `routes/costs.py:60-63`.
-- **MiniLM downloads on first use.** First call to `compute_doubt_candidates` or any embedding path triggers the sentence-transformers download (~80MB). Slow request, then fast forever. Pre-warm in CI with `BIFROST_EMBEDDING_CACHE` set.
+- **MiniLM downloads on first use.** First call to `compute_doubt_candidates` or any embedding path triggers the sentence-transformers download (~80MB). Slow request, then fast forever. Pre-warm in CI with `ORGBRAIN_EMBEDDING_CACHE` set.
 - **Track A vs Track B.** Every code path implements the `AgentRuntime` and `AgentStateBackend` interfaces so a future Track B (Managed Agents + Memory Stores + MCP) is a drop-in. Today the only `AgentRuntime` is the local Postgres-backed one.
-- **No browser automation, ever.** Per the "Browser automation is forbidden" section of `CLAUDE.md` and the CI gate at `.github/workflows/pr-check.yml`. Bifrost extracts via `git clone` + `claude -p` subprocess; external data flows through MCP. If you find yourself reaching for puppeteer / playwright / chromium, you are on the wrong path.
+- **No browser automation, ever.** Per the "Browser automation is forbidden" section of `CLAUDE.md` and the CI gate at `.github/workflows/pr-check.yml`. OrgBrain extracts via `git clone` + `claude -p` subprocess; external data flows through MCP. If you find yourself reaching for puppeteer / playwright / chromium, you are on the wrong path.
 - **The CLAUDE.md rules apply to the *codebase*, not just docs.** Rule 9 (Test before the next feature) is mandatory: every non-trivial feature gets a smoke test before moving on. Silent success ≠ success.
-- **Slack auto-post needs a bot token.** Both `BIFROST_SLACK_BOT_TOKEN` and `BIFROST_SLACK_ESCALATION_CHANNEL` must be set. Either missing → the draft stays as an on-disk artifact.
+- **Slack auto-post needs a bot token.** Both `ORGBRAIN_SLACK_BOT_TOKEN` and `ORGBRAIN_SLACK_ESCALATION_CHANNEL` must be set. Either missing → the draft stays as an on-disk artifact.

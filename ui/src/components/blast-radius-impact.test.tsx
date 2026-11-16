@@ -16,7 +16,7 @@ import {
 import type { BlastImpact, BlastRadiusResponse } from "@/lib/api";
 
 const DIRECT: BlastImpact = {
-  urn: "urn:bifrost:repo/svc/component/OrderController",
+  urn: "urn:orgbrain:repo/svc/component/OrderController",
   name: "OrderController",
   entity_type: "component",
   repo_id: "r1",
@@ -28,9 +28,9 @@ const DIRECT: BlastImpact = {
   qualified_name: "svc.OrderController",
   path: [
     {
-      from_urn: "urn:bifrost:repo/svc/component/PricingService",
+      from_urn: "urn:orgbrain:repo/svc/component/PricingService",
       from_name: "PricingService",
-      to_urn: "urn:bifrost:repo/svc/component/OrderController",
+      to_urn: "urn:orgbrain:repo/svc/component/OrderController",
       to_name: "OrderController",
       rel_type: "calls",
       confidence: 0.92,
@@ -45,7 +45,7 @@ const DIRECT: BlastImpact = {
 };
 
 const INDIRECT: BlastImpact = {
-  urn: "urn:bifrost:repo/other/component/InventoryWriter",
+  urn: "urn:orgbrain:repo/other/component/InventoryWriter",
   name: "InventoryWriter",
   entity_type: "component",
   repo_id: "r2",
@@ -57,9 +57,9 @@ const INDIRECT: BlastImpact = {
   qualified_name: "inventory.InventoryWriter",
   path: [
     {
-      from_urn: "urn:bifrost:repo/svc/component/PricingService",
+      from_urn: "urn:orgbrain:repo/svc/component/PricingService",
       from_name: "PricingService",
-      to_urn: "urn:bifrost:repo/svc/component/OrderController",
+      to_urn: "urn:orgbrain:repo/svc/component/OrderController",
       to_name: "OrderController",
       rel_type: "calls",
       confidence: 0.92,
@@ -68,9 +68,9 @@ const INDIRECT: BlastImpact = {
       to_line: 88,
     },
     {
-      from_urn: "urn:bifrost:repo/svc/component/OrderController",
+      from_urn: "urn:orgbrain:repo/svc/component/OrderController",
       from_name: "OrderController",
-      to_urn: "urn:bifrost:repo/other/component/InventoryWriter",
+      to_urn: "urn:orgbrain:repo/other/component/InventoryWriter",
       to_name: "InventoryWriter",
       rel_type: "publishes_to",
       confidence: 0.61,
@@ -114,7 +114,7 @@ describe("ImpactRow", () => {
 
 describe("buildBlastSection (Jira description)", () => {
   const RESP: BlastRadiusResponse = {
-    seed_urn: "urn:bifrost:repo/svc/component/PricingService",
+    seed_urn: "urn:orgbrain:repo/svc/component/PricingService",
     seed_name: "PricingService",
     direction: "downstream",
     depth: 3,

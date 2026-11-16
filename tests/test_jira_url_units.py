@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.cli.config import reset_settings
-from bifrost.cli.config_sections import JiraSourceConfig
+from orgbrain.cli.config import reset_settings
+from orgbrain.cli.config_sections import JiraSourceConfig
 
 BASE = "https://acme.atlassian.net"
 
@@ -15,8 +15,8 @@ BASE = "https://acme.atlassian.net"
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
-    monkeypatch.delenv("BIFROST_SOURCES__JIRA__BASE_URL", raising=False)
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
+    monkeypatch.delenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", raising=False)
     reset_settings()
     yield
     monkeypatch.undo()
@@ -25,7 +25,7 @@ def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
 @pytest.fixture
 def with_base_url(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__BASE_URL", BASE)
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", BASE)
     reset_settings()
 
 
@@ -66,37 +66,37 @@ def _pulse_row(**over):
 
 
 def test_inbox_task_row_jira_url_default_is_none() -> None:
-    from bifrost.actions.personal_inbox import _task_row
+    from orgbrain.actions.personal_inbox import _task_row
 
     assert _task_row(_inbox_row()).jira_url is None
 
 
 def test_inbox_task_row_jira_url_with_base_url(with_base_url) -> None:
-    from bifrost.actions.personal_inbox import _task_row
+    from orgbrain.actions.personal_inbox import _task_row
 
     assert _task_row(_inbox_row()).jira_url == f"{BASE}/browse/ABC-1"
 
 
 def test_inbox_task_row_without_a_key_has_no_url(with_base_url) -> None:
-    from bifrost.actions.personal_inbox import _task_row
+    from orgbrain.actions.personal_inbox import _task_row
 
     assert _task_row(_inbox_row(jira_key=None)).jira_url is None
 
 
 def test_pulse_task_row_jira_url_default_is_none() -> None:
-    from bifrost.actions.squad_pulse import TaskRow
+    from orgbrain.actions.squad_pulse import TaskRow
 
     assert TaskRow.from_db(_pulse_row()).jira_url is None
 
 
 def test_pulse_task_row_jira_url_with_base_url(with_base_url) -> None:
-    from bifrost.actions.squad_pulse import TaskRow
+    from orgbrain.actions.squad_pulse import TaskRow
 
     assert TaskRow.from_db(_pulse_row()).jira_url == f"{BASE}/browse/ABC-1"
 
 
 def test_pulse_task_row_without_a_key_has_no_url(with_base_url) -> None:
-    from bifrost.actions.squad_pulse import TaskRow
+    from orgbrain.actions.squad_pulse import TaskRow
 
     assert TaskRow.from_db(_pulse_row(jira_key=None)).jira_url is None
 
@@ -105,7 +105,7 @@ def test_pulse_task_row_without_a_key_has_no_url(with_base_url) -> None:
 
 
 def test_canonical_url_prefers_the_url_the_tool_returned() -> None:
-    from bifrost.actions.jira_writer import _canonical_url
+    from orgbrain.actions.jira_writer import _canonical_url
 
     got = _canonical_url(
         "ABC-1", "https://jira.example/browse/ABC-1", JiraSourceConfig(base_url=BASE)
@@ -114,26 +114,26 @@ def test_canonical_url_prefers_the_url_the_tool_returned() -> None:
 
 
 def test_canonical_url_builds_from_base_url_when_tool_returned_none() -> None:
-    from bifrost.actions.jira_writer import _canonical_url
+    from orgbrain.actions.jira_writer import _canonical_url
 
     assert _canonical_url("ABC-1", "", JiraSourceConfig(base_url=BASE)) == f"{BASE}/browse/ABC-1"
 
 
 def test_canonical_url_is_empty_without_base_url() -> None:
-    from bifrost.actions.jira_writer import _canonical_url
+    from orgbrain.actions.jira_writer import _canonical_url
 
     assert _canonical_url("ABC-1", "", JiraSourceConfig()) == ""
 
 
 def test_indexer_keeps_the_url_the_model_returned() -> None:
-    from bifrost.research.external_indexer import _resolve_issue_url
+    from orgbrain.research.external_indexer import _resolve_issue_url
 
     got = _resolve_issue_url("https://x/browse/ABC-1", "ABC-1", JiraSourceConfig(base_url=BASE))
     assert got == "https://x/browse/ABC-1"
 
 
 def test_indexer_fills_an_empty_url_from_browse_url() -> None:
-    from bifrost.research.external_indexer import _resolve_issue_url
+    from orgbrain.research.external_indexer import _resolve_issue_url
 
     assert (
         _resolve_issue_url("", "ABC-1", JiraSourceConfig(base_url=BASE)) == f"{BASE}/browse/ABC-1"
@@ -141,6 +141,6 @@ def test_indexer_fills_an_empty_url_from_browse_url() -> None:
 
 
 def test_indexer_leaves_url_empty_without_base_url() -> None:
-    from bifrost.research.external_indexer import _resolve_issue_url
+    from orgbrain.research.external_indexer import _resolve_issue_url
 
     assert _resolve_issue_url("", "ABC-1", JiraSourceConfig()) == ""

@@ -8,11 +8,11 @@
 
 ## 1. Purpose and Scope
 
-The Source Adapter Framework is Bifrost's sensory layer -- the plugin architecture through which the platform connects to external source systems, discovers their contents, extracts knowledge-relevant content, and tracks changes over time.
+The Source Adapter Framework is OrgBrain's sensory layer -- the plugin architecture through which the platform connects to external source systems, discovers their contents, extracts knowledge-relevant content, and tracks changes over time.
 
-Every piece of knowledge in Bifrost originates from a source system. The adapter framework defines the uniform contract that all source integrations must satisfy so that the rest of the platform -- the knowledge model, the freshness engine, the specialist agents -- can operate against any source without coupling to its implementation details.
+Every piece of knowledge in OrgBrain originates from a source system. The adapter framework defines the uniform contract that all source integrations must satisfy so that the rest of the platform -- the knowledge model, the freshness engine, the specialist agents -- can operate against any source without coupling to its implementation details.
 
-Source adapters are implemented across two tracks. Track A (V1): Python classes running in-process within Bifrost. Track B (future): MCP servers exposing the same capabilities via the Model Context Protocol. The adapter capability interface is identical between tracks. Switching from Track A to Track B is a packaging change, not a logic change.
+Source adapters are implemented across two tracks. Track A (V1): Python classes running in-process within OrgBrain. Track B (future): MCP servers exposing the same capabilities via the Model Context Protocol. The adapter capability interface is identical between tracks. Switching from Track A to Track B is a packaging change, not a logic change.
 
 This specification covers:
 
@@ -37,8 +37,8 @@ It does **not** cover:
 | **Source** | An external system that contains engineering-relevant information (e.g., GitHub, Jira, Confluence, Slack). |
 | **SourceObject** | A discrete, identifiable unit of content within a source (e.g., a file, a ticket, a message). |
 | **SourceObjectRef** | A stable, globally unique reference to a SourceObject, encoded as a URN. |
-| **Mapping** | A declared relationship between a SourceObject and a Bifrost concept (repo, domain, flow, concept). |
-| **Repo** | A code repository that Bifrost tracks. The primary unit of code-level organization. |
+| **Mapping** | A declared relationship between a SourceObject and a OrgBrain concept (repo, domain, flow, concept). |
+| **Repo** | A code repository that OrgBrain tracks. The primary unit of code-level organization. |
 | **Domain** | A logical grouping of repos and sources that together serve a coherent engineering area. |
 | **Adapter** | A plugin that implements the `SourceAdapter` interface for a specific source system. |
 | **AdapterScope** | A filter that narrows adapter operations to a specific repo, domain, path prefix, project, or other boundary. |
@@ -114,7 +114,7 @@ from pydantic import BaseModel
 class SourceAdapter(ABC):
     """The primary contract that every source adapter must implement.
 
-    Adapters are the sensory boundary between Bifrost and external systems.
+    Adapters are the sensory boundary between OrgBrain and external systems.
     """
 
     @property
@@ -261,7 +261,7 @@ server = McpServer(
         # ... other tools
     ],
 )
-server.listen(8081)  # bifrost-git-mcp on canonical port
+server.listen(8081)  # orgbrain-git-mcp on canonical port
 
 # Agent invokes via MCP protocol:
 # use_mcp_tool("github", "extract", { ref: { repo_id: "...", path: "..." } })
@@ -393,10 +393,10 @@ class AdapterScope(BaseModel):
     """Narrows adapter operations to a specific boundary within the source."""
 
     repo_id: str | None = None
-    """The Bifrost repo this scope is associated with, if any."""
+    """The OrgBrain repo this scope is associated with, if any."""
 
     domain_id: str | None = None
-    """The Bifrost domain this scope is associated with, if any."""
+    """The OrgBrain domain this scope is associated with, if any."""
 
     source_scope: dict[str, Any]
     """Source-specific scope parameters (e.g., GitHub org/repo, Jira project key)."""
@@ -469,9 +469,9 @@ class SourceObjectType(str, Enum):
 class SourceObjectRef(BaseModel):
     """Globally unique reference to a source object, encoded as a URN.
 
-    Format: bifrost:<adapter-id>:<source-instance>:<object-type>:<object-path-or-id>
-    Example: bifrost:github:acme-org/webhook-api:file:src/handlers/sign.py
-    Example: bifrost:jira:acme:issue:DLVR-1234
+    Format: orgbrain:<adapter-id>:<source-instance>:<object-type>:<object-path-or-id>
+    Example: orgbrain:github:acme-org/webhook-api:file:src/handlers/sign.py
+    Example: orgbrain:jira:acme:issue:DLVR-1234
     """
 
     urn: str
@@ -530,10 +530,10 @@ class SourceMetadata(BaseModel):
 
 
 class RelevanceHint(BaseModel):
-    """Hint about how a source object relates to a Bifrost entity."""
+    """Hint about how a source object relates to a OrgBrain entity."""
 
     target_kind: Literal["repo", "domain", "concept", "flow", "dependency"]
-    """What kind of Bifrost entity this object is relevant to."""
+    """What kind of OrgBrain entity this object is relevant to."""
 
     target_id: str
     """The identifier of the target entity (repo ID, domain ID, concept name, flow name)."""
@@ -647,7 +647,7 @@ class UserContext(BaseModel):
     """Context about the user making a request."""
 
     user_id: str
-    """Bifrost user ID."""
+    """OrgBrain user ID."""
 
     source_identity: dict[str, Any] | None = None
     """Source-system-specific credentials or identity token."""
@@ -778,10 +778,10 @@ class HealthStatus(BaseModel):
 
 ### 6.1 URN Scheme
 
-Every source object in Bifrost is identified by a URN (Uniform Resource Name) with the following structure:
+Every source object in OrgBrain is identified by a URN (Uniform Resource Name) with the following structure:
 
 ```
-bifrost:<adapter-id>:<source-instance>:<object-type>:<object-id>
+orgbrain:<adapter-id>:<source-instance>:<object-type>:<object-id>
 ```
 
 | Segment | Description | Examples |
@@ -794,13 +794,13 @@ bifrost:<adapter-id>:<source-instance>:<object-type>:<object-id>
 **Examples:**
 
 ```
-bifrost:github:acme-org/webhook-api:file:src/handlers/sign.ts
-bifrost:github:acme-org/webhook-api:commit:a1b2c3d
-bifrost:github:acme-org/webhook-api:pull-request:142
-bifrost:jira:acme:issue:DLVR-1234
-bifrost:jira:acme:epic:DLVR-100
-bifrost:confluence:acme:confluence-page:12345678
-bifrost:slack:acme-workspace:slack-message:C01ABC/1680000000.000001
+orgbrain:github:acme-org/webhook-api:file:src/handlers/sign.ts
+orgbrain:github:acme-org/webhook-api:commit:a1b2c3d
+orgbrain:github:acme-org/webhook-api:pull-request:142
+orgbrain:jira:acme:issue:DLVR-1234
+orgbrain:jira:acme:epic:DLVR-100
+orgbrain:confluence:acme:confluence-page:12345678
+orgbrain:slack:acme-workspace:slack-message:C01ABC/1680000000.000001
 ```
 
 ### 6.2 Object Typing
@@ -1022,7 +1022,7 @@ class AdapterConfig(BaseModel):
   "sourceConfig": {
     "baseUrl": "https://acme.atlassian.net",
     "projectKeys": ["DLVR", "DLVRINFRA"],
-    "auth": { "type": "api-token", "email": "bifrost@acme.com" },
+    "auth": { "type": "api-token", "email": "orgbrain@acme.com" },
     "includeSubtasks": true,
     "includeComments": true
   },
@@ -1039,13 +1039,13 @@ Adapters support three change detection modes, selected per adapter instance via
 
 ### 10.1 Webhook-First (Preferred)
 
-The source system pushes change events to Bifrost via webhooks. The adapter's `watch()` method registers the webhook and routes incoming events to the `ChangeCallback`.
+The source system pushes change events to OrgBrain via webhooks. The adapter's `watch()` method registers the webhook and routes incoming events to the `ChangeCallback`.
 
 **Advantages:** Low latency, no wasted API calls, near-real-time awareness.
 
 **Requirements:**
 - The source system must support webhooks (GitHub, Jira, Slack all do).
-- Bifrost must expose an HTTPS endpoint for receiving webhook payloads.
+- OrgBrain must expose an HTTPS endpoint for receiving webhook payloads.
 - The adapter must validate webhook signatures to prevent spoofing.
 
 ### 10.2 Polling Fallback
@@ -1163,14 +1163,14 @@ In Track B, MCP servers handle their own rate limiting internally. If an MCP ser
 
 ## 13. Relevance Mapping Protocol
 
-Adapters signal how their source objects relate to Bifrost's knowledge model through `RelevanceHint` objects attached to `SourceObject` and `ExtractedContent`.
+Adapters signal how their source objects relate to OrgBrain's knowledge model through `RelevanceHint` objects attached to `SourceObject` and `ExtractedContent`.
 
 ```python
 class RelevanceHint(BaseModel):
-    """Hint about how a source object relates to a Bifrost entity."""
+    """Hint about how a source object relates to a OrgBrain entity."""
 
     target_kind: Literal["repo", "domain", "concept", "flow", "dependency"]
-    """What kind of Bifrost entity this object is relevant to."""
+    """What kind of OrgBrain entity this object is relevant to."""
 
     target_id: str
     """The identifier of the target entity (repo ID, domain ID, concept name, flow name)."""
@@ -1219,7 +1219,7 @@ This is an expensive operation. For large sources (e.g., a Git repo with thousan
 
 **Track A:** Incremental sync is triggered by webhook events. The webhook payload updates the revision state stored in PostgreSQL. A background ExtractionAgent job then processes only the changed files: it calls `identify(scope, { modifiedAfter: last_indexed_at })` to get the diff set, then `extract(ref)` for each changed object.
 
-**Track B:** Incremental sync is triggered by webhook events received by the Bifrost control plane. The control plane creates a new ExtractionAgent Session scoped to the changed objects. The session's Git adapter fetches the diff since `last_commit_indexed` (via `GET /repos/{owner}/{repo}/compare/{base}...{head}`), and the agent processes only the changed files within the managed container.
+**Track B:** Incremental sync is triggered by webhook events received by the OrgBrain control plane. The control plane creates a new ExtractionAgent Session scoped to the changed objects. The session's Git adapter fetches the diff since `last_commit_indexed` (via `GET /repos/{owner}/{repo}/compare/{base}...{head}`), and the agent processes only the changed files within the managed container.
 
 After bootstrap, changes are detected via:
 
@@ -1290,8 +1290,8 @@ For adapters that declare optional capabilities:
   "agent": "extraction-agent-id",
   "environment_id": "env-id",
   "mcp_servers": [
-    { "name": "github", "url": "http://bifrost-git-mcp:8081" },
-    { "name": "jira",   "url": "http://bifrost-jira-mcp:8082" }
+    { "name": "github", "url": "http://orgbrain-git-mcp:8081" },
+    { "name": "jira",   "url": "http://orgbrain-jira-mcp:8082" }
   ]
 }
 ```
@@ -1573,20 +1573,20 @@ When Track B is enabled, source adapters are deployed as MCP HTTP servers. The s
 
 **Architecture options:**
 
-- **Option 1: Sidecar** -- Run MCP servers as Python processes alongside the Bifrost API server in the same host or compose network.
+- **Option 1: Sidecar** -- Run MCP servers as Python processes alongside the OrgBrain API server in the same host or compose network.
 - **Option 2: Separate services** -- Deploy MCP servers as independent microservices, each with their own scaling policy.
 - **Option 3: Anthropic-hosted** -- Use Anthropic's MCP server registry if available for the relevant source type.
 
-**V1.5 recommendation: Sidecar.** Run all MCP servers in the same Docker Compose setup as the Bifrost API server. Each adapter gets its own port:
+**V1.5 recommendation: Sidecar.** Run all MCP servers in the same Docker Compose setup as the OrgBrain API server. Each adapter gets its own port:
 
 ```
-bifrost-api:      port 3000
-bifrost-git-mcp:  port 8081
-bifrost-jira-mcp: port 8082
+orgbrain-api:      port 3000
+orgbrain-git-mcp:  port 8081
+orgbrain-jira-mcp: port 8082
 slack-mcp:        port 3300  (future)
 ```
 
-MCP server URLs are set in Bifrost config and injected into session creation requests at runtime. MCP servers authenticate to external APIs using the same credentials as Track A adapters -- the credential management layer is shared.
+MCP server URLs are set in OrgBrain config and injected into session creation requests at runtime. MCP servers authenticate to external APIs using the same credentials as Track A adapters -- the credential management layer is shared.
 
 #### MCP Server Specification for Track B Adapters
 
@@ -1653,13 +1653,13 @@ All other Track B adapters (Jira, Confluence, etc.) must define an equivalent to
 
 #### MCP Server Deployment for Track B
 
-Each adapter's MCP server runs as a separate process alongside the Bifrost API server. Deployment details:
+Each adapter's MCP server runs as a separate process alongside the OrgBrain API server. Deployment details:
 
-- **Docker Compose services:** `bifrost-git-mcp` on port 8081, `bifrost-jira-mcp` on port 8082.
-- **Session injection:** Track B sessions receive MCP server endpoints via `SessionConfig.mcpTools` (from S8). The Bifrost control plane populates this field from the adapter registry at session creation time.
+- **Docker Compose services:** `orgbrain-git-mcp` on port 8081, `orgbrain-jira-mcp` on port 8082.
+- **Session injection:** Track B sessions receive MCP server endpoints via `SessionConfig.mcpTools` (from S8). The OrgBrain control plane populates this field from the adapter registry at session creation time.
 - **Authentication:** MCP servers authenticate Managed Agent sessions via short-lived tokens issued by `SessionCredentialProvider` (from S11). Tokens are scoped to the session lifetime and rotated on renewal. The MCP server validates the token on every request before executing any tool.
 - **Protocol:** MCP servers must implement the standard MCP protocol: JSON-RPC 2.0 over HTTP/SSE. The SSE stream is used for long-running tool calls (e.g., `git_clone_or_fetch` on large repos).
-- **Health check:** Each MCP server exposes `GET /health`. The Bifrost API checks all configured MCP server health endpoints at startup and on a 30-second polling interval. If any MCP server required for Track B is unhealthy, the API marks Track B as unavailable and falls back to Track A (if configured) or returns a 503 for session creation requests that require Track B adapters.
+- **Health check:** Each MCP server exposes `GET /health`. The OrgBrain API checks all configured MCP server health endpoints at startup and on a 30-second polling interval. If any MCP server required for Track B is unhealthy, the API marks Track B as unavailable and falls back to Track A (if configured) or returns a 503 for session creation requests that require Track B adapters.
 
 #### MCP Tool Error Contract
 
@@ -1686,7 +1686,7 @@ The current `SourceAdapter` interface is designed to be network-boundary-clean (
 
 ### Adapter Marketplace
 
-A registry of community-contributed and vendor-maintained adapters that can be installed into a Bifrost deployment. Each adapter would ship with:
+A registry of community-contributed and vendor-maintained adapters that can be installed into a OrgBrain deployment. Each adapter would ship with:
 
 - The adapter implementation.
 - A JSON Schema for configuration.

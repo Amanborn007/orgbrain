@@ -26,7 +26,7 @@ class _DummyCheckpoint:  # pragma: no cover - unused here
 
 def _make_worker():
     """Construct a worker without connecting to Postgres or filesystem."""
-    from bifrost.extraction.worker import ExtractionWorker
+    from orgbrain.extraction.worker import ExtractionWorker
 
     worker = ExtractionWorker.__new__(ExtractionWorker)
     worker._session_factory = None  # type: ignore[attr-defined]

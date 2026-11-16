@@ -1,4 +1,4 @@
-"""CLI entry point for the Bifrost Extraction Probe.
+"""CLI entry point for the OrgBrain Extraction Probe.
 
 Usage:
     python -m extraction_probe.run --target /path/to/python/project
@@ -17,7 +17,7 @@ from extraction_probe.agent import ExtractionResult, run_extraction
 def print_summary(result: ExtractionResult) -> None:
     """Print a human-readable extraction summary."""
     print("\n" + "=" * 60)
-    print("  BIFROST EXTRACTION PROBE — RESULTS")
+    print("  ORGBRAIN EXTRACTION PROBE — RESULTS")
     print("=" * 60)
 
     # Entity counts
@@ -127,7 +127,7 @@ def print_summary(result: ExtractionResult) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="extraction_probe",
-        description="Bifrost Phase 0 — validate extraction quality against a Python repo",
+        description="OrgBrain Phase 0 — validate extraction quality against a Python repo",
     )
     parser.add_argument(
         "--target",
@@ -148,7 +148,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    print(f"  Bifrost Extraction Probe")
+    print(f"  OrgBrain Extraction Probe")
     print(f"  Target: {args.target}")
     print(f"  Max files: {args.max_files}")
     print()

@@ -14,10 +14,10 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.cli.config import reset_settings
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.cli.config import reset_settings
+from orgbrain.storage.repository import EntityRepository
 
 BASE_URL = "https://acme.atlassian.net"
 KEY = "ABC-4321"
@@ -27,7 +27,7 @@ KEY = "ABC-4321"
 def _stub_worker():
     from unittest.mock import MagicMock
 
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -37,14 +37,14 @@ def _stub_worker():
 
 @pytest.fixture
 def jira_base(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("BIFROST_SOURCES__JIRA__BASE_URL", raising=False)
+    monkeypatch.delenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", raising=False)
     reset_settings()
 
     def _set(url: str | None) -> None:
         if url is None:
-            monkeypatch.delenv("BIFROST_SOURCES__JIRA__BASE_URL", raising=False)
+            monkeypatch.delenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", raising=False)
         else:
-            monkeypatch.setenv("BIFROST_SOURCES__JIRA__BASE_URL", url)
+            monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", url)
         reset_settings()
 
     yield _set

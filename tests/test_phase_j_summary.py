@@ -7,17 +7,17 @@ from typing import Any
 
 import pytest
 
-from bifrost.extraction.checkpoint import ExtractionCheckpoint
-from bifrost.extraction.cli_client import CliCompletion, Usage
-from bifrost.extraction.cost import CostTracker
-from bifrost.extraction.pipeline import (
+from orgbrain.extraction.checkpoint import ExtractionCheckpoint
+from orgbrain.extraction.cli_client import CliCompletion, Usage
+from orgbrain.extraction.cost import CostTracker
+from orgbrain.extraction.pipeline import (
     ExtractedComponent,
     ExtractedDependency,
     ExtractedFlow,
     ExtractionOutput,
     ExtractionPipeline,
 )
-from bifrost.extraction.triage import TriagedFile, TriageResult
+from orgbrain.extraction.triage import TriagedFile, TriageResult
 
 
 class _RecordingClient:
@@ -118,7 +118,7 @@ async def test_phase_j_failure_is_recorded_not_swallowed(
     async def read_file(path: str) -> str:
         return "x = 1"
 
-    monkeypatch.setattr("bifrost.extraction.pipeline.triage_files", fake_triage)
+    monkeypatch.setattr("orgbrain.extraction.pipeline.triage_files", fake_triage)
     monkeypatch.setattr(ExtractionPipeline, "_extract_components", fake_components)
 
     cp = ExtractionCheckpoint(checkpoint_dir=str(tmp_path), session_id="j")

@@ -1,7 +1,7 @@
 """Multi-code-agent sharding helpers.
 
 Pure-data tests for ``shard_repo_for_code_agents`` + ``merge_repo_reports``
-in ``bifrost.research.repo_agent``. No DB, no LLM — both helpers are
+in ``orgbrain.research.repo_agent``. No DB, no LLM — both helpers are
 synchronous-data transforms.
 
 Coverage targets:
@@ -24,14 +24,14 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.extraction.cli_client import (
+from orgbrain.extraction.cli_client import (
     ClaudeCliAuthError,
     ClaudeCliTransientError,
     CliCompletion,
     Usage,
 )
-from bifrost.research import repo_agent as _ra
-from bifrost.research.repo_agent import (
+from orgbrain.research import repo_agent as _ra
+from orgbrain.research.repo_agent import (
     EdgeVerification,
     EntitySnippet,
     MissedEdge,
@@ -165,7 +165,7 @@ def _entity(urn: str, name: str | None = None) -> EntitySnippet:
     )
 
 
-def _entities(n: int, prefix: str = "urn:bifrost:repo/r/component") -> list[EntitySnippet]:
+def _entities(n: int, prefix: str = "urn:orgbrain:repo/r/component") -> list[EntitySnippet]:
     return [_entity(f"{prefix}/E{i:04d}") for i in range(n)]
 
 

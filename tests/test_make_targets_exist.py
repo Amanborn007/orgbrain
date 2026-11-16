@@ -47,7 +47,7 @@ def referenced() -> dict[str, set[str]]:
         if p.exists() and p != ROOT / "docs" / "prd.md":
             for span in _md_spans(p.read_text()):
                 add(span, str(p.relative_to(ROOT)))
-    for p in sorted((ROOT / "src" / "bifrost" / "cli").rglob("*.py")):
+    for p in sorted((ROOT / "src" / "orgbrain" / "cli").rglob("*.py")):
         text = p.read_text()
         rel = str(p.relative_to(ROOT))
         for lit in re.findall(r'"([^"\n]*\bmake [^"\n]*)"', text):

@@ -20,7 +20,7 @@ import asyncio
 
 import pytest
 
-from bifrost.api.sse import SSEEvent, TaskEventBus
+from orgbrain.api.sse import SSEEvent, TaskEventBus
 
 
 @pytest.mark.asyncio

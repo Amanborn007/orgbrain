@@ -16,13 +16,13 @@ from dataclasses import dataclass
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.agent_cache import (
+from orgbrain.research.agent_cache import (
     cached_agent,
     compute_scope_hash,
     count_cache_hits_for_run,
 )
-from bifrost.research.runs import start_run
-from bifrost.storage.repository import EntityRepository
+from orgbrain.research.runs import start_run
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture

@@ -1,12 +1,12 @@
-# S12 -- Bifrost Observability and Audit Specification
+# S12 -- OrgBrain Observability and Audit Specification
 
 **Spec ID:** S12
 
 ## 1. Purpose and Scope
 
-This specification defines how the Bifrost platform observes itself: how it logs, measures, traces, audits, and alerts on its own behavior. Every subsystem in Bifrost -- task orchestration, agent workforce, knowledge pipeline, source adapters, freshness tracking, and API surface -- is within scope.
+This specification defines how the OrgBrain platform observes itself: how it logs, measures, traces, audits, and alerts on its own behavior. Every subsystem in OrgBrain -- task orchestration, agent workforce, knowledge pipeline, source adapters, freshness tracking, and API surface -- is within scope.
 
-The goal is to make Bifrost's internal behavior transparent, debuggable, and accountable. Engineers operating Bifrost must be able to answer: what happened, when, why, how long it took, what it cost, and whether the platform is healthy.
+The goal is to make OrgBrain's internal behavior transparent, debuggable, and accountable. Engineers operating OrgBrain must be able to answer: what happened, when, why, how long it took, what it cost, and whether the platform is healthy.
 
 This specification covers structured logging, metrics collection, distributed tracing, audit trails, alerting, and dashboards. It defines what is built in V1 (minimal viable observability) and what is deferred to V2 and beyond.
 
@@ -49,7 +49,7 @@ This specification directly addresses the following requirements sections:
 
 ### Goals
 
-- **Complete task traceability.** Every task that enters Bifrost produces a traceable chain of logs, metrics, and audit events from submission to delivery.
+- **Complete task traceability.** Every task that enters OrgBrain produces a traceable chain of logs, metrics, and audit events from submission to delivery.
 - **Operational transparency.** Platform operators can determine system health, identify bottlenecks, and diagnose failures without reading application code.
 - **Freshness visibility.** Staleness and lag are observable as first-class metrics, not buried in application logic.
 - **Vendor neutrality.** Instrumentation uses OpenTelemetry standards so that backends (Prometheus, Jaeger, Grafana, Datadog) are interchangeable.
@@ -61,7 +61,7 @@ This specification directly addresses the following requirements sections:
 - **Business analytics.** User behavior analytics, funnel analysis, and product metrics are out of scope. This specification covers platform operational observability only.
 - **Log aggregation infrastructure.** This specification defines what is emitted, not how log aggregation clusters are provisioned or managed.
 - **Real-time anomaly detection in V1.** Automated anomaly detection and ML-based alerting are deferred to future evolution.
-- **Source system monitoring.** Bifrost observes its own interactions with source systems but does not monitor the health of those source systems themselves.
+- **Source system monitoring.** OrgBrain observes its own interactions with source systems but does not monitor the health of those source systems themselves.
 
 ---
 
@@ -69,7 +69,7 @@ This specification directly addresses the following requirements sections:
 
 ### 5.1 Structured JSON Format
 
-Every log entry emitted by Bifrost MUST be a single-line JSON object written to stdout, following 12-factor app conventions. Bifrost uses **structlog** (D7 from tech-stack-adr) as its logging library.
+Every log entry emitted by OrgBrain MUST be a single-line JSON object written to stdout, following 12-factor app conventions. OrgBrain uses **structlog** (D7 from tech-stack-adr) as its logging library.
 
 **structlog Configuration (application startup):**
 
@@ -262,7 +262,7 @@ Emitted by agents during consultation.
 
 ### 5.4 Correlation
 
-Every task submitted to Bifrost is assigned a `trace_id` (UUID v4) at the point of submission. This ID:
+Every task submitted to OrgBrain is assigned a `trace_id` (UUID v4) at the point of submission. This ID:
 
 - Propagates through all log entries related to the task.
 - Is attached to all OpenTelemetry spans for the task.
@@ -320,7 +320,7 @@ Every agent execution (Track A or Track B) produces structured events for observ
 
 ### Track A Events (custom)
 
-Bifrost emits events via its internal `asyncio.Queue`-based event bus (see S9 — D9). These map to OpenTelemetry spans.
+OrgBrain emits events via its internal `asyncio.Queue`-based event bus (see S9 — D9). These map to OpenTelemetry spans.
 
 | Event | When | Data |
 |-------|------|------|
@@ -336,9 +336,9 @@ Bifrost emits events via its internal `asyncio.Queue`-based event bus (see S9 �
 
 ### Track B Events (Managed Agents)
 
-When Track B is active, Bifrost also captures events from the Managed Agents API:
+When Track B is active, OrgBrain also captures events from the Managed Agents API:
 
-- Managed Agents session events streamed to Bifrost are captured and stored.
+- Managed Agents session events streamed to OrgBrain are captured and stored.
 - Session thread events (`thread_created`, `thread_idle`) are mapped to `agent.session` events.
 - Memory store operations (via agent `tool_use` events) are mapped to `agent.state` events.
 
@@ -354,47 +354,47 @@ All metrics MUST be OpenTelemetry-compatible and exposed in Prometheus expositio
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `bifrost_api_request_duration_seconds` | Histogram | `endpoint`, `method`, `status` | API latency distribution. Report p50, p95, p99. |
-| `bifrost_task_completion_duration_seconds` | Histogram | `task_type`, `outcome` | End-to-end task completion time. |
-| `bifrost_agent_invocation_duration_seconds` | Histogram | `agent_type`, `repo`, `outcome` | Per-agent consultation latency. |
-| `bifrost_component_errors_total` | Counter | `component`, `error_type` | Error count per component. |
-| `bifrost_tasks_active` | Gauge | `task_type` | Currently executing tasks. |
-| `bifrost_tasks_queued` | Gauge | `task_type` | Tasks waiting for execution. |
+| `orgbrain_api_request_duration_seconds` | Histogram | `endpoint`, `method`, `status` | API latency distribution. Report p50, p95, p99. |
+| `orgbrain_task_completion_duration_seconds` | Histogram | `task_type`, `outcome` | End-to-end task completion time. |
+| `orgbrain_agent_invocation_duration_seconds` | Histogram | `agent_type`, `repo`, `outcome` | Per-agent consultation latency. |
+| `orgbrain_component_errors_total` | Counter | `component`, `error_type` | Error count per component. |
+| `orgbrain_tasks_active` | Gauge | `task_type` | Currently executing tasks. |
+| `orgbrain_tasks_queued` | Gauge | `task_type` | Tasks waiting for execution. |
 
 ### 6.2 Freshness Health Metrics
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `bifrost_staleness_seconds` | Histogram | `repo`, `source_type` | Distribution of staleness across knowledge artifacts per repo. |
-| `bifrost_source_lag_seconds` | Gauge | `repo`, `source_type` | Current lag between source state and indexed state per source. Report p50, p95, p99 via recording rules. |
-| `bifrost_last_refresh_timestamp_seconds` | Gauge | `repo`, `source_type` | Unix timestamp of the most recent successful refresh. |
-| `bifrost_stale_artifacts_count` | Gauge | `repo`, `artifact_type` | Count of knowledge artifacts currently marked stale. |
+| `orgbrain_staleness_seconds` | Histogram | `repo`, `source_type` | Distribution of staleness across knowledge artifacts per repo. |
+| `orgbrain_source_lag_seconds` | Gauge | `repo`, `source_type` | Current lag between source state and indexed state per source. Report p50, p95, p99 via recording rules. |
+| `orgbrain_last_refresh_timestamp_seconds` | Gauge | `repo`, `source_type` | Unix timestamp of the most recent successful refresh. |
+| `orgbrain_stale_artifacts_count` | Gauge | `repo`, `artifact_type` | Count of knowledge artifacts currently marked stale. |
 
 ### 6.3 Coverage Metrics
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `bifrost_entities_total` | Gauge | `repo`, `entity_type` | Count of discovered entities (components, flows, dependencies) per repo. |
-| `bifrost_source_coverage` | Gauge | `repo`, `source_type` | Binary (0/1) or percentage indicating whether a source type is connected for a repo. |
-| `bifrost_knowledge_tier_count` | Gauge | `repo`, `tier` | Count of knowledge artifacts at each tier (T0, T1, T2, T3). |
+| `orgbrain_entities_total` | Gauge | `repo`, `entity_type` | Count of discovered entities (components, flows, dependencies) per repo. |
+| `orgbrain_source_coverage` | Gauge | `repo`, `source_type` | Binary (0/1) or percentage indicating whether a source type is connected for a repo. |
+| `orgbrain_knowledge_tier_count` | Gauge | `repo`, `tier` | Count of knowledge artifacts at each tier (T0, T1, T2, T3). |
 
 ### 6.4 Usage Metrics
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `bifrost_tasks_total` | Counter | `task_type`, `outcome` | Total tasks processed. |
-| `bifrost_query_type_total` | Counter | `query_type` | Distribution of query types (flow analysis, dependency check, etc.). |
-| `bifrost_cache_requests_total` | Counter | `result` (`hit`, `miss`) | Cache hit/miss counts. |
-| `bifrost_llm_tokens_total` | Counter | `model`, `direction` (`input`, `output`) | LLM token consumption. |
-| `bifrost_llm_cost_dollars` | Counter | `model`, `task_type` | Estimated LLM cost in dollars. |
+| `orgbrain_tasks_total` | Counter | `task_type`, `outcome` | Total tasks processed. |
+| `orgbrain_query_type_total` | Counter | `query_type` | Distribution of query types (flow analysis, dependency check, etc.). |
+| `orgbrain_cache_requests_total` | Counter | `result` (`hit`, `miss`) | Cache hit/miss counts. |
+| `orgbrain_llm_tokens_total` | Counter | `model`, `direction` (`input`, `output`) | LLM token consumption. |
+| `orgbrain_llm_cost_dollars` | Counter | `model`, `task_type` | Estimated LLM cost in dollars. |
 
 ### 6.5 Workforce Metrics
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `bifrost_agents_count` | Gauge | `agent_type`, `status` (`active`, `idle`, `error`) | Current agent count by type and status. |
-| `bifrost_agent_consultations_total` | Counter | `agent_type`, `repo` | Total consultations per agent. |
-| `bifrost_agent_response_duration_seconds` | Histogram | `agent_type` | Agent response time distribution. |
+| `orgbrain_agents_count` | Gauge | `agent_type`, `status` (`active`, `idle`, `error`) | Current agent count by type and status. |
+| `orgbrain_agent_consultations_total` | Counter | `agent_type`, `repo` | Total consultations per agent. |
+| `orgbrain_agent_response_duration_seconds` | Histogram | `agent_type` | Agent response time distribution. |
 
 ---
 
@@ -404,35 +404,35 @@ When Managed Agents is active, the following additional metrics are collected. T
 
 ```
 # Session pool metrics
-bifrost_session_pool_active_total{agent_type}       # Current active sessions
-bifrost_session_pool_queued_total                   # Tasks waiting for session slot
-bifrost_session_pool_utilization_ratio              # active / max_concurrent
+orgbrain_session_pool_active_total{agent_type}       # Current active sessions
+orgbrain_session_pool_queued_total                   # Tasks waiting for session slot
+orgbrain_session_pool_utilization_ratio              # active / max_concurrent
 
 # Session lifecycle metrics
-bifrost_session_duration_seconds{agent_type, outcome}  # histogram: completed/timed_out/failed
-bifrost_session_timeout_total{agent_type}           # counter: sessions that hit duration limit
-bifrost_session_respawn_total{agent_type}           # counter: sessions re-spawned after timeout
-bifrost_session_checkpoint_writes_total             # counter: checkpoint writes to Memory Store
+orgbrain_session_duration_seconds{agent_type, outcome}  # histogram: completed/timed_out/failed
+orgbrain_session_timeout_total{agent_type}           # counter: sessions that hit duration limit
+orgbrain_session_respawn_total{agent_type}           # counter: sessions re-spawned after timeout
+orgbrain_session_checkpoint_writes_total             # counter: checkpoint writes to Memory Store
 
 # Memory Store metrics
-bifrost_memory_store_read_bytes_total{agent_type}   # bytes read from Memory Store
-bifrost_memory_store_write_bytes_total{agent_type}  # bytes written to Memory Store
-bifrost_memory_store_write_failures_total           # failed writes (critical — state loss risk)
+orgbrain_memory_store_read_bytes_total{agent_type}   # bytes read from Memory Store
+orgbrain_memory_store_write_bytes_total{agent_type}  # bytes written to Memory Store
+orgbrain_memory_store_write_failures_total           # failed writes (critical — state loss risk)
 
 # MCP tool metrics
-bifrost_mcp_tool_calls_total{server_name, tool_name, outcome}   # success/failure
-bifrost_mcp_tool_latency_seconds{server_name, tool_name}        # histogram
+orgbrain_mcp_tool_calls_total{server_name, tool_name, outcome}   # success/failure
+orgbrain_mcp_tool_latency_seconds{server_name, tool_name}        # histogram
 
 # Track B cost metrics
-bifrost_track_b_session_overhead_usd_total{agent_type}  # cumulative session overhead cost
-bifrost_track_b_total_cost_usd_total                     # all Track B costs combined
+orgbrain_track_b_session_overhead_usd_total{agent_type}  # cumulative session overhead cost
+orgbrain_track_b_total_cost_usd_total                     # all Track B costs combined
 ```
 
 ---
 
 ## 6.7 LLM Cost Tracking
 
-**Requirement:** LLM cost per query is unestimated and potentially ruinous. Bifrost MUST track and alert on LLM costs from day 1 (V1).
+**Requirement:** LLM cost per query is unestimated and potentially ruinous. OrgBrain MUST track and alert on LLM costs from day 1 (V1).
 
 ### Cost Collection
 
@@ -472,11 +472,11 @@ Cost alerting runs in V1. Alert delivery (Slack / on-call pager) is wired in V2 
 
 #### Track B-Specific Alerts
 
-- **`BifrostTrackBSessionOverheadHigh`** — Fires when `track_b_session_overhead_usd` exceeds 20% of `estimated_cost_usd` for the same task. This indicates MCP or session overhead is unexpectedly high. Expected baseline is 5–10%; values above 20% suggest runaway MCP tool usage or session leaks.
+- **`OrgBrainTrackBSessionOverheadHigh`** — Fires when `track_b_session_overhead_usd` exceeds 20% of `estimated_cost_usd` for the same task. This indicates MCP or session overhead is unexpectedly high. Expected baseline is 5–10%; values above 20% suggest runaway MCP tool usage or session leaks.
 
-- **`BifrostMemoryStoreWriteFailure`** — Fires on any increment of `bifrost_memory_store_write_failures_total`. Highest severity: a failed checkpoint write means agent state is lost and the task may produce incorrect or incomplete output. Requires immediate investigation.
+- **`OrgBrainMemoryStoreWriteFailure`** — Fires on any increment of `orgbrain_memory_store_write_failures_total`. Highest severity: a failed checkpoint write means agent state is lost and the task may produce incorrect or incomplete output. Requires immediate investigation.
 
-- **`BifrostSessionPoolSaturated`** — Fires when `bifrost_session_pool_utilization_ratio` > 0.8. Indicates the session pool is near capacity and tasks will begin queueing. Remediation: increase `max_concurrent_sessions` configuration or upgrade from Research Preview tier to a higher session limit.
+- **`OrgBrainSessionPoolSaturated`** — Fires when `orgbrain_session_pool_utilization_ratio` > 0.8. Indicates the session pool is near capacity and tasks will begin queueing. Remediation: increase `max_concurrent_sessions` configuration or upgrade from Research Preview tier to a higher session limit.
 
 ### Reference Cost Estimates (V1, claude-sonnet-4-6)
 
@@ -487,7 +487,7 @@ Cost alerting runs in V1. Alert delivery (Slack / on-call pager) is wired in V2 
 | Impact assessment (10 repos) | 11-15 calls | $0.30-1.00 |
 | Cold-start extraction (200 files) | 20-40 calls | $0.50-2.00 |
 
-Track B adds container compute cost (rate TBD during beta). Monitor separately via `bifrost.session.container_seconds`.
+Track B adds container compute cost (rate TBD during beta). Monitor separately via `orgbrain.session.container_seconds`.
 
 ---
 
@@ -495,7 +495,7 @@ Track B adds container compute cost (rate TBD during beta). Monitor separately v
 
 ### 7.1 Tracing Standard
 
-Bifrost uses OpenTelemetry for distributed tracing. Traces are propagated using W3C Trace Context headers internally.
+OrgBrain uses OpenTelemetry for distributed tracing. Traces are propagated using W3C Trace Context headers internally.
 
 ### 7.2 Span Hierarchy
 
@@ -558,15 +558,15 @@ Every span MUST include:
 
 | Attribute | Description |
 |-----------|-------------|
-| `bifrost.task_id` | The task this span belongs to. |
-| `bifrost.component` | The subsystem executing this span. |
-| `bifrost.repo` | Repository in scope (where applicable). |
-| `bifrost.agent_type` | Agent type (on agent spans). |
-| `bifrost.adapter` | Adapter name (on adapter spans). |
+| `orgbrain.task_id` | The task this span belongs to. |
+| `orgbrain.component` | The subsystem executing this span. |
+| `orgbrain.repo` | Repository in scope (where applicable). |
+| `orgbrain.agent_type` | Agent type (on agent spans). |
+| `orgbrain.adapter` | Adapter name (on adapter spans). |
 
 ### 7.4 Trace-to-Task Correlation
 
-Every trace root span is tagged with `bifrost.task_id`. The task response returned to the caller includes the `trace_id`, enabling operators to look up the full trace for any task.
+Every trace root span is tagged with `orgbrain.task_id`. The task response returned to the caller includes the `trace_id`, enabling operators to look up the full trace for any task.
 
 ### 7.5 Sampling
 
@@ -588,12 +588,12 @@ Alerting is deferred to V2. This section defines the target design.
 
 | Alert | Condition | Severity |
 |-------|-----------|----------|
-| Repo staleness exceeded | `bifrost_source_lag_seconds{repo=X}` > configured threshold (default 24h) for > 30 minutes | Warning |
-| Adapter failure rate | `rate(bifrost_component_errors_total{component=~"adapter.*"}[5m])` > 0.1 | Critical |
-| Agent failure rate | `rate(bifrost_component_errors_total{component=~"agent.*"}[5m])` > 0.05 | Warning |
-| Task failure rate spike | `rate(bifrost_tasks_total{outcome="error"}[5m]) / rate(bifrost_tasks_total[5m])` > 0.1 | Critical |
-| LLM cost budget exceeded | `sum(bifrost_llm_cost_dollars)` over rolling 24h window exceeds configured budget | Warning |
-| Task queue depth | `bifrost_tasks_queued` > configured threshold for > 5 minutes | Warning |
+| Repo staleness exceeded | `orgbrain_source_lag_seconds{repo=X}` > configured threshold (default 24h) for > 30 minutes | Warning |
+| Adapter failure rate | `rate(orgbrain_component_errors_total{component=~"adapter.*"}[5m])` > 0.1 | Critical |
+| Agent failure rate | `rate(orgbrain_component_errors_total{component=~"agent.*"}[5m])` > 0.05 | Warning |
+| Task failure rate spike | `rate(orgbrain_tasks_total{outcome="error"}[5m]) / rate(orgbrain_tasks_total[5m])` > 0.1 | Critical |
+| LLM cost budget exceeded | `sum(orgbrain_llm_cost_dollars)` over rolling 24h window exceeds configured budget | Warning |
+| Task queue depth | `orgbrain_tasks_queued` > configured threshold for > 5 minutes | Warning |
 
 ### 8.2 Alert Routing
 
@@ -611,7 +611,7 @@ Alert routing rules are defined in platform configuration and support per-alert 
 
 ### 9.1 Purpose
 
-The audit trail provides a tamper-resistant, append-only record of all security-relevant and operationally significant events in Bifrost. It serves compliance, debugging, and forensic analysis needs.
+The audit trail provides a tamper-resistant, append-only record of all security-relevant and operationally significant events in OrgBrain. It serves compliance, debugging, and forensic analysis needs.
 
 ### 9.2 Audited Event Categories
 
@@ -678,7 +678,7 @@ from uuid import uuid4
 from sqlalchemy import Column, BigInteger, String, DateTime, text
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 
-from bifrost.db.base import Base
+from orgbrain.db.base import Base
 
 
 class AuditLog(Base):
@@ -715,7 +715,7 @@ class AuditLog(Base):
   "outcome": "success",
   "metadata": { "method": "api_key", "scopes": ["read", "task"] },
   "client_ip": "10.0.1.42",
-  "user_agent": "bifrost-cli/0.1.0"
+  "user_agent": "orgbrain-cli/0.1.0"
 }
 ```
 
@@ -769,7 +769,7 @@ class AuditLog(Base):
 Every write to AgentStateBackend is logged at the audit layer:
 
 - **Track A:** `INSERT` into `knowledge_audit_log(path, operation, prev_hash, new_hash, agent_type, task_id, timestamp)` after every state write.
-- **Track B:** Anthropic Memory Store version history provides the primary audit trail automatically (every mutation creates an immutable memory version with actor, timestamp, `content_sha256`). Bifrost supplements this with its own log entry for cross-referencing with internal task IDs.
+- **Track B:** Anthropic Memory Store version history provides the primary audit trail automatically (every mutation creates an immutable memory version with actor, timestamp, `content_sha256`). OrgBrain supplements this with its own log entry for cross-referencing with internal task IDs.
 
 ### 9.8 Sensitive Query Handling in Audit Logs
 
@@ -862,7 +862,7 @@ GET /metrics
 Content-Type: text/plain; version=0.0.4; charset=utf-8
 ```
 
-Returns all Bifrost metrics in Prometheus exposition format. No authentication required (intended for internal network scraping only; network-level access control applies).
+Returns all OrgBrain metrics in Prometheus exposition format. No authentication required (intended for internal network scraping only; network-level access control applies).
 
 ### 11.2 Health Check Endpoint
 
@@ -932,7 +932,7 @@ Access restricted to admin role. Returns 403 for non-admin callers.
 
 ## 12. Dependencies
 
-This specification observes all other Bifrost subsystems. It has dependencies on:
+This specification observes all other OrgBrain subsystems. It has dependencies on:
 
 | Subsystem | Dependency Type |
 |-----------|----------------|
@@ -962,7 +962,7 @@ This specification observes all other Bifrost subsystems. It has dependencies on
 
 ## 14. V1 Scope
 
-V1 delivers the minimum observability required to operate and debug Bifrost in a development and early-production environment.
+V1 delivers the minimum observability required to operate and debug OrgBrain in a development and early-production environment.
 
 V1 implements Track A observability: structured JSON logs (Pino), OpenTelemetry spans for all agent operations, LLM cost tracking per call (PostgreSQL `llm_cost_log` table), and cost alerting thresholds. Track B event capture (session events, memory store audit) is the V1.5 addition when Managed Agents is enabled.
 
@@ -976,7 +976,7 @@ V1 implements Track A observability: structured JSON logs (Pino), OpenTelemetry 
 | **Knowledge update audit** | Per-write entries in `knowledge_audit_log` for every AgentStateBackend mutation (section 9.7). |
 | **LLM cost tracking** | Per-call cost logging to `llm_cost_log` PostgreSQL table. Daily spend cap alerting at $50/day. Per-task warn at $2.00. |
 | **`/health` endpoint** | Health check with database and knowledge store connectivity verification. |
-| **Basic metrics** | `bifrost_tasks_total`, `bifrost_task_completion_duration_seconds`, `bifrost_component_errors_total`, `bifrost_cache_requests_total`, `bifrost_llm_tokens_total`, `bifrost_llm_cost_dollars` exposed at `/metrics`. |
+| **Basic metrics** | `orgbrain_tasks_total`, `orgbrain_task_completion_duration_seconds`, `orgbrain_component_errors_total`, `orgbrain_cache_requests_total`, `orgbrain_llm_tokens_total`, `orgbrain_llm_cost_dollars` exposed at `/metrics`. |
 | **Correlation ID propagation** | `trace_id` assigned at task submission and propagated through all logs and audit events. |
 | **Sensitive query log handling** | Query text flagged `"sensitive": true` in audit metadata; 90-day retention (section 9.8). |
 

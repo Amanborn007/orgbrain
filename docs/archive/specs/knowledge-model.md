@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-The Knowledge Model is the core data model of the entire Bifrost system. Every other subsystem -- source adapters, freshness tracking, storage, orchestration, query, documentation generation -- reads from or writes to structures defined here.
+The Knowledge Model is the core data model of the entire OrgBrain system. Every other subsystem -- source adapters, freshness tracking, storage, orchestration, query, documentation generation -- reads from or writes to structures defined here.
 
 Knowledge entities are stored in two complementary layers: PostgreSQL (structured graph, queryable) and AgentStateBackend (text documents for agent context loading, path-organized). This spec defines both layers.
 
@@ -33,7 +33,7 @@ This specification does NOT define:
 
 ## 2. Glossary References
 
-This specification uses terms defined in the Bifrost Glossary (doc F1). The following are load-bearing:
+This specification uses terms defined in the OrgBrain Glossary (doc F1). The following are load-bearing:
 
 | Term | Definition |
 |------|-----------|
@@ -41,7 +41,7 @@ This specification uses terms defined in the Bifrost Glossary (doc F1). The foll
 | **Knowledge Tiers** | T0 (source mappings) -> T1 (extracted facts) -> T2 (derived knowledge) -> T3 (generated artifacts). |
 | **Confidence Levels** | `confirmed`, `inferred`, `stale`, `unknown`, `conflicting`. |
 | **Scopes** | `source-object` < `repo` < `domain` < `org`. Hierarchical, composable. |
-| **URN** | Uniform Resource Name. Bifrost-internal identifier for cross-repo entities. Format: `bifrost:{scope}:{type}:{id}`. |
+| **URN** | Uniform Resource Name. OrgBrain-internal identifier for cross-repo entities. Format: `orgbrain:{scope}:{type}:{id}`. |
 | **Source Mapping** | A T0 artifact that records where authoritative truth lives for a given concept, repo, domain, or flow. |
 | **Metadata Envelope** | The standard set of quality fields every KnowledgeArtifact carries. |
 
@@ -84,7 +84,7 @@ This specification uses terms defined in the Bifrost Glossary (doc F1). The foll
 
 ### Non-Goals
 
-1. **Not a source-of-truth for raw content**: Bifrost stores extracted knowledge and references, not full copies of source files, tickets, or logs.
+1. **Not a source-of-truth for raw content**: OrgBrain stores extracted knowledge and references, not full copies of source files, tickets, or logs.
 2. **Not a general-purpose graph database**: The model is a labeled property graph with specific types and constraints, not an open-ended triple store.
 3. **Not a runtime observability platform**: Runtime observations are ingested as source evidence, not stored as time-series data.
 4. **Not a documentation CMS**: T3 generated docs are stored as artifacts with metadata, not as a full publishing pipeline.
@@ -105,7 +105,7 @@ from typing import Literal, NewType
 from uuid import UUID
 from pydantic import BaseModel, Field
 
-# Bifrost-internal identifier. Format: bifrost:{scope}:{type}:{id}
+# OrgBrain-internal identifier. Format: orgbrain:{scope}:{type}:{id}
 URN = NewType("URN", str)
 
 # ISO-8601 timestamp
@@ -183,7 +183,7 @@ class RepoFreshnessState(BaseModel):
 
 class Repo(BaseModel):
     id: EntityId
-    urn: URN  # bifrost:org:repo:{id}
+    urn: URN  # orgbrain:org:repo:{id}
     name: str
     url: str  # remote git URL or equivalent
     domain_id: EntityId | None = None  # FK to Domain
@@ -197,14 +197,14 @@ class Repo(BaseModel):
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | id | EntityId | yes | Primary key (UUID v7) |
-| urn | URN | yes | Globally unique Bifrost URN |
+| urn | URN | yes | Globally unique OrgBrain URN |
 | name | string | yes | Human-readable repo name |
 | url | string | yes | Remote URL for the repository |
 | domain_id | EntityId | no | Parent domain, if assigned |
 | description | string | no | Brief purpose description |
 | source_mappings | EntityId[] | yes | Connected source mappings (may be empty) |
 | freshness_state | RepoFreshnessState | yes | Current freshness tracking |
-| created_at | Timestamp | yes | When Bifrost first indexed this repo |
+| created_at | Timestamp | yes | When OrgBrain first indexed this repo |
 | updated_at | Timestamp | yes | Last mutation timestamp |
 
 ### 5.3 Domain
@@ -214,7 +214,7 @@ Domains group repos that work together to serve a business or technical area.
 ```python
 class Domain(BaseModel):
     id: EntityId
-    urn: URN  # bifrost:org:domain:{id}
+    urn: URN  # orgbrain:org:domain:{id}
     name: str
     repos: list[EntityId] = Field(default_factory=list)  # FK[] to Repo
     description: str | None = None
@@ -226,7 +226,7 @@ class Domain(BaseModel):
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | id | EntityId | yes | Primary key |
-| urn | URN | yes | Globally unique Bifrost URN |
+| urn | URN | yes | Globally unique OrgBrain URN |
 | name | string | yes | Human-readable domain name |
 | repos | EntityId[] | yes | Repos belonging to this domain |
 | description | string | no | Purpose and boundaries of this domain |
@@ -244,7 +244,7 @@ ComponentType = Literal["module", "service", "library", "package"]
 
 class Component(BaseModel):
     id: EntityId
-    urn: URN  # bifrost:repo:{repo_id}:component:{id}
+    urn: URN  # orgbrain:repo:{repo_id}:component:{id}
     repo_id: EntityId  # FK to Repo
     name: str
     type: ComponentType
@@ -321,7 +321,7 @@ InterfaceType = Literal["api", "event", "schema", "config"]
 
 class Interface(BaseModel):
     id: EntityId
-    urn: URN  # bifrost:repo:{repo_id}:interface:{id}
+    urn: URN  # orgbrain:repo:{repo_id}:interface:{id}
     component_id: EntityId  # FK to Component
     type: InterfaceType
     name: str
@@ -376,7 +376,7 @@ class FlowSegment(BaseModel):
 
 class FlowReference(BaseModel):
     id: EntityId
-    urn: URN  # bifrost:{scope}:flow:{id}
+    urn: URN  # orgbrain:{scope}:flow:{id}
     name: str
     flow_type: FlowType
     segments: list[FlowSegment]
@@ -580,7 +580,7 @@ class SourceMapping(BaseModel):
 | urn | URN | yes | Unique identifier |
 | source_type | SourceType | yes | Classification of the source system |
 | source_ref | string | yes | URI or identifier within the source system |
-| mapped_to | object | yes | What Bifrost concept this source maps to |
+| mapped_to | object | yes | What OrgBrain concept this source maps to |
 | relevance_score | number | yes | How relevant this source is (0.0 to 1.0) |
 | metadata | MetadataEnvelope | yes | Full metadata envelope |
 | created_at | Timestamp | yes | Creation timestamp |
@@ -702,7 +702,7 @@ GapSeverity = Literal["blocking", "partial", "minor"]
 
 # T1 entity: captures a knowledge gap discovered during a query
 class GapReport(BaseModel):
-    id: str  # bifrost:gap-report:{scope}:{id}
+    id: str  # orgbrain:gap-report:{scope}:{id}
     entity_type: Literal["gap_report"] = "gap_report"
 
     discovered_during: str  # task_id that discovered this gap
@@ -737,7 +737,7 @@ ReportedBy = Literal["user", "agent", "validation_stage"]
 
 # T1 entity: a correction to existing knowledge
 class Correction(BaseModel):
-    id: str  # bifrost:correction:{scope}:{id}
+    id: str  # orgbrain:correction:{scope}:{id}
     entity_type: Literal["correction"] = "correction"
 
     target_entity_id: str  # ID of the entity being corrected
@@ -763,7 +763,7 @@ MigrationStatus = Literal["pending", "in_progress", "complete", "failed", "rolle
 
 
 class MigrationState(BaseModel):
-    id: str  # URN: bifrost:org:migration:{id}
+    id: str  # URN: orgbrain:org:migration:{id}
     migration_name: str  # e.g., "postgres_v2_schema_upgrade"
     migration_type: MigrationType
     status: MigrationStatus
@@ -810,7 +810,7 @@ All relationships are typed, directed edges in a labeled property graph. The tab
 
 ## 7. Metadata Envelope
 
-Every knowledge-bearing entity in Bifrost carries a `MetadataEnvelope`. This is the mechanism that makes confidence, freshness, and traceability explicit throughout the system (req S7.2, S16.1).
+Every knowledge-bearing entity in OrgBrain carries a `MetadataEnvelope`. This is the mechanism that makes confidence, freshness, and traceability explicit throughout the system (req S7.2, S16.1).
 
 ```python
 class MetadataEnvelope(BaseModel):
@@ -859,7 +859,7 @@ When the Freshness subsystem (S3) detects that a source has changed since `index
 
 ## 8. Knowledge Tiers
 
-The tier system is the backbone of Bifrost's approach to balancing breadth with depth. Lower tiers are cheap and broad; higher tiers are expensive and curated.
+The tier system is the backbone of OrgBrain's approach to balancing breadth with depth. Lower tiers are cheap and broad; higher tiers are expensive and curated.
 
 ### T0: Source Mappings
 
@@ -1031,7 +1031,7 @@ The knowledge model must support these query patterns efficiently. Each pattern 
 | **by-dependency** | Direct and transitive dependencies of a given entity, with confidence | DependencyReference graph traversal from source entity | S10.3 |
 | **by-staleness** | All entities where freshness.indexed_at is older than threshold or confidence is stale | Scan on freshness.indexed_at, filter confidence.level = 'stale' | S12.1 |
 | **by-confidence-below-threshold** | All entities where confidence.score < threshold | Scan on confidence.score | S16.1 |
-| **by-source-mapping** | What Bifrost entities does a given source object map to | SourceMapping filtered by source_ref | S6.4 |
+| **by-source-mapping** | What OrgBrain entities does a given source object map to | SourceMapping filtered by source_ref | S6.4 |
 | **blast-radius** | Given an entity, find all direct and indirect dependents | Reverse DependencyReference traversal + flow participation | S10.3 |
 | **similar-implementation** | Given a component or pattern, find similar ones | LearnedPattern matching, component attribute similarity | S11.1 |
 
@@ -1085,7 +1085,7 @@ This supports the by-concept query pattern and general keyword search.
 
 ## 12. Knowledge Lifecycle
 
-Every piece of knowledge in Bifrost follows this lifecycle:
+Every piece of knowledge in OrgBrain follows this lifecycle:
 
 ```
 Creation --> Validation --> Storage --> Query --> Invalidation --> Refresh --> Archival
@@ -1159,7 +1159,7 @@ Org-level views follow the same pattern, composing domain views:
 
 ## 14. Interface Contracts
 
-The Knowledge Model subsystem exposes the following interfaces to other Bifrost subsystems.
+The Knowledge Model subsystem exposes the following interfaces to other OrgBrain subsystems.
 
 ### CRUD Operations
 
@@ -1232,9 +1232,9 @@ The knowledge model emits events to a message bus for consumption by other subsy
 
 ### D4: Cross-Repo Entities Use URN Identifiers
 
-**Decision:** All cross-repo references use URN identifiers from the Bifrost URN scheme, never raw foreign keys.
+**Decision:** All cross-repo references use URN identifiers from the OrgBrain URN scheme, never raw foreign keys.
 
-**Rationale:** Cross-repo references are fundamental to Bifrost's value proposition (req S2.4, S2.5). Using URNs makes these references location-independent, resolvable across storage boundaries, and stable across repo moves or renames. URN format: `bifrost:{scope}:{type}:{id}`.
+**Rationale:** Cross-repo references are fundamental to OrgBrain's value proposition (req S2.4, S2.5). Using URNs makes these references location-independent, resolvable across storage boundaries, and stable across repo moves or renames. URN format: `orgbrain:{scope}:{type}:{id}`.
 
 ### D5: UUID v7 for Entity IDs
 
@@ -1289,7 +1289,7 @@ The knowledge model emits events to a message bus for consumption by other subsy
 4. **Knowledge lineage visualization**: Use the `derived_from` relationship chain to show how a T3 document traces back through T2 analysis to T1 facts to T0 source mappings.
 5. **Confidence decay model**: Replace the current binary stale/fresh model with a continuous decay function based on source volatility history.
 6. **Multi-tenant support**: Extend URN scheme and storage model to support multiple organizations with isolated knowledge graphs.
-7. **Federated knowledge**: Support knowledge graphs that span multiple Bifrost instances, with cross-instance URN resolution.
+7. **Federated knowledge**: Support knowledge graphs that span multiple OrgBrain instances, with cross-instance URN resolution.
 
 ---
 

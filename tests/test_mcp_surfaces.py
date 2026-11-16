@@ -20,10 +20,10 @@ from unittest.mock import patch
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings, reset_settings
-from bifrost.cli.config_sections import McpConfig
-from bifrost.errors import ConfigError
-from bifrost.extraction.cli_client import ClaudeCliError, ClaudeLlmClient
+from orgbrain.cli.config import OrgBrainSettings, reset_settings
+from orgbrain.cli.config_sections import McpConfig
+from orgbrain.errors import ConfigError
+from orgbrain.extraction.cli_client import ClaudeCliError, ClaudeLlmClient
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GOLDEN_PATH = Path(__file__).parent / "fixtures" / "mcp_surfaces_golden.json"
@@ -49,9 +49,9 @@ CUSTOM_PREFIXES = {
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
-    monkeypatch.delenv("BIFROST_MCP__TOOL_PREFIX", raising=False)
-    monkeypatch.delenv("BIFROST_SOURCES__JIRA__BASE_URL", raising=False)
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
+    monkeypatch.delenv("ORGBRAIN_MCP__TOOL_PREFIX", raising=False)
+    monkeypatch.delenv("ORGBRAIN_SOURCES__JIRA__BASE_URL", raising=False)
     reset_settings()
     yield
     reset_settings()
@@ -59,11 +59,11 @@ def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
 
 def _settings(
     *, prefixes: dict[str, str] | None = None, base_url: str = ACME_JIRA
-) -> BifrostSettings:
+) -> OrgBrainSettings:
     kw: dict[str, Any] = {"sources": {"jira": {"base_url": base_url}}}
     if prefixes:
         kw["mcp"] = {"tool_prefix": prefixes}
-    return BifrostSettings(**kw)
+    return OrgBrainSettings(**kw)
 
 
 def _golden() -> dict[str, dict[str, Any]]:
@@ -100,19 +100,19 @@ def _recording():
 
 
 def _repo_stub() -> SimpleNamespace:
-    return SimpleNamespace(id="rid", name="widgets", urn="urn:bifrost:repo:widgets")
+    return SimpleNamespace(id="rid", name="widgets", urn="urn:orgbrain:repo:widgets")
 
 
-async def _drive_confluence(s: BifrostSettings | None) -> None:
-    from bifrost.research.confluence_agent import research_confluence_for_repo
+async def _drive_confluence(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.confluence_agent import research_confluence_for_repo
 
     await research_confluence_for_repo(
         question="q", repo_id="r", repo_name="widgets", confluence_space_key="SP", settings=s
     )
 
 
-async def _drive_index_confluence(s: BifrostSettings | None) -> None:
-    from bifrost.research.external_indexer import index_confluence_for_repo
+async def _drive_index_confluence(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.external_indexer import index_confluence_for_repo
 
     await index_confluence_for_repo(
         session=None,
@@ -122,8 +122,8 @@ async def _drive_index_confluence(s: BifrostSettings | None) -> None:
     )
 
 
-async def _drive_index_jira(s: BifrostSettings | None) -> None:
-    from bifrost.research.external_indexer import index_jira_for_repo
+async def _drive_index_jira(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.external_indexer import index_jira_for_repo
 
     await index_jira_for_repo(
         session=None,
@@ -133,8 +133,8 @@ async def _drive_index_jira(s: BifrostSettings | None) -> None:
     )
 
 
-async def _drive_github(s: BifrostSettings | None) -> None:
-    from bifrost.research.github_agent import research_github_for_repo
+async def _drive_github(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.github_agent import research_github_for_repo
 
     await research_github_for_repo(
         question="q",
@@ -145,33 +145,33 @@ async def _drive_github(s: BifrostSettings | None) -> None:
     )
 
 
-async def _drive_slack_agent(s: BifrostSettings | None) -> None:
-    from bifrost.research.slack_agent import research_slack_for_repo
+async def _drive_slack_agent(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.slack_agent import research_slack_for_repo
 
     await research_slack_for_repo(
         question="q", repo_id="r", repo_name="widgets", slack_channel="#widgets", settings=s
     )
 
 
-async def _drive_jira_agent(s: BifrostSettings | None) -> None:
-    from bifrost.research.jira_agent import research_jira_for_repo
+async def _drive_jira_agent(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.jira_agent import research_jira_for_repo
 
     await research_jira_for_repo(
         question="q", repo_id="r", repo_name="widgets", jira_project_key="PRJ", settings=s
     )
 
 
-async def _drive_gdocs_agent(s: BifrostSettings | None) -> None:
-    from bifrost.research.gdocs_agent import research_gdocs_for_repo
+async def _drive_gdocs_agent(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.gdocs_agent import research_gdocs_for_repo
 
     await research_gdocs_for_repo(
         question="q", repo_id="r", repo_name="widgets", gdoc_folder_url=None, settings=s
     )
 
 
-async def _drive_gdocs_index(s: BifrostSettings | None) -> None:
-    from bifrost.cli.config import get_settings
-    from bifrost.research.gdocs_index import _index_one_repo
+async def _drive_gdocs_index(s: OrgBrainSettings | None) -> None:
+    from orgbrain.cli.config import get_settings
+    from orgbrain.research.gdocs_index import _index_one_repo
 
     await _index_one_repo(
         repo=_repo_stub(),  # type: ignore[arg-type]
@@ -182,29 +182,29 @@ async def _drive_gdocs_index(s: BifrostSettings | None) -> None:
     )
 
 
-async def _drive_external_agent(s: BifrostSettings | None) -> None:
-    from bifrost.research.external_agent import research_external
+async def _drive_external_agent(s: OrgBrainSettings | None) -> None:
+    from orgbrain.research.external_agent import research_external
 
     await research_external(question="q", settings=s)
 
 
-async def _drive_jira_chain(s: BifrostSettings | None) -> None:
-    from bifrost.cli.config import get_settings
-    from bifrost.research.coordinator import _prefetch_jira_chain
+async def _drive_jira_chain(s: OrgBrainSettings | None) -> None:
+    from orgbrain.cli.config import get_settings
+    from orgbrain.research.coordinator import _prefetch_jira_chain
 
     await _prefetch_jira_chain("what is the state of ABC-123?", s or get_settings())
 
 
-async def _drive_jira_writer(s: BifrostSettings | None) -> None:
-    from bifrost.actions.jira_writer import JiraWriteFailed, _run_jira_write
+async def _drive_jira_writer(s: OrgBrainSettings | None) -> None:
+    from orgbrain.actions.jira_writer import JiraWriteFailed, _run_jira_write
 
     with pytest.raises(JiraWriteFailed):
         await _run_jira_write(user_message="m", settings=s)
 
 
 def _channel_driver(kind: str, channel: str):
-    async def _drive(s: BifrostSettings | None) -> None:
-        from bifrost.collaboration.slack_draft import create_slack_draft
+    async def _drive(s: OrgBrainSettings | None) -> None:
+        from orgbrain.collaboration.slack_draft import create_slack_draft
 
         await create_slack_draft(channel=channel, body_md="hello", settings=s)
 
@@ -227,7 +227,7 @@ DRIVERS: dict[str, Any] = {
 }
 
 
-async def _capture(key: str, s: BifrostSettings | None) -> dict[str, Any]:
+async def _capture(key: str, s: OrgBrainSettings | None) -> dict[str, Any]:
     with _recording() as calls:
         await DRIVERS[key](s)
     assert len(calls) == 1, f"{key}: expected exactly one LLM call, saw {len(calls)}"
@@ -270,55 +270,55 @@ def test_golden_covers_every_driver() -> None:
 # key -> (module, server, prompt constant, tool-name constant)
 TEMPLATED: dict[str, tuple[str, str, str, str]] = {
     "confluence_agent": (
-        "bifrost.research.confluence_agent",
+        "orgbrain.research.confluence_agent",
         "atlassian",
         "_CONFLUENCE_SYSTEM_PROMPT",
         "_CONFLUENCE_READ_TOOL_NAMES",
     ),
     "github_agent": (
-        "bifrost.research.github_agent",
+        "orgbrain.research.github_agent",
         "github",
         "_GITHUB_SYSTEM_PROMPT",
         "_GITHUB_READ_TOOL_NAMES",
     ),
     "slack_agent": (
-        "bifrost.research.slack_agent",
+        "orgbrain.research.slack_agent",
         "slack",
         "_SLACK_SYSTEM_PROMPT",
         "_SLACK_READ_TOOL_NAMES",
     ),
     "jira_agent": (
-        "bifrost.research.jira_agent",
+        "orgbrain.research.jira_agent",
         "atlassian",
         "_JIRA_SYSTEM_PROMPT",
         "_JIRA_READ_TOOL_NAMES",
     ),
     "gdocs_agent": (
-        "bifrost.research.gdocs_agent",
+        "orgbrain.research.gdocs_agent",
         "gdrive",
         "_GDOCS_SYSTEM_PROMPT",
         "_GDOCS_READ_TOOL_NAMES",
     ),
     "gdocs_index": (
-        "bifrost.research.gdocs_index",
+        "orgbrain.research.gdocs_index",
         "gdrive",
         "_GDOCS_INDEX_SYSTEM_PROMPT",
         "_GDOCS_INDEX_TOOL_NAMES",
     ),
     "external_agent": (
-        "bifrost.research.external_agent",
+        "orgbrain.research.external_agent",
         "atlassian",
         "_EXTERNAL_SYSTEM_PROMPT",
         "_ATLASSIAN_READONLY_TOOL_NAMES",
     ),
     "coordinator_jira_chain": (
-        "bifrost.research.coordinator",
+        "orgbrain.research.coordinator",
         "atlassian",
         "_JIRA_CHAIN_SYSTEM",
         "_JIRA_CHAIN_TOOL_NAMES",
     ),
     "jira_writer": (
-        "bifrost.actions.jira_writer",
+        "orgbrain.actions.jira_writer",
         "atlassian",
         "_JIRA_WRITE_SYSTEM",
         "_JIRA_WRITE_TOOL_NAMES",
@@ -349,7 +349,7 @@ def test_prompt_constants_are_token_templates(key: str) -> None:
 
 @pytest.mark.parametrize("which", ["conf", "jira"])
 def test_index_prompts_builder_level(which: str) -> None:
-    from bifrost.research import external_indexer as ix
+    from orgbrain.research import external_indexer as ix
 
     s = _settings()
     build = ix._conf_index_system_prompt if which == "conf" else ix._jira_index_system_prompt
@@ -362,7 +362,7 @@ def test_index_prompts_builder_level(which: str) -> None:
 
 @pytest.mark.parametrize("which", ["conf", "jira"])
 def test_index_prompts_without_base_url_name_no_atlassian_host(which: str) -> None:
-    from bifrost.research import external_indexer as ix
+    from orgbrain.research import external_indexer as ix
 
     s = _settings(base_url="")
     build = ix._conf_index_system_prompt if which == "conf" else ix._jira_index_system_prompt
@@ -376,7 +376,7 @@ def test_index_prompts_without_base_url_name_no_atlassian_host(which: str) -> No
 
 
 def test_slack_builders_take_mcp_and_default_to_settings() -> None:
-    from bifrost.collaboration import slack_draft
+    from orgbrain.collaboration import slack_draft
 
     g = _golden()
     s = _settings()
@@ -388,7 +388,7 @@ def test_slack_builders_take_mcp_and_default_to_settings() -> None:
 
 
 def test_slack_tool_constants_are_bare_names_still_inside_the_prompt() -> None:
-    from bifrost.collaboration import slack_draft
+    from orgbrain.collaboration import slack_draft
 
     sp = slack_draft._build_system_prompt("#orders-eng")
     assert not slack_draft._SLACK_SEARCH_TOOL.startswith("mcp__")
@@ -400,14 +400,14 @@ def test_slack_tool_constants_are_bare_names_still_inside_the_prompt() -> None:
 
 
 async def test_prefix_is_read_at_call_time(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    from bifrost.collaboration import slack_draft
+    from orgbrain.collaboration import slack_draft
 
-    cfg = tmp_path / "bifrost.yaml"
+    cfg = tmp_path / "orgbrain.yaml"
     cfg.write_text(
         "mcp:\n  tool_prefix:\n    atlassian: mcp__late_bound__\n    slack: mcp__late_slack__\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("BIFROST_CONFIG", str(cfg))
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(cfg))
     reset_settings()  # after every module above was imported
 
     got = await _capture("confluence_agent", None)

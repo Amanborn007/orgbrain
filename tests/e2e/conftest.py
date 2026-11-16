@@ -21,11 +21,11 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.cli.config import reset_settings
-from bifrost.storage.models import Base
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.cli.config import reset_settings
+from orgbrain.storage.models import Base
+from orgbrain.storage.repository import EntityRepository
 
 # ---------------------------------------------------------------------------
 # PostgreSQL container — one per test session
@@ -37,9 +37,9 @@ def pg_container():
     """Start a PostgreSQL container with pgvector for the entire test session."""
     with PostgresContainer(
         image="pgvector/pgvector:pg16",
-        username="bifrost_test",
-        password="bifrost_test",
-        dbname="bifrost_e2e",
+        username="orgbrain_test",
+        password="orgbrain_test",
+        dbname="orgbrain_e2e",
     ) as pg:
         yield pg
 
@@ -49,7 +49,7 @@ def database_url(pg_container) -> str:
     """Async database URL pointing at the test container."""
     host = pg_container.get_container_host_ip()
     port = pg_container.get_exposed_port(5432)
-    return f"postgresql+asyncpg://bifrost_test:bifrost_test@{host}:{port}/bifrost_e2e"
+    return f"postgresql+asyncpg://orgbrain_test:orgbrain_test@{host}:{port}/orgbrain_e2e"
 
 
 @pytest.fixture(scope="session")
@@ -134,7 +134,7 @@ async def client(session_factory) -> AsyncGenerator[httpx.AsyncClient]:
 
 # Known file contents so extraction results are deterministic.
 _TEST_REPO_FILES = {
-    "README.md": "# Test Repo\nA small test repository for Bifrost E2E tests.\n",
+    "README.md": "# Test Repo\nA small test repository for OrgBrain E2E tests.\n",
     "src/main.py": (
         '"""Main entry point for the test application."""\n'
         "\n"
@@ -156,7 +156,7 @@ _TEST_REPO_FILES = {
         "\n"
         "def helper() -> str:\n"
         '    """Return a greeting string."""\n'
-        '    return "hello from bifrost test repo"\n'
+        '    return "hello from orgbrain test repo"\n'
     ),
     "src/models.py": (
         '"""Data models for the test app."""\n'
@@ -188,7 +188,7 @@ def test_repo_path() -> Generator[Path]:
 
     Returns the path to the repo. Cleaned up at session end.
     """
-    tmpdir = Path(tempfile.mkdtemp(prefix="bifrost_e2e_repo_"))
+    tmpdir = Path(tempfile.mkdtemp(prefix="orgbrain_e2e_repo_"))
     for relpath, content in _TEST_REPO_FILES.items():
         filepath = tmpdir / relpath
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -204,10 +204,10 @@ def test_repo_path() -> Generator[Path]:
         capture_output=True,
         env={
             **os.environ,
-            "GIT_AUTHOR_NAME": "Bifrost Test",
-            "GIT_AUTHOR_EMAIL": "test@bifrost.dev",
-            "GIT_COMMITTER_NAME": "Bifrost Test",
-            "GIT_COMMITTER_EMAIL": "test@bifrost.dev",
+            "GIT_AUTHOR_NAME": "OrgBrain Test",
+            "GIT_AUTHOR_EMAIL": "test@orgbrain.dev",
+            "GIT_COMMITTER_NAME": "OrgBrain Test",
+            "GIT_COMMITTER_EMAIL": "test@orgbrain.dev",
         },
     )
 

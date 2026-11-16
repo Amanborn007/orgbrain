@@ -15,11 +15,11 @@ questions:
     paraphrase: "Give me an overview of the AcmeCo webhook delivery services and their dependencies."
     scope_repo_names: ["webhook-api", "dispatcher", "delivery-gateway", "signing-keys", "usage-metering"]
     expected_entities:
-      - urn:bifrost:service:webhook-api
-      - urn:bifrost:service:dispatcher
-      - urn:bifrost:service:delivery-gateway
-      - urn:bifrost:service:signing-keys
-      - urn:bifrost:service:usage-metering
+      - urn:orgbrain:service:webhook-api
+      - urn:orgbrain:service:dispatcher
+      - urn:orgbrain:service:delivery-gateway
+      - urn:orgbrain:service:signing-keys
+      - urn:orgbrain:service:usage-metering
     expected_key_facts:
       - {needle: "webhook-api", why: "public ingest and subscriptions service"}
       - {needle: "dispatcher", why: "fan-out worker between ingest and delivery"}
@@ -40,10 +40,10 @@ questions:
     paraphrase: "What is the life of an event from ingest to the customer's endpoint?"
     scope_repo_names: ["webhook-api", "dispatcher", "delivery-gateway", "signing-keys", "usage-metering"]
     expected_entities:
-      - urn:bifrost:service:webhook-api
-      - urn:bifrost:service:dispatcher
-      - urn:bifrost:service:delivery-gateway
-      - urn:bifrost:service:signing-keys
+      - urn:orgbrain:service:webhook-api
+      - urn:orgbrain:service:dispatcher
+      - urn:orgbrain:service:delivery-gateway
+      - urn:orgbrain:service:signing-keys
     expected_key_facts:
       - {needle: "DELIVERY_QUEUE", why: "webhook-api hands events to the dispatcher through this queue"}
       - {needle: "/v1/deliver", why: "the dispatcher calls this delivery-gateway endpoint"}
@@ -63,8 +63,8 @@ questions:
     paraphrase: "What happens when a customer's webhook URL keeps failing?"
     scope_repo_names: ["delivery-gateway", "dispatcher"]
     expected_entities:
-      - urn:bifrost:service:delivery-gateway
-      - urn:bifrost:repo/delivery-gateway
+      - urn:orgbrain:service:delivery-gateway
+      - urn:orgbrain:repo/delivery-gateway
     expected_key_facts:
       - {needle: "backoff", why: "failed deliveries are retried with exponential backoff"}
       - {needle: "circuit breaker", why: "per-endpoint breaker stops repeated calls to a dead URL"}
@@ -80,8 +80,8 @@ questions:
     text: "How does the dispatcher reach delivery-gateway — which setting holds the address and which endpoint does it call?"
     scope_repo_names: ["dispatcher"]
     expected_entities:
-      - urn:bifrost:service:dispatcher
-      - urn:bifrost:service:delivery-gateway
+      - urn:orgbrain:service:dispatcher
+      - urn:orgbrain:service:delivery-gateway
     expected_key_facts:
       - {needle: "DELIVERY_GATEWAY_HOST", why: "the setting that addresses delivery-gateway"}
       - {needle: "/v1/deliver", why: "the endpoint the dispatcher POSTs to"}
@@ -99,8 +99,8 @@ questions:
     paraphrase: "What is the link between webhook-api and the dispatcher?"
     scope_repo_names: ["webhook-api", "dispatcher"]
     expected_entities:
-      - urn:bifrost:service:webhook-api
-      - urn:bifrost:service:dispatcher
+      - urn:orgbrain:service:webhook-api
+      - urn:orgbrain:service:dispatcher
     expected_key_facts:
       - {needle: "DELIVERY_QUEUE", why: "queue setting shared by both services"}
       - {needle: "IngestService", why: "webhook-api class that publishes to the queue"}
@@ -119,8 +119,8 @@ questions:
     paraphrase: "What is different between the eu and us config of the dispatcher?"
     scope_repo_names: ["dispatcher"]
     expected_entities:
-      - urn:bifrost:service:dispatcher
-      - urn:bifrost:repo/dispatcher
+      - urn:orgbrain:service:dispatcher
+      - urn:orgbrain:repo/dispatcher
     expected_key_facts:
       - {needle: "delivery-events-eu", why: "the eu DELIVERY_QUEUE value"}
       - {needle: "delivery-gateway.eu.acmeco.internal", why: "the eu DELIVERY_GATEWAY_HOST value"}
@@ -138,8 +138,8 @@ questions:
     paraphrase: "Explain webhook signing and secret rotation at AcmeCo."
     scope_repo_names: ["delivery-gateway", "signing-keys"]
     expected_entities:
-      - urn:bifrost:service:delivery-gateway
-      - urn:bifrost:service:signing-keys
+      - urn:orgbrain:service:delivery-gateway
+      - urn:orgbrain:service:signing-keys
     expected_key_facts:
       - {needle: "SIGNING_KEYS_HOST", why: "setting delivery-gateway uses to reach signing-keys"}
       - {needle: "HMAC", why: "the signature scheme"}
@@ -156,9 +156,9 @@ questions:
     paraphrase: "What is DLVR responsible for?"
     scope_repo_names: ["webhook-api", "dispatcher", "delivery-gateway", "signing-keys", "usage-metering"]
     expected_entities:
-      - urn:bifrost:service:webhook-api
-      - urn:bifrost:service:dispatcher
-      - urn:bifrost:service:delivery-gateway
+      - urn:orgbrain:service:webhook-api
+      - urn:orgbrain:service:dispatcher
+      - urn:orgbrain:service:delivery-gateway
     expected_key_facts:
       - {needle: "@acmeco/dlvr", why: "the CODEOWNERS entry for DLVR repos"}
       - {needle: "webhook-api", why: "owned by DLVR"}
@@ -176,8 +176,8 @@ questions:
       inside the repos that DLVR owns?
     scope_repo_names: ["signing-keys", "usage-metering", "webhook-api", "dispatcher", "delivery-gateway"]
     expected_entities:
-      - urn:bifrost:service:signing-keys
-      - urn:bifrost:service:usage-metering
+      - urn:orgbrain:service:signing-keys
+      - urn:orgbrain:service:usage-metering
     expected_key_facts:
       - {needle: "signing-keys", why: "owned by PLAT"}
       - {needle: "usage-metering", why: "owned by PLAT"}
@@ -196,7 +196,7 @@ questions:
     paraphrase: "What motivated the delivery-gateway retry policy?"
     scope_repo_names: ["delivery-gateway"]
     expected_entities:
-      - urn:bifrost:service:delivery-gateway
+      - urn:orgbrain:service:delivery-gateway
     expected_jira_refs: ["DLVR-12"]
     expected_key_facts:
       - {needle: "DLVR-12", why: "ticket on the commit that added retries"}
@@ -214,7 +214,7 @@ questions:
     paraphrase: "What problem did the key rotation grace period solve?"
     scope_repo_names: ["signing-keys"]
     expected_entities:
-      - urn:bifrost:service:signing-keys
+      - urn:orgbrain:service:signing-keys
     expected_jira_refs: ["PLAT-7"]
     expected_key_facts:
       - {needle: "PLAT-7", why: "ticket on the commit that added rotation"}

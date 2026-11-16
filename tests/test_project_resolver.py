@@ -8,13 +8,13 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import text
 
-from bifrost.actions.project_resolver import (
+from orgbrain.actions.project_resolver import (
     all_known_projects,
     project_from_jira_key,
     resolve_for_task,
 )
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
 
 # ── pure helpers — no DB required ───────────────────────────────────
 
@@ -104,7 +104,7 @@ async def test_all_known_projects_returns_real_data(factory) -> None:
     set ordered by repo count."""
     async with factory() as session:
         projects = await all_known_projects(session)
-    # Bifrost dev DB has many repos — at minimum some projects exist
+    # OrgBrain dev DB has many repos — at minimum some projects exist
     assert isinstance(projects, list)
     # Each is uppercase
     for p in projects:

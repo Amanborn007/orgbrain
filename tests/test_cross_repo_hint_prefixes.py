@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.research.cross_repo_linker import _dep_target_repo_hint, _repo_hint_patterns
+from orgbrain.research.cross_repo_linker import _dep_target_repo_hint, _repo_hint_patterns
 from tests import leak_terms
 
 ACME = ["com.acmeco.", "@acmeco/", "github.com/acmeco/"]
@@ -45,13 +45,13 @@ def test_prefix_is_escaped() -> None:
 
 
 def test_default_comes_from_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    from bifrost.cli import config as cfg_mod
+    from orgbrain.cli import config as cfg_mod
 
     cfg_mod.reset_settings()
     monkeypatch.setattr(
         cfg_mod,
         "_settings",
-        cfg_mod.BifrostSettings(linking={"internal_package_prefixes": ["com.acmeco."]}),
+        cfg_mod.OrgBrainSettings(linking={"internal_package_prefixes": ["com.acmeco."]}),
     )
     try:
         assert _dep_target_repo_hint("com.acmeco.dispatcher.X") == "dispatcher"

@@ -2,7 +2,7 @@
 
 > Every page in the React app — what you see, which API calls drive it, how live updates flow. The UI lives in `ui/src/`.
 
-> **TL;DR.** Bifrost's UI is a React + Vite SPA with a sidebar shell and seven primary pages (Dashboard, Chat, Tasks, Knowledge, Collaboration, Spend, Learning). State flows through `@tanstack/react-query` keys → typed `apiCall()` wrappers → FastAPI; live updates ride SSE channels (`task:`, `chat:`, `collab_session:`, `handover:`). Most pages combine a 15-30s polling baseline with SSE-driven cache invalidation, so events feel instant when SSE works and degrade gracefully if it drops.
+> **TL;DR.** OrgBrain's UI is a React + Vite SPA with a sidebar shell and seven primary pages (Dashboard, Chat, Tasks, Knowledge, Collaboration, Spend, Learning). State flows through `@tanstack/react-query` keys → typed `apiCall()` wrappers → FastAPI; live updates ride SSE channels (`task:`, `chat:`, `collab_session:`, `handover:`). Most pages combine a 15-30s polling baseline with SSE-driven cache invalidation, so events feel instant when SSE works and degrade gracefully if it drops.
 
 > **Read this when** you're adding a new page, debugging why a UI region is stale, or tracing why an SSE event did not flip a panel.
 > **Skip if** you only consume the UI as a user — the operational chapters (06, 07, 10) cover the substrate the UI sits on.
@@ -491,7 +491,7 @@ Both regions share the same underlying pattern: SSE events trigger `qc.invalidat
 
 ## 17. Real-time mechanisms
 
-Bifrost uses **two patterns** for keeping the UI fresh:
+OrgBrain uses **two patterns** for keeping the UI fresh:
 
 ### 17.1 SSE (push)
 For long-running, low-event-rate streams.
@@ -584,7 +584,7 @@ Everything in `ui/src/components/`:
 
 ## 20. Things you'll wish you knew
 
-- **Refresh + cookie = fresh identity.** Sessions and conversations are scoped to the `bifrost_session` cookie. Clearing cookies = abandoning all your threads. Do not do this in production debugging.
+- **Refresh + cookie = fresh identity.** Sessions and conversations are scoped to the `orgbrain_session` cookie. Clearing cookies = abandoning all your threads. Do not do this in production debugging.
 - **The intent classifier is best-effort.** When it is slow / fails, the chip just does not appear. The UI does not block on it.
 - **SSE wrappers handle reconnect.** If you see "WebSocket-style flicker" in the network panel — that is the wrapper retrying with backoff. Not a bug.
 - **`lib/api.ts` is the single source of truth for endpoints.** Every fetch goes through `apiCall(method, path, body?)` which wraps the envelope unwrapping + error normalization. Never `fetch()` directly from a page.

@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import uuid
 
-from bifrost.adapters.base import AdapterScope
-from bifrost.adapters.mock import MockAdapter
-from bifrost.storage.repository import EntityRepository
+from orgbrain.adapters.base import AdapterScope
+from orgbrain.adapters.mock import MockAdapter
+from orgbrain.storage.repository import EntityRepository
 
 MOCK_FILES = {
     "src/services/shipment.py": (
@@ -45,7 +45,7 @@ class TestAdapterToRepositoryRoundTrip:
                 {
                     "id": entity_id,
                     "entity_type": "component",
-                    "urn": f"urn:bifrost:component:{ref.object_id.replace('/', '-')}",
+                    "urn": f"urn:orgbrain:component:{ref.object_id.replace('/', '-')}",
                     "name": ref.object_id.split("/")[-1].replace(".py", ""),
                     "knowledge_tier": 1,
                     "confidence": 0.8,
@@ -87,7 +87,7 @@ class TestAdapterToRepositoryRoundTrip:
         repo_id = uuid.uuid4()
         await repo.upsert_repo(
             id=repo_id,
-            urn="urn:bifrost:repo:list-test",
+            urn="urn:orgbrain:repo:list-test",
             name="list-test",
             url="mock://list-test",
         )
@@ -96,7 +96,7 @@ class TestAdapterToRepositoryRoundTrip:
         await repo.upsert_entity(
             id=entity_id,
             entity_type="component",
-            urn="urn:bifrost:component:handler",
+            urn="urn:orgbrain:component:handler",
             name="handler",
             scope_repo_id=repo_id,
             knowledge_tier=1,
@@ -128,13 +128,13 @@ class TestAdapterToRepositoryRoundTrip:
         await repo.upsert_entity(
             id=a_id,
             entity_type="component",
-            urn="urn:bifrost:component:int-a",
+            urn="urn:orgbrain:component:int-a",
             name="a",
         )
         await repo.upsert_entity(
             id=b_id,
             entity_type="component",
-            urn="urn:bifrost:component:int-b",
+            urn="urn:orgbrain:component:int-b",
             name="b",
         )
 

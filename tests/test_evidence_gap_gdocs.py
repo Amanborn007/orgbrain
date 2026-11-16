@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from bifrost.research.coordinator import RepoBundle, _has_evidence_gap_in_bundles
-from bifrost.research.gdocs_agent import GDocsReport
+from orgbrain.research.coordinator import RepoBundle, _has_evidence_gap_in_bundles
+from orgbrain.research.gdocs_agent import GDocsReport
 
 
 def test_gdocs_error_is_an_evidence_gap() -> None:

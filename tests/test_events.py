@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from bifrost.core.events import (
+from orgbrain.core.events import (
     EntityCreated,
     EntityUpdated,
     Event,
@@ -30,7 +30,7 @@ class TestEventBusSubscription:
             received.append(event)
 
         bus.subscribe(EntityCreated, handler)
-        event = EntityCreated(entity_id="e1", entity_type="component", urn="urn:bifrost:c:1")
+        event = EntityCreated(entity_id="e1", entity_type="component", urn="urn:orgbrain:c:1")
         await bus.publish(event)
         await bus.drain()
 
