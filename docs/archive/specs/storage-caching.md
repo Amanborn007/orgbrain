@@ -8,7 +8,7 @@
 
 ## 1. Purpose and Scope
 
-This specification defines how Bifrost stores, caches, retrieves, and retires engineering knowledge. It covers the full data lifecycle from live source fetches through in-process caching, shared caching, persistent storage, and versioned artifact publishing.
+This specification defines how OrgBrain stores, caches, retrieves, and retires engineering knowledge. It covers the full data lifecycle from live source fetches through in-process caching, shared caching, persistent storage, and versioned artifact publishing.
 
 This spec defines storage across two tracks. Track A (V1): all storage on customer infrastructure (PostgreSQL + optional Redis). Track B (future): Anthropic Memory Stores handle agent state, PostgreSQL handles structured knowledge graph. Both tracks share the same `AgentStateBackend` interface so storage implementation is swappable.
 
@@ -68,7 +68,7 @@ The scope excludes:
 
 ### Goals
 
-1. **Source of truth stays at the source.** Bifrost never attempts to fully mirror external systems. L4 is authoritative; L3 stores derived knowledge, not raw content.
+1. **Source of truth stays at the source.** OrgBrain never attempts to fully mirror external systems. L4 is authoritative; L3 stores derived knowledge, not raw content.
 2. **Fast reads for hot paths.** Interactive queries and agent consultations must hit L1 or L2 in the common case. Target: <50ms for cached reads.
 3. **Explicit freshness everywhere.** Every cached or stored artifact carries age, source revision, and confidence impact metadata. Nothing is silently stale.
 4. **Single durable store for V1.** PostgreSQL serves as the single persistent store for entities, relationships, knowledge artifacts, and event log. Avoid premature polyglot persistence.
@@ -89,7 +89,7 @@ The scope excludes:
 
 ```mermaid
 graph TB
-    subgraph "Bifrost Storage Architecture"
+    subgraph "OrgBrain Storage Architecture"
         direction TB
 
         AS["Agent State Tier\n(AgentStateBackend)\nTrack A: PostgreSQL\nTrack B: Memory Stores"]
@@ -151,7 +151,7 @@ class PostgresStateBackend(AgentStateBackend):
     ...
 
 # Track B implementation — uses Anthropic Memory Stores API
-# Only available when BIFROST_TRACK=B and Managed Agents access is granted
+# Only available when ORGBRAIN_TRACK=B and Managed Agents access is granted
 class MemoryStoreBackend(AgentStateBackend):
     def __init__(self, client: Anthropic) -> None:
         self._client = client
@@ -311,14 +311,14 @@ If listing a path prefix returns more than 100 items, the caller MUST paginate u
 ### L4: Source Systems (External)
 
 - **Technology:** Varies per source (GitHub API, Jira API, Kubernetes API, etc.)
-- **Lifetime:** Authoritative and external. Bifrost does not control retention.
+- **Lifetime:** Authoritative and external. OrgBrain does not control retention.
 - **Access pattern:** On-demand via source adapters (S2). Results flow into L3 and propagate to L2/L1.
 - **Key constraint:** Raw source content is NOT duplicated in L3. Only extracted knowledge, metadata, and mappings are stored.
 
 ### L5: Artifact Store
 
 - **Track A (V1):** Local filesystem or PostgreSQL text column. Each generated doc is committed to a local Git directory. Simple, no additional infrastructure.
-- **Track B (future):** Anthropic Memory Stores at `/docs/{doc-type}/{target-id}.md`. Publication: Bifrost control plane reads from memory store, pushes to Git or Confluence. Versioning: memory store provides immutable version history.
+- **Track B (future):** Anthropic Memory Stores at `/docs/{doc-type}/{target-id}.md`. Publication: OrgBrain control plane reads from memory store, pushes to Git or Confluence. Versioning: memory store provides immutable version history.
 - **States:** draft, review, published, stale, archived.
 - **See:** Section 13 for full artifact store design.
 
@@ -450,7 +450,7 @@ CREATE INDEX idx_ka_envelope ON knowledge_artifacts USING gin (metadata_envelope
 
 ### 7.4 Source Mappings Table
 
-Maps external source objects to Bifrost entities.
+Maps external source objects to OrgBrain entities.
 
 ```sql
 CREATE TABLE source_mappings (
@@ -556,7 +556,7 @@ CREATE TABLE freshness_tracking (
     last_known_rev  TEXT,                -- revision hash or version at source
     last_checked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_changed_at TIMESTAMPTZ,         -- when source last changed
-    last_synced_at  TIMESTAMPTZ,         -- when Bifrost last synced this source
+    last_synced_at  TIMESTAMPTZ,         -- when OrgBrain last synced this source
     lag_ms          BIGINT,              -- computed: last_changed_at - last_synced_at
     state           TEXT NOT NULL DEFAULT 'unknown',  -- 'fresh', 'stale', 'unknown', 'error'
     error_detail    TEXT,
@@ -707,17 +707,17 @@ CREATE UNIQUE INDEX idx_mv_repo_deps ON mv_repo_dependencies (repo_id, depends_o
 All cache keys follow a structured namespace:
 
 ```
-bifrost:{tier}:{entity_type}:{id}:{version}
+orgbrain:{tier}:{entity_type}:{id}:{version}
 ```
 
 Examples:
 ```
-bifrost:L2:entity:550e8400-e29b-41d4-a716-446655440000:v3
-bifrost:L2:relationship:query:repo-deps:550e8400:latest
-bifrost:L2:artifact:meta:doc-overview:550e8400:v1
-bifrost:L1:task:result:abc123:latest
-bifrost:L2:freshness:entity:550e8400:current
-bifrost:L2:source_meta:github:org/repo:latest
+orgbrain:L2:entity:550e8400-e29b-41d4-a716-446655440000:v3
+orgbrain:L2:relationship:query:repo-deps:550e8400:latest
+orgbrain:L2:artifact:meta:doc-overview:550e8400:v1
+orgbrain:L1:task:result:abc123:latest
+orgbrain:L2:freshness:entity:550e8400:current
+orgbrain:L2:source_meta:github:org/repo:latest
 ```
 
 Conventions:
@@ -828,7 +828,7 @@ Users can trigger invalidation at multiple scopes via the API:
 ### 10.4 Local vs Shared Cache Distinction
 
 - **L1 invalidation** is session-local. When a session receives a stale notification for a key it holds in L1, the L1 entry is evicted immediately. Cross-session L1 invalidation is not attempted; L1 entries have short TTLs and are scoped to a single session.
-- **L2 invalidation** is shared. A Redis key deletion or `DEL` command removes the entry for all consumers. Pub/Sub notifications on the `bifrost:invalidation` channel alert active sessions to evict their L1 entries.
+- **L2 invalidation** is shared. A Redis key deletion or `DEL` command removes the entry for all consumers. Pub/Sub notifications on the `orgbrain:invalidation` channel alert active sessions to evict their L1 entries.
 
 ---
 
@@ -866,7 +866,7 @@ This ensures that stale data explicitly reduces confidence, surfacing to users a
 
 ### 12.1 Cold-Start Strategy
 
-Trigger: First time a repo is registered with Bifrost, or when freshness state is absent.
+Trigger: First time a repo is registered with OrgBrain, or when freshness state is absent.
 
 **Track A cold start:**
 1. Check PostgreSQL `repo_freshness` for this repo — if absent, start fresh.
@@ -893,7 +893,7 @@ During bootstrap, queries against the repo return partial results with `freshnes
 
 ### 12.2 New Repo Bootstrap (Phase Detail)
 
-When a repo is first registered with Bifrost:
+When a repo is first registered with OrgBrain:
 
 | Phase | Actions | Estimated Time | Resources |
 |-------|---------|---------------|-----------|
@@ -935,13 +935,13 @@ After initial bootstrap, incremental updates are much faster:
 
 **Track B (future):**
 - Primary: Memory Stores at `/docs/{doc-type}/{target-id}.md`.
-- Publication: Bifrost control plane reads from memory store, pushes to Git or Confluence.
+- Publication: OrgBrain control plane reads from memory store, pushes to Git or Confluence.
 - Versioning: memory store provides immutable version history (no custom versioning needed).
 - Redaction: use `memory_versions.redact()` to remove accidentally published sensitive content.
 
 ### 13.2 Git-Backed Versioning (Track A V1)
 
-Generated documents are stored in a dedicated Git repository (or a subdirectory of the Bifrost data directory in V1).
+Generated documents are stored in a dedicated Git repository (or a subdirectory of the OrgBrain data directory in V1).
 
 ```
 artifacts/
@@ -983,9 +983,9 @@ Each update to a document is a Git commit. The commit message includes:
 
 ### 13.5 Multi-Instance Consistency (Cross-Machine Agent Behavior)
 
-**Problem (V1 without shared storage):** If two engineers run Bifrost locally, each has its own PostgreSQL instance with potentially different agent state — agents behave differently per machine.
+**Problem (V1 without shared storage):** If two engineers run OrgBrain locally, each has its own PostgreSQL instance with potentially different agent state — agents behave differently per machine.
 
-**Solution Track A:** Run a SHARED PostgreSQL instance (e.g., cloud-hosted Postgres, or a single company-wide Bifrost server). All Bifrost CLI/API instances connect to the same DB.
+**Solution Track A:** Run a SHARED PostgreSQL instance (e.g., cloud-hosted Postgres, or a single company-wide OrgBrain server). All OrgBrain CLI/API instances connect to the same DB.
 - Config: `DATABASE_URL` pointing to shared instance.
 - Tradeoff: requires a persistent server; local dev uses local DB with acknowledged divergence.
 
@@ -1029,13 +1029,13 @@ async def migrate_to_track_b(repo_ids: list[str]) -> None:
 ```
 
 **Post-migration:**
-1. Set `BIFROST_TRACK=B` in environment
+1. Set `ORGBRAIN_TRACK=B` in environment
 2. Set `TRACK_B_DPA_CONFIRMED=true` in environment
 3. Restart application
 4. PostgreSQL `knowledge_text_cache` is no longer written to (keep for 30-day rollback window)
 5. After 30 days: optionally truncate `knowledge_text_cache` table
 
-**Rollback:** Set `BIFROST_TRACK=A`, restart. PostgreSQL data is preserved.
+**Rollback:** Set `ORGBRAIN_TRACK=A`, restart. PostgreSQL data is preserved.
 
 ---
 
@@ -1344,7 +1344,7 @@ V1 uses Track A storage: PostgreSQL for all persistence (knowledge graph, agent 
 
 8. **Artifact review workflow.** Who reviews generated docs before they move from `review` to `published`? Is this a human-only gate or can an agent approve?
 
-9. **Track A shared PostgreSQL deployment model.** Should Bifrost ship a recommended `docker-compose.yml` with a shared PostgreSQL instance for teams? Or assume engineers configure their own cloud Postgres? What is the zero-config story for a solo developer?
+9. **Track A shared PostgreSQL deployment model.** Should OrgBrain ship a recommended `docker-compose.yml` with a shared PostgreSQL instance for teams? Or assume engineers configure their own cloud Postgres? What is the zero-config story for a solo developer?
 
 10. **knowledge_text_cache size limits.** Track A stores knowledge text in PostgreSQL TEXT columns. Should we enforce a per-row size limit (analogous to the 100KB Memory Store limit) to keep parity with Track B and prevent unexpectedly large rows?
 

@@ -1118,7 +1118,7 @@ function SessionStartPanel({
       </div>
       <div className="space-y-3 p-4">
         <p className="text-[12.5px] text-fg-2">
-          Captures what you need from another squad. Bifrost asks clarifying
+          Captures what you need from another squad. OrgBrain asks clarifying
           questions, resolves open points, and produces a handover brief you
           can share — no back-and-forth emails needed.
         </p>

@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from bifrost.extraction.checkpoint import PHASE_ORDER, ExtractionCheckpoint
-from bifrost.extraction.pipeline import (
+from orgbrain.extraction.checkpoint import PHASE_ORDER, ExtractionCheckpoint
+from orgbrain.extraction.pipeline import (
     BACKOFF_SECONDS,
     MAX_RETRIES,
     _is_retryable,
@@ -280,7 +280,7 @@ class TestRetryAbsorption:
                 raise Exception("rate_limit_error")
             return "success"
 
-        with patch("bifrost.extraction.pipeline.asyncio.sleep", new_callable=AsyncMock):
+        with patch("orgbrain.extraction.pipeline.asyncio.sleep", new_callable=AsyncMock):
             result = await _retry_llm_call(flaky_call, phase="D", context="test.py")
 
         assert result == "success"
@@ -296,7 +296,7 @@ class TestRetryAbsorption:
             raise Exception("rate_limit_error")
 
         with (
-            patch("bifrost.extraction.pipeline.asyncio.sleep", new_callable=AsyncMock),
+            patch("orgbrain.extraction.pipeline.asyncio.sleep", new_callable=AsyncMock),
             pytest.raises(Exception, match="rate_limit_error"),
         ):
             await _retry_llm_call(always_fails, phase="D", context="test.py")
@@ -315,7 +315,7 @@ class TestRetryAbsorption:
             raise Exception("rate_limit_error")
 
         with (
-            patch("bifrost.extraction.pipeline.asyncio.sleep", side_effect=mock_sleep),
+            patch("orgbrain.extraction.pipeline.asyncio.sleep", side_effect=mock_sleep),
             pytest.raises(Exception, match="rate_limit_error"),
         ):
             await _retry_llm_call(always_rate_limited, phase="D", context="test.py")
@@ -360,7 +360,7 @@ class TestCheckpointPipelineIntegration:
         from dataclasses import dataclass, field
         from typing import Any
 
-        from bifrost.extraction.pipeline import ExtractionPipeline
+        from orgbrain.extraction.pipeline import ExtractionPipeline
 
         @dataclass
         class MockToolUseBlock:

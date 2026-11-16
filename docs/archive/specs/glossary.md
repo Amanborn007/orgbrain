@@ -1,14 +1,14 @@
-# F1 -- Bifrost Glossary and Conceptual Model
+# F1 -- OrgBrain Glossary and Conceptual Model
 
 **Spec ID:** F1
 
-> **Status:** Living document — canonical vocabulary reference for all Bifrost specs.
+> **Status:** Living document — canonical vocabulary reference for all OrgBrain specs.
 
 ---
 
 ## 1. Purpose and Scope
 
-This document defines the foundational vocabulary, entity model, relationship taxonomy, knowledge tier system, and identity conventions used throughout every Bifrost specification. Any term used in a Bifrost spec that carries domain-specific meaning MUST be defined here or explicitly reference this document.
+This document defines the foundational vocabulary, entity model, relationship taxonomy, knowledge tier system, and identity conventions used throughout every OrgBrain specification. Any term used in a OrgBrain spec that carries domain-specific meaning MUST be defined here or explicitly reference this document.
 
 The goals of this glossary are:
 
@@ -81,11 +81,11 @@ This glossary provides vocabulary that spans the entire requirements surface. Th
 
 ### 4.1 Source
 
-A **Source** is an external system or service containing engineering knowledge that Bifrost connects to via a source adapter. Sources are not owned by Bifrost; Bifrost reads from them (and in future, may write to some).
+A **Source** is an external system or service containing engineering knowledge that OrgBrain connects to via a source adapter. Sources are not owned by OrgBrain; OrgBrain reads from them (and in future, may write to some).
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:source:{sourceId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:source:{sourceId}` |
 | `name` | string | Yes | Human-readable label (e.g., "GitHub — acme-org") |
 | `type` | SourceType enum | Yes | Category of source (see §6.3 of requirements) |
 | `adapter` | string | Yes | Identifier of the adapter plugin used to connect |
@@ -105,16 +105,16 @@ A **Source** is an external system or service containing engineering knowledge t
 
 ### 4.2 SourceObject
 
-A **SourceObject** is a discrete, addressable unit of content within a Source. It is the finest-grained thing Bifrost tracks for freshness, mapping, and retrieval.
+A **SourceObject** is a discrete, addressable unit of content within a Source. It is the finest-grained thing OrgBrain tracks for freshness, mapping, and retrieval.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:source-object:{sourceObjectId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:source-object:{sourceObjectId}` |
 | `sourceId` | URN | Yes | Parent Source |
 | `externalId` | string | Yes | The identifier in the external system (e.g., file path, ticket key, message ID) |
 | `objectType` | string | Yes | Source-specific type (e.g., `file`, `pull-request`, `ticket`, `message`, `trace`, `config-key`, `schema`) |
 | `revision` | string | No | External revision marker (commit SHA, version, updated-at) |
-| `lastFetchedAt` | timestamp | No | When Bifrost last retrieved content |
+| `lastFetchedAt` | timestamp | No | When OrgBrain last retrieved content |
 | `lastFetchedRevision` | string | No | Revision at time of last fetch |
 | `metadata` | map | No | Adapter-extracted metadata (author, labels, timestamps) |
 
@@ -124,21 +124,21 @@ A **SourceObject** is a discrete, addressable unit of content within a Source. I
 
 ### 4.3 Repo
 
-A **Repo** is a code repository tracked by Bifrost. It is the primary unit of code-level scope.
+A **Repo** is a code repository tracked by OrgBrain. It is the primary unit of code-level scope.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:repo:{repoId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:repo:{repoId}` |
 | `name` | string | Yes | Short name (e.g., `webhook-api`) |
 | `sourceId` | URN | Yes | The code-host Source this repo lives in |
 | `externalId` | string | Yes | External identifier (e.g., `acme-org/webhook-api`) |
 | `domainId` | URN | No | Domain this repo belongs to (null if unassigned) |
 | `defaultBranch` | string | Yes | Remote default branch name |
 | `lastKnownRemoteRevision` | string | No | Latest observed HEAD of default branch |
-| `lastIndexedRevision` | string | No | Revision at which Bifrost last indexed |
+| `lastIndexedRevision` | string | No | Revision at which OrgBrain last indexed |
 | `languages` | string[] | No | Detected primary languages |
 | `status` | enum | Yes | `active`, `archived`, `removed` |
-| `createdAt` | timestamp | Yes | When Bifrost started tracking |
+| `createdAt` | timestamp | Yes | When OrgBrain started tracking |
 
 **Key invariant:** A Repo always maps to exactly one code-host Source. A Repo belongs to at most one Domain (or is unassigned).
 
@@ -150,7 +150,7 @@ A **Domain** is a configured grouping of related repositories representing a bus
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:domain:{domainId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:domain:{domainId}` |
 | `name` | string | Yes | Human-readable name (e.g., "Delivery", "Platform") |
 | `description` | string | No | Purpose and scope description |
 | `repos` | URN[] | Yes | Ordered list of repo IDs belonging to this domain |
@@ -165,16 +165,16 @@ A **Domain** is a configured grouping of related repositories representing a bus
 
 ### 4.5 Organization
 
-An **Organization** is the top-level scope containing all domains, repos, sources, and knowledge within a single Bifrost deployment.
+An **Organization** is the top-level scope containing all domains, repos, sources, and knowledge within a single OrgBrain deployment.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}` |
 | `name` | string | Yes | Organization name |
 | `defaultConfig` | object | No | Org-wide default settings (freshness thresholds, confidence policies) |
 | `createdAt` | timestamp | Yes | When the org was created |
 
-**Key invariant:** All other entities are scoped under exactly one Organization. Multi-org deployments are modeled as separate Bifrost instances (V1 assumption — see Open Questions).
+**Key invariant:** All other entities are scoped under exactly one Organization. Multi-org deployments are modeled as separate OrgBrain instances (V1 assumption — see Open Questions).
 
 ---
 
@@ -184,7 +184,7 @@ A **Flow** is an end-to-end path through services, repos, and systems representi
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:flow:{flowId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:flow:{flowId}` |
 | `name` | string | Yes | Human-readable name (e.g., "Webhook Delivery") |
 | `description` | string | No | What this flow accomplishes |
 | `registration` | enum | Yes | `registered` (important, named, human-curated) or `discovered` (ad-hoc, system-inferred) |
@@ -207,7 +207,7 @@ A **FlowSegment** is a discrete step within a Flow. Each segment represents one 
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:flow:{flowId}:segment:{segmentId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:flow:{flowId}:segment:{segmentId}` |
 | `flowId` | URN | Yes | Parent Flow |
 | `segmentType` | FlowSegmentType | Yes | Type of step (see enum below) |
 | `repoId` | URN | No | Repo this segment executes in (if applicable) |
@@ -241,12 +241,12 @@ A **Dependency** is a typed, directional relationship where one entity relies on
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:dependency:{dependencyId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:dependency:{dependencyId}` |
 | `fromEntity` | URN | Yes | The entity that depends (the dependent) |
 | `toEntity` | URN | Yes | The entity depended upon (the dependency) |
 | `dependencyType` | DependencyType | Yes | Classification (see enum below) |
 | `direction` | enum | Yes | `direct` or `indirect` (transitive) |
-| `confidence` | ConfidenceLevel | Yes | How certain Bifrost is that this dependency exists |
+| `confidence` | ConfidenceLevel | Yes | How certain OrgBrain is that this dependency exists |
 | `evidenceBasis` | URN[] | No | SourceObjects that evidence this dependency |
 | `lastValidatedAt` | timestamp | No | Last time this dependency was checked |
 | `metadata` | map | No | Type-specific data (package version, API path, schema name) |
@@ -263,7 +263,7 @@ A **Dependency** is a typed, directional relationship where one entity relies on
 | `runtime` | Observed runtime dependency | Service A calls Service B (seen in traces) |
 | `ownership` | Organizational/ownership coupling | Same team owns both, shared on-call |
 | `migration` | Temporal coupling during migration | Old system and new system coexist |
-| `inferred-hidden` | Dependency inferred but not directly evidenced | Bifrost suspects coupling from indirect signals |
+| `inferred-hidden` | Dependency inferred but not directly evidenced | OrgBrain suspects coupling from indirect signals |
 
 ---
 
@@ -273,7 +273,7 @@ A **Pattern** is a recurring implementation approach discovered across repos or 
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:pattern:{patternId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:pattern:{patternId}` |
 | `name` | string | Yes | Descriptive name (e.g., "Retry with exponential backoff") |
 | `description` | string | No | What this pattern does and when to use it |
 | `scope` | enum | Yes | `repo`, `domain`, `org` |
@@ -288,11 +288,11 @@ A **Pattern** is a recurring implementation approach discovered across repos or 
 
 ### 4.10 KnowledgeArtifact
 
-A **KnowledgeArtifact** is any piece of stored knowledge carrying a metadata envelope. It is the universal wrapper for everything Bifrost knows — from a raw mapping to a synthesized flow model to a generated document.
+A **KnowledgeArtifact** is any piece of stored knowledge carrying a metadata envelope. It is the universal wrapper for everything OrgBrain knows — from a raw mapping to a synthesized flow model to a generated document.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:artifact:{artifactId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:artifact:{artifactId}` |
 | `tier` | KnowledgeTier | Yes | 0, 1, 2, or 3 (see section 6) |
 | `state` | KnowledgeState | Yes | Current lifecycle state (see section 7) |
 | `artifactType` | string | Yes | Specific type (e.g., `mapping`, `entity-extraction`, `flow-model`, `dependency-graph`, `generated-doc`, `pattern-classification`) |
@@ -312,7 +312,7 @@ A **KnowledgeArtifact** is any piece of stored knowledge carrying a metadata env
 | Field | Type | Description |
 |---|---|---|
 | `sourceStateAt` | timestamp | The source revision timestamp this artifact reflects |
-| `derivedAt` | timestamp | When Bifrost produced this artifact |
+| `derivedAt` | timestamp | When OrgBrain produced this artifact |
 | `lastCheckedAt` | timestamp | Last freshness check against source |
 | `lagIndicator` | enum | `current`, `slightly-behind`, `stale`, `unknown` |
 
@@ -324,7 +324,7 @@ A **Mapping** is a lightweight Tier-0 pointer from a SourceObject to one or more
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:mapping:{mappingId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:mapping:{mappingId}` |
 | `sourceObjectId` | URN | Yes | The SourceObject being mapped |
 | `targets` | MappingTarget[] | Yes | What this source object maps to |
 | `relevance` | enum | Yes | `primary`, `supporting`, `peripheral` |
@@ -346,11 +346,11 @@ A **Mapping** is a lightweight Tier-0 pointer from a SourceObject to one or more
 
 **Deprecated:** The term 'Specialist' has been replaced by 'Agent' throughout the spec suite. RepoAgent, TaskCoordinator, and ExtractionAgent are the canonical V1 agent types. See §4.X Agent.
 
-A **Specialist** is an AI worker scoped to a particular knowledge domain. Specialists are the units of the Bifrost agent workforce.
+A **Specialist** is an AI worker scoped to a particular knowledge domain. Specialists are the units of the OrgBrain agent workforce.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:specialist:{specialistId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:specialist:{specialistId}` |
 | `name` | string | Yes | Human-readable label |
 | `scopeType` | enum | Yes | `repo-source`, `repo`, `domain`, `org`, `task-coordinator` |
 | `scopeRef` | URN | No | The entity this specialist is scoped to |
@@ -372,7 +372,7 @@ A **Task** is a unit of work requested by a user or agent, with a full lifecycle
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:task:{taskId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:task:{taskId}` |
 | `requestedBy` | string | Yes | User ID or agent URN |
 | `requestType` | enum | Yes | `question`, `plan`, `validate`, `generate-doc`, `refresh`, `execute` |
 | `scope` | URN | Yes | Primary scope entity (repo, domain, flow, org) |
@@ -394,9 +394,9 @@ A **Task** is a unit of work requested by a user or agent, with a full lifecycle
 
 ### 4.14 Agent Registry
 
-An **Agent Registry** is the lookup and instantiation registry that maps agent type identifiers to their configuration and runtime handles. Bifrost consults the Agent Registry when selecting which specialists to invoke for a given task scope.
+An **Agent Registry** is the lookup and instantiation registry that maps agent type identifiers to their configuration and runtime handles. OrgBrain consults the Agent Registry when selecting which specialists to invoke for a given task scope.
 
-**Track A (V1):** An in-memory/PostgreSQL registry of agent type → instantiation config. On startup, each agent type (RepoAgent, TaskCoordinator, etc.) is registered with its model, system prompt template, and capability set. The registry instantiates agents as Python class instances within the Bifrost process.
+**Track A (V1):** An in-memory/PostgreSQL registry of agent type → instantiation config. On startup, each agent type (RepoAgent, TaskCoordinator, etc.) is registered with its model, system prompt template, and capability set. The registry instantiates agents as Python class instances within the OrgBrain process.
 
 **Track B (future):** The Anthropic Managed Agents API (`/v1/agents`) serves as the Agent Registry. Each agent type maps to a persisted Agent Definition resource (created once, referenced by ID). Invoking an agent type means creating a new Session from that Agent Definition.
 
@@ -404,11 +404,11 @@ An **Agent Registry** is the lookup and instantiation registry that maps agent t
 
 ### 4.15 GeneratedDoc
 
-A **GeneratedDoc** is a human-readable document produced by Bifrost from knowledge artifacts. It is a Tier-3 output.
+A **GeneratedDoc** is a human-readable document produced by OrgBrain from knowledge artifacts. It is a Tier-3 output.
 
 | Attribute | Type | Required | Description |
 |---|---|---|---|
-| `id` | URN | Yes | `bifrost:org:{orgId}:doc:{docId}` |
+| `id` | URN | Yes | `orgbrain:org:{orgId}:doc:{docId}` |
 | `title` | string | Yes | Document title |
 | `docType` | enum | Yes | `repo-overview`, `onboarding`, `flow-doc`, `domain-summary`, `playbook`, `migration-guide`, `dependency-doc` |
 | `scope` | URN | Yes | Entity this doc is about |
@@ -426,7 +426,7 @@ A **GeneratedDoc** is a human-readable document produced by Bifrost from knowled
 
 ## 5. Relationship Taxonomy
 
-All relationships between entities in Bifrost are typed, directional, and carry cardinality. The following relationship types form the complete taxonomy.
+All relationships between entities in OrgBrain are typed, directional, and carry cardinality. The following relationship types form the complete taxonomy.
 
 | Relationship | From | To | Cardinality | Description |
 |---|---|---|---|---|
@@ -508,7 +508,7 @@ erDiagram
 
 ## 6. Knowledge Tiers
 
-Knowledge in Bifrost is organized into four tiers, ordered by cost-to-produce, depth, and fragility. Lower tiers are broad and cheap; higher tiers are deep and expensive.
+Knowledge in OrgBrain is organized into four tiers, ordered by cost-to-produce, depth, and fragility. Lower tiers are broad and cheap; higher tiers are deep and expensive.
 
 | Tier | Name | Description | Examples | Cost | Coverage | Freshness Sensitivity |
 |---|---|---|---|---|---|---|
@@ -611,8 +611,8 @@ Every knowledge artifact, dependency, flow, and mapping carries a confidence lev
 | `confirmed` | Backed by direct, fresh evidence from an authoritative source | At least one authoritative source agrees; source is fresh (within configured threshold); no conflicting evidence |
 | `inferred` | Logically derived from indirect evidence; no direct authoritative source | Evidence exists but is indirect (e.g., call-graph analysis, naming convention match); or source is authoritative but not for this specific fact type |
 | `stale` | Was confirmed or inferred, but source basis is no longer fresh | Source revision has changed since last validation; confidence was previously higher |
-| `uncertain` | Best-effort extraction attempted but evidence is weak or sparse | Extraction ran and produced a result, but evidence quality is low (e.g., heuristic match, single weak signal, low-coverage source). Distinct from `unknown`: Bifrost has an answer but holds it with low confidence. Use `uncertain` when you can say something; use `unknown` when you cannot. |
-| `unknown` | No evidence found; Bifrost has not been able to determine the fact | No relevant source objects mapped; or extraction produced no result; explicitly flagged as a gap |
+| `uncertain` | Best-effort extraction attempted but evidence is weak or sparse | Extraction ran and produced a result, but evidence quality is low (e.g., heuristic match, single weak signal, low-coverage source). Distinct from `unknown`: OrgBrain has an answer but holds it with low confidence. Use `uncertain` when you can say something; use `unknown` when you cannot. |
+| `unknown` | No evidence found; OrgBrain has not been able to determine the fact | No relevant source objects mapped; or extraction produced no result; explicitly flagged as a gap |
 | `conflicting` | Multiple sources disagree on the fact | Two or more authoritative sources provide contradictory evidence; or static analysis contradicts runtime observation |
 
 ### Confidence Transitions
@@ -666,7 +666,7 @@ When confidence is `conflicting`, the conflict is further classified:
 
 ## 9. Scope Hierarchy
 
-Bifrost's scope model is a strict hierarchy for containment, with cross-cutting concerns (Flows) that span levels.
+OrgBrain's scope model is a strict hierarchy for containment, with cross-cutting concerns (Flows) that span levels.
 
 ### Containment Hierarchy
 
@@ -712,12 +712,12 @@ Organization
 
 ### Canonical Identifier Scheme
 
-**This section (F1) defines the canonical URN format. S1, S2, and all other Bifrost specs MUST use this format. Any conflicting format in another spec is superseded by this definition.**
+**This section (F1) defines the canonical URN format. S1, S2, and all other OrgBrain specs MUST use this format. Any conflicting format in another spec is superseded by this definition.**
 
-All Bifrost entities use a URN-style identifier scheme:
+All OrgBrain entities use a URN-style identifier scheme:
 
 ```
-bifrost:{scope}:{type}:{id}
+orgbrain:{scope}:{type}:{id}
 ```
 
 Where:
@@ -728,7 +728,7 @@ Where:
 **Source-layer URNs** (emitted by adapters for objects that originate in external systems) use the sub-scheme:
 
 ```
-bifrost:source:{adapter}:{instance}:{type}:{id}
+orgbrain:source:{adapter}:{instance}:{type}:{id}
 ```
 
 Where:
@@ -737,34 +737,34 @@ Where:
 - `{type}` = source object type (e.g., `repo`, `pull-request`, `ticket`)
 - `{id}` = identifier within the adapter instance
 
-Source-layer URNs are normalized to Bifrost canonical URNs during ingestion. After normalization, only canonical URNs appear in Knowledge Store entities, relationships, and API responses.
+Source-layer URNs are normalized to OrgBrain canonical URNs during ingestion. After normalization, only canonical URNs appear in Knowledge Store entities, relationships, and API responses.
 
 ### Full URN Patterns
 
 | Entity | URN Pattern | Example |
 |---|---|---|
-| Organization | `bifrost:org:{orgId}` | `bifrost:org:acme` |
-| Source | `bifrost:org:{orgId}:source:{sourceId}` | `bifrost:org:acme:source:github-main` |
-| SourceObject | `bifrost:org:{orgId}:source-object:{sourceObjectId}` | `bifrost:org:acme:source-object:a1b2c3d4` |
-| Repo | `bifrost:org:{orgId}:repo:{repoId}` | `bifrost:org:acme:repo:webhook-api` |
-| Domain | `bifrost:org:{orgId}:domain:{domainId}` | `bifrost:org:acme:domain:delivery` |
-| Flow | `bifrost:org:{orgId}:flow:{flowId}` | `bifrost:org:acme:flow:webhook-delivery` |
-| FlowSegment | `bifrost:org:{orgId}:flow:{flowId}:segment:{segmentId}` | `bifrost:org:acme:flow:webhook-delivery:segment:sign-payload` |
-| Dependency | `bifrost:org:{orgId}:dependency:{dependencyId}` | `bifrost:org:acme:dependency:d7e8f9` |
-| Pattern | `bifrost:org:{orgId}:pattern:{patternId}` | `bifrost:org:acme:pattern:retry-backoff` |
-| KnowledgeArtifact | `bifrost:org:{orgId}:artifact:{artifactId}` | `bifrost:org:acme:artifact:k1m2n3` |
-| Mapping | `bifrost:org:{orgId}:mapping:{mappingId}` | `bifrost:org:acme:mapping:m4p5q6` |
-| Specialist | `bifrost:org:{orgId}:specialist:{specialistId}` | `bifrost:org:acme:specialist:webhook-api-repo` |
-| Task | `bifrost:org:{orgId}:task:{taskId}` | `bifrost:org:acme:task:t7u8v9` |
-| GeneratedDoc | `bifrost:org:{orgId}:doc:{docId}` | `bifrost:org:acme:doc:delivery-overview` |
+| Organization | `orgbrain:org:{orgId}` | `orgbrain:org:acme` |
+| Source | `orgbrain:org:{orgId}:source:{sourceId}` | `orgbrain:org:acme:source:github-main` |
+| SourceObject | `orgbrain:org:{orgId}:source-object:{sourceObjectId}` | `orgbrain:org:acme:source-object:a1b2c3d4` |
+| Repo | `orgbrain:org:{orgId}:repo:{repoId}` | `orgbrain:org:acme:repo:webhook-api` |
+| Domain | `orgbrain:org:{orgId}:domain:{domainId}` | `orgbrain:org:acme:domain:delivery` |
+| Flow | `orgbrain:org:{orgId}:flow:{flowId}` | `orgbrain:org:acme:flow:webhook-delivery` |
+| FlowSegment | `orgbrain:org:{orgId}:flow:{flowId}:segment:{segmentId}` | `orgbrain:org:acme:flow:webhook-delivery:segment:sign-payload` |
+| Dependency | `orgbrain:org:{orgId}:dependency:{dependencyId}` | `orgbrain:org:acme:dependency:d7e8f9` |
+| Pattern | `orgbrain:org:{orgId}:pattern:{patternId}` | `orgbrain:org:acme:pattern:retry-backoff` |
+| KnowledgeArtifact | `orgbrain:org:{orgId}:artifact:{artifactId}` | `orgbrain:org:acme:artifact:k1m2n3` |
+| Mapping | `orgbrain:org:{orgId}:mapping:{mappingId}` | `orgbrain:org:acme:mapping:m4p5q6` |
+| Specialist | `orgbrain:org:{orgId}:specialist:{specialistId}` | `orgbrain:org:acme:specialist:webhook-api-repo` |
+| Task | `orgbrain:org:{orgId}:task:{taskId}` | `orgbrain:org:acme:task:t7u8v9` |
+| GeneratedDoc | `orgbrain:org:{orgId}:doc:{docId}` | `orgbrain:org:acme:doc:delivery-overview` |
 
 ### Identity Rules
 
-1. **Stability:** An entity's URN MUST NOT change over its lifetime. If a repo is renamed in the external system, the Bifrost URN remains the same; the `externalId` field is updated.
-2. **Uniqueness:** URNs are globally unique within a Bifrost deployment.
+1. **Stability:** An entity's URN MUST NOT change over its lifetime. If a repo is renamed in the external system, the OrgBrain URN remains the same; the `externalId` field is updated.
+2. **Uniqueness:** URNs are globally unique within a OrgBrain deployment.
 3. **Parseability:** URNs can be parsed to extract scope, type, and ID without external lookup.
 4. **Human-readability:** The `{id}` segment SHOULD be human-readable where possible (e.g., `webhook-api` rather than a UUID), but MAY fall back to system-generated IDs for entities without stable human names.
-5. **External reference:** SourceObjects carry both a Bifrost URN and an `externalId` that is the identifier in the origin system. The mapping between them is maintained by the source adapter.
+5. **External reference:** SourceObjects carry both a OrgBrain URN and an `externalId` that is the identifier in the origin system. The mapping between them is maintained by the source adapter.
 
 ---
 
@@ -779,25 +779,25 @@ Source-layer URNs are normalized to Bifrost canonical URNs during ingestion. Aft
 - Miss organizational intent (e.g., two loosely coupled repos owned by the same team)
 - Create confusion when cluster membership disagrees with team mental models
 
-**Compromise:** Bifrost MAY suggest domain groupings based on dependency analysis, co-change frequency, and ownership patterns. These suggestions are surfaced to the user but require explicit acceptance to take effect.
+**Compromise:** OrgBrain MAY suggest domain groupings based on dependency analysis, co-change frequency, and ownership patterns. These suggestions are surfaced to the user but require explicit acceptance to take effect.
 
 ### KD-2: Flows can be both registered and discovered
 
 **Decision:** Flows have a `registration` field that is either `registered` (important, named, human-curated) or `discovered` (system-inferred, potentially ephemeral).
 
-**Rationale:** Important business flows (e.g., "Webhook Delivery") should be durable first-class objects with names, descriptions, and tracked freshness. But Bifrost should also be able to discover flows ad-hoc during task execution (e.g., tracing a call graph to answer "what happens when X is called?"). Requiring all flows to be pre-registered would cripple ad-hoc investigation; making all flows permanent would flood the system with noise.
+**Rationale:** Important business flows (e.g., "Webhook Delivery") should be durable first-class objects with names, descriptions, and tracked freshness. But OrgBrain should also be able to discover flows ad-hoc during task execution (e.g., tracing a call graph to answer "what happens when X is called?"). Requiring all flows to be pre-registered would cripple ad-hoc investigation; making all flows permanent would flood the system with noise.
 
 **Lifecycle:** Discovered flows begin as ephemeral (associated with a Task, garbage-collected after a TTL). A user or specialist can **promote** a discovered flow to registered status, giving it a name and making it durable.
 
 ### KD-3: URN-style identifiers
 
-**Decision:** All entities use `bifrost:{scope}:{type}:{id}` URNs.
+**Decision:** All entities use `orgbrain:{scope}:{type}:{id}` URNs.
 
 **Rationale:**
 - URNs are self-describing — you can parse type and scope without a lookup.
 - URNs are stable — they do not encode mutable state (no branch names, no revision hashes).
 - URNs are system-independent — they do not embed external system URLs.
-- URNs support hierarchical scoping — `bifrost:org:acme:flow:webhook-delivery:segment:sign-payload` clearly nests a segment within a flow within an org.
+- URNs support hierarchical scoping — `orgbrain:org:acme:flow:webhook-delivery:segment:sign-payload` clearly nests a segment within a flow within an org.
 - URNs avoid collision — the type segment prevents ID collision between entities of different types.
 
 ### KD-4: Knowledge Tiers are a cost/coverage tradeoff, not a quality ranking
@@ -821,7 +821,7 @@ Source-layer URNs are normalized to Bifrost canonical URNs during ingestion. Aft
 | OQ-1 | Should multi-org deployments be supported, or is one org per deployment sufficient? | §5.3, §22.5 | Affects top-level scoping and identity scheme |
 | OQ-2 | What is the TTL for discovered (non-registered) flows? | KD-2 | Affects storage cost and garbage collection design |
 | OQ-3 | Should Patterns carry version history, or is "latest observed" sufficient? | §11.1, §7.2 | Affects whether pattern drift is trackable |
-| OQ-4 | How are permissions modeled across sources with different auth models? | §21.1, §6.2 | Affects whether Bifrost can share artifacts derived from restricted sources |
+| OQ-4 | How are permissions modeled across sources with different auth models? | §21.1, §6.2 | Affects whether OrgBrain can share artifacts derived from restricted sources |
 | OQ-5 | Should KnowledgeArtifact content be stored inline or as a reference to blob storage? | §13.2, §13.3 | Affects storage architecture; inline is simpler but may not scale for large artifacts |
 | OQ-6 | What is the freshness threshold boundary between `current` and `slightly-behind` lag indicators? | §12.1, §7.2 | Needs to be configurable per org/domain; requires a policy model |
 | OQ-7 | Should `inferred-hidden` dependencies have a separate promotion workflow? | §10.2 | An inferred dependency is high-risk to act on; may need human confirmation before Tier-2 use |
@@ -833,7 +833,7 @@ Source-layer URNs are normalized to Bifrost canonical URNs during ingestion. Aft
 
 ## 13. Runtime Model Primitives
 
-This section defines terms related to how Bifrost agents are executed and how their state is persisted. Bifrost is designed with a **dual-track runtime strategy**: a custom implementation (Track A, V1) and a Managed Agents implementation (Track B, future). All terms here apply to both tracks unless marked otherwise.
+This section defines terms related to how OrgBrain agents are executed and how their state is persisted. OrgBrain is designed with a **dual-track runtime strategy**: a custom implementation (Track A, V1) and a Managed Agents implementation (Track B, future). All terms here apply to both tracks unless marked otherwise.
 
 See `architecture-overview.md` ADR-008 for the full rationale behind the dual-track approach.
 
@@ -841,7 +841,7 @@ See `architecture-overview.md` ADR-008 for the full rationale behind the dual-tr
 
 ### AgentRuntime
 
-The **AgentRuntime** is the execution environment that hosts and runs Bifrost agents. It is the abstraction that isolates business logic (what an agent does) from infrastructure (how an agent runs).
+The **AgentRuntime** is the execution environment that hosts and runs OrgBrain agents. It is the abstraction that isolates business logic (what an agent does) from infrastructure (how an agent runs).
 
 **ABC interface (common to both tracks):**
 - `initialize(agentType, config)` — provision a new agent instance from its type and config
@@ -849,7 +849,7 @@ The **AgentRuntime** is the execution environment that hosts and runs Bifrost ag
 - `getState(agentId, path)` — read state from the agent's state backend
 - `setState(agentId, path, content)` — write state to the agent's state backend
 
-**Track A (V1 implementation):** A Python class (extending the `AgentRuntime` ABC) that implements the async agent loop directly: receives a task, calls the Anthropic Messages API with the agent's system prompt and tool definitions, executes tool calls, iterates until completion, and returns the response. Runs in-process within the Bifrost API Server.
+**Track A (V1 implementation):** A Python class (extending the `AgentRuntime` ABC) that implements the async agent loop directly: receives a task, calls the Anthropic Messages API with the agent's system prompt and tool definitions, executes tool calls, iterates until completion, and returns the response. Runs in-process within the OrgBrain API Server.
 
 **Track B (future implementation):** Anthropic Managed Agent Sessions. The `AgentRuntime` creates and monitors Sessions against pre-registered Agent Definitions. SSE event streams from Sessions replace the in-process loop.
 
@@ -918,9 +918,9 @@ The `AgentStateBackend` ABC is the same regardless of track. Business logic read
 
 A **Session Thread** is a context-isolated event stream for a single callable agent within a multi-agent Managed Agents Session (Track B only). When a TaskCoordinator Session calls multiple RepoAgent Sessions in parallel, each RepoAgent runs in its own Session Thread.
 
-Key constraint: **only one level of delegation is supported.** A TaskCoordinator can call RepoAgents as Session Threads, but those RepoAgents cannot in turn call further sub-agents. The agent hierarchy is strictly 2 levels: `TaskCoordinator → RepoAgents`. This single-level cap is a Managed Agents Research Preview constraint (L1: No Recursive Delegation); the number of RepoAgent Session Threads that can run in parallel is also bounded by the platform's concurrency ceiling (L7: Session Concurrency Limits), which Bifrost must respect when planning multi-repo tasks.
+Key constraint: **only one level of delegation is supported.** A TaskCoordinator can call RepoAgents as Session Threads, but those RepoAgents cannot in turn call further sub-agents. The agent hierarchy is strictly 2 levels: `TaskCoordinator → RepoAgents`. This single-level cap is a Managed Agents Research Preview constraint (L1: No Recursive Delegation); the number of RepoAgent Session Threads that can run in parallel is also bounded by the platform's concurrency ceiling (L7: Session Concurrency Limits), which OrgBrain must respect when planning multi-repo tasks.
 
-In Track A, the equivalent is an `asyncio.gather()` over multiple parallel in-process async agent loop invocations orchestrated by the Bifrost control plane.
+In Track A, the equivalent is an `asyncio.gather()` over multiple parallel in-process async agent loop invocations orchestrated by the OrgBrain control plane.
 
 ---
 
@@ -930,23 +930,23 @@ An **MCP Server** (Model Context Protocol server) is an external tool provider a
 
 In Track B, source adapters (GitHub adapter, Jira adapter, etc.) are implemented as MCP servers rather than Python plugins.
 
-In Track A (V1), source adapters are Python plugin classes within the Bifrost package and registered via the `SourceAdapter` port ABC (see ADR-007 in `architecture-overview.md`). No external MCP protocol is used.
+In Track A (V1), source adapters are Python plugin classes within the OrgBrain package and registered via the `SourceAdapter` port ABC (see ADR-007 in `architecture-overview.md`). No external MCP protocol is used.
 
-MCP Servers are sidecar processes attached to a Session; they expose registered tools but cannot execute arbitrary code on behalf of an agent (L4: MCP Tools Are Sidecar Processes). Bifrost source adapters in Track B must confine all extraction logic to the APIs exposed by the MCP protocol, and any capability that requires direct filesystem access inside an Anthropic container must be handled via Git MCP operations rather than native filesystem calls (L3: No Direct Filesystem Access in Track B).
+MCP Servers are sidecar processes attached to a Session; they expose registered tools but cannot execute arbitrary code on behalf of an agent (L4: MCP Tools Are Sidecar Processes). OrgBrain source adapters in Track B must confine all extraction logic to the APIs exposed by the MCP protocol, and any capability that requires direct filesystem access inside an Anthropic container must be handled via Git MCP operations rather than native filesystem calls (L3: No Direct Filesystem Access in Track B).
 
 ---
 
 ### §13.5 Managed Agents Research Preview — Known Limitations
 
-This subsection catalogs the known constraints of the Anthropic Managed Agents Research Preview as they apply to Bifrost's Track B runtime design. Each limitation is assigned a stable code (L1–L8) used throughout the glossary and architecture documents to link terms to the constraints that affect them.
+This subsection catalogs the known constraints of the Anthropic Managed Agents Research Preview as they apply to OrgBrain's Track B runtime design. Each limitation is assigned a stable code (L1–L8) used throughout the glossary and architecture documents to link terms to the constraints that affect them.
 
-| Code | Name | Description | Bifrost Mitigation |
+| Code | Name | Description | OrgBrain Mitigation |
 |------|------|-------------|--------------------|
-| L1 | No Recursive Delegation | Managed Agents supports a maximum of one level of delegation: a top-level Session (e.g., TaskCoordinator) may call sub-agents (e.g., RepoAgents) as Session Threads, but those sub-agents cannot themselves spawn further sub-agents. This limits agent hierarchy depth to exactly two levels: `TaskCoordinator → RepoAgents`. | Bifrost's canonical multi-agent topology is deliberately flat: TaskCoordinator orchestrates RepoAgents and does not require deeper nesting. All decomposition logic is expressed as a breadth-first fan-out, not a recursive tree, matching this ceiling by design. |
+| L1 | No Recursive Delegation | Managed Agents supports a maximum of one level of delegation: a top-level Session (e.g., TaskCoordinator) may call sub-agents (e.g., RepoAgents) as Session Threads, but those sub-agents cannot themselves spawn further sub-agents. This limits agent hierarchy depth to exactly two levels: `TaskCoordinator → RepoAgents`. | OrgBrain's canonical multi-agent topology is deliberately flat: TaskCoordinator orchestrates RepoAgents and does not require deeper nesting. All decomposition logic is expressed as a breadth-first fan-out, not a recursive tree, matching this ceiling by design. |
 | L2 | Ephemeral Sessions | All in-memory agent state is lost when a Session terminates. There is no implicit continuity between Sessions; any value that must be available in a future Session must be explicitly persisted before the current Session ends. | All durable agent state (configs, freshness envelopes, extracted knowledge text) is written to the AgentStateBackend (Memory Stores in Track B) before a Session completes. The AgentStateBackend abstraction enforces this discipline uniformly across agent types. |
 | L3 | No Direct Filesystem Access in Track B | Agents running in Anthropic-hosted containers cannot read or write arbitrary local filesystem paths. Repository source code cannot be cloned into a container and traversed with standard filesystem tools. | Track B source adapters access repository content exclusively through Git MCP sidecar operations (clone-to-temp, file read via MCP tool calls). The `SourceAdapter` ABC abstracts filesystem vs. MCP access so business logic is unchanged between tracks. |
-| L4 | MCP Tools Are Sidecar Processes | MCP Servers are attached to a Session as external sidecar processes communicating over the MCP protocol. They can only expose tool endpoints; they cannot execute arbitrary code, hold long-lived connections on behalf of the agent, or share in-process memory with the agent. | Bifrost MCP server adapters are stateless request-response services. State that must persist between tool calls is stored in Memory Stores, not in the MCP server process. MCP servers are designed to be restartable without data loss. |
+| L4 | MCP Tools Are Sidecar Processes | MCP Servers are attached to a Session as external sidecar processes communicating over the MCP protocol. They can only expose tool endpoints; they cannot execute arbitrary code, hold long-lived connections on behalf of the agent, or share in-process memory with the agent. | OrgBrain MCP server adapters are stateless request-response services. State that must persist between tool calls is stored in Memory Stores, not in the MCP server process. MCP servers are designed to be restartable without data loss. |
 | L5 | Session Duration Limits | Research Preview Sessions have an estimated maximum lifetime of 10–30 minutes. Tasks that require more wall-clock time than this ceiling (e.g., extracting knowledge from a very large repository) cannot be completed in a single Session. | Long extraction tasks use a checkpoint-and-resume pattern: progress is written to Memory Store at regular intervals, and a subsequent Session resumes from the last checkpoint. The `FreshnessEnvelope` tracks partial-extraction state to support this pattern. |
 | L6 | No Direct Inter-Agent Communication | Agents cannot send messages directly to one another. All information exchange between agents must flow through shared Memory Stores: one agent writes, another reads. There is no pub/sub or direct RPC channel between Sessions. | The TaskCoordinator writes task assignments to Memory Store and RepoAgents read their assignments from Memory Store. Results are written back to Memory Store by each RepoAgent and aggregated by the TaskCoordinator in a subsequent read pass. |
-| L7 | Session Concurrency Limits | The Research Preview supports an estimated maximum of 3–5 concurrent Sessions. Bifrost workflows that fan out across many repos simultaneously (e.g., org-wide re-indexing) will exceed this ceiling if not rate-limited. | The TaskCoordinator enforces a configurable `maxConcurrentRepoAgents` cap (defaulting conservatively to 3) and uses a queue-based dispatch model. Repo indexing tasks are serialized or batched to stay within the platform concurrency ceiling. |
-| L8 | Cost Opacity | The total cost of a Track B workflow includes LLM token costs, Session overhead charges, MCP tool call overhead, and Memory Store read/write operation costs. These are billed separately and are not surfaced in a unified cost metric during the Research Preview. | Bifrost's `UsageMetrics` schema (see §12) captures LLM token counts per Session. Memory Store operation counts are tracked as a separate metric dimension. Cost estimation tooling treats these as additive line items rather than a single unified figure, with explicit documentation that the total is a lower bound. |
+| L7 | Session Concurrency Limits | The Research Preview supports an estimated maximum of 3–5 concurrent Sessions. OrgBrain workflows that fan out across many repos simultaneously (e.g., org-wide re-indexing) will exceed this ceiling if not rate-limited. | The TaskCoordinator enforces a configurable `maxConcurrentRepoAgents` cap (defaulting conservatively to 3) and uses a queue-based dispatch model. Repo indexing tasks are serialized or batched to stay within the platform concurrency ceiling. |
+| L8 | Cost Opacity | The total cost of a Track B workflow includes LLM token costs, Session overhead charges, MCP tool call overhead, and Memory Store read/write operation costs. These are billed separately and are not surfaced in a unified cost metric during the Research Preview. | OrgBrain's `UsageMetrics` schema (see §12) captures LLM token counts per Session. Memory Store operation counts are tracked as a separate metric dimension. Cost estimation tooling treats these as additive line items rather than a single unified figure, with explicit documentation that the total is a lower bound. |

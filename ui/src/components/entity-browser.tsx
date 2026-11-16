@@ -361,7 +361,7 @@ function EntityDetailPanel({
           <Link
             to={askInChat}
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-1 px-2.5 py-1 text-[11.5px] font-medium text-fg-1 hover:bg-bg-2 hover:text-fg-0"
-            title="Ask Bifrost about this entity"
+            title="Ask OrgBrain about this entity"
           >
             <MessageSquare className="h-3 w-3" strokeWidth={1.75} />
             Ask in chat
@@ -745,7 +745,7 @@ function BlastRadiusControl({ entity }: { entity: EntityDetail }) {
 }
 
 function repoFromUrn(urn: string): string | null {
-  const m = urn.match(/^urn:bifrost:repo:([^/]+)/);
+  const m = urn.match(/^urn:orgbrain:repo:([^/]+)/);
   return m ? m[1] : null;
 }
 

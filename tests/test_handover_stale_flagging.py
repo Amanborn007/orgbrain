@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 
 def _make_session(
@@ -66,7 +66,7 @@ async def test_repo_with_domain_and_squads_flags_all_three_scopes(
     )
     repo = EntityRepository(session)
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_handover_docs_stale_by_repo_name("batch-orders")
 
     assert flagged == 3
@@ -108,7 +108,7 @@ async def test_repo_with_no_domain_no_squad_falls_back_to_repo_only(
     session = _make_session(domain_name=None, squads=[], rowcount=1)
     repo = EntityRepository(session)
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_handover_docs_stale_by_repo_name("orphan-repo")
 
     assert flagged == 1

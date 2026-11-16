@@ -1,14 +1,14 @@
-# Bifrost Handbook
+# OrgBrain Handbook
 
 > **TL;DR.** This handbook is the single artifact you can sit down with and
-> read top-to-bottom to understand Bifrost end-to-end without grepping the
+> read top-to-bottom to understand OrgBrain end-to-end without grepping the
 > codebase. It is opinionated about what the system *is today* (not what the
 > specs aspire to). It is split into a foundational half (vision, architecture,
 > data model, glossary — chapters 01-03 and 09) and an operational half
 > (chapters 04-08, written separately). Every load-bearing claim cites a
 > source file.
 
-> **Read this when** you are onboarding to Bifrost, returning after time away,
+> **Read this when** you are onboarding to OrgBrain, returning after time away,
 > or about to make a non-trivial change anywhere in the system. **Skip if**
 > you already know the topology and just need a specific table or endpoint
 > reference — jump straight to chapter 03 or the [glossary](./09-glossary.md).
@@ -17,7 +17,7 @@
 
 ## What this is
 
-A read-from-the-top handbook for Bifrost. It is the single
+A read-from-the-top handbook for OrgBrain. It is the single
 artifact you can sit down with and walk through to understand the entire
 system end-to-end without grepping the codebase. It is opinionated about
 what "the system" is *today*, not what the specs aspire to.
@@ -40,7 +40,7 @@ chapter.
 
 | Question | Answered in |
 |---|---|
-| What is Bifrost and why does it exist? | [01 §1-3](./01-vision-and-overview.md) |
+| What is OrgBrain and why does it exist? | [01 §1-3](./01-vision-and-overview.md) |
 | What does the runtime look like? Where does extraction happen? | [02 §1-3](./02-architecture.md) |
 | What is the data model — what's actually persisted? | [03](./03-data-model.md) |
 | How does collaboration (team-to-team brokerage) work? | [01 §4.5](./01-vision-and-overview.md#45-collaboration-collaboration-collaboration) and [02 §6.4](./02-architecture.md#64-collaboration-session) |
@@ -53,7 +53,7 @@ If you can answer all five after one pass, the handbook has done its job.
 ## Read in order
 
 1. **[01 — Vision and overview](./01-vision-and-overview.md)**
-   What Bifrost is, why it exists, the seven product surfaces today, the
+   What OrgBrain is, why it exists, the seven product surfaces today, the
    user journey from "a question about a system" through "a brief that can be
    taken to another team."
    *Skip if* you already know the elevator pitch and just want runtime details.
@@ -61,13 +61,13 @@ If you can answer all five after one pass, the handbook has done its job.
 2. **[02 — Architecture](./02-architecture.md)**
    System topology, process model, the `claude -p` subprocess pattern, MCP
    sidecars, the in-memory SSE bus, the major code packages under
-   `src/bifrost/`, and the four data flows that matter
+   `src/orgbrain/`, and the four data flows that matter
    (extraction, chat, handover generation, collaboration session).
    *Skip if* you already know the topology and only need data-model specifics.
 
 3. **[03 — Data model](./03-data-model.md)**
    Every persisted table grouped by purpose. Inventoried from
-   `src/bifrost/storage/models.py` and `alembic/versions/`. Includes
+   `src/orgbrain/storage/models.py` and `alembic/versions/`. Includes
    four ER-diagram blocks (one per group) and a per-table "what / when /
    who reads" paragraph.
    *Skip if* you are not writing migrations or queries today.
@@ -112,18 +112,18 @@ them.
 
 | Concern | Path |
 |---|---|
-| FastAPI app entry | `src/bifrost/api/app.py` |
-| All HTTP routers | `src/bifrost/api/routes/__init__.py` |
-| All ORM models | `src/bifrost/storage/models.py` |
+| FastAPI app entry | `src/orgbrain/api/app.py` |
+| All HTTP routers | `src/orgbrain/api/routes/__init__.py` |
+| All ORM models | `src/orgbrain/storage/models.py` |
 | Schema migrations | `alembic/versions/` |
-| Extraction pipeline (7 phases) | `src/bifrost/extraction/pipeline.py` |
-| Claude CLI subprocess client | `src/bifrost/extraction/cli_client.py` |
-| Chat coordinator (multi-repo fan-out) | `src/bifrost/research/coordinator.py` |
-| Handover-doc generator | `src/bifrost/collaboration/handover_generator.py` |
-| Collab clarifier loop | `src/bifrost/collaboration/clarifier.py` |
-| Collab synthesizer (closes the session) | `src/bifrost/collaboration/synthesizer.py` |
-| Task-state machine (action layer) | `src/bifrost/actions/task_lifecycle.py` |
-| In-memory SSE event bus | `src/bifrost/api/sse.py` |
+| Extraction pipeline (7 phases) | `src/orgbrain/extraction/pipeline.py` |
+| Claude CLI subprocess client | `src/orgbrain/extraction/cli_client.py` |
+| Chat coordinator (multi-repo fan-out) | `src/orgbrain/research/coordinator.py` |
+| Handover-doc generator | `src/orgbrain/collaboration/handover_generator.py` |
+| Collab clarifier loop | `src/orgbrain/collaboration/clarifier.py` |
+| Collab synthesizer (closes the session) | `src/orgbrain/collaboration/synthesizer.py` |
+| Task-state machine (action layer) | `src/orgbrain/actions/task_lifecycle.py` |
+| In-memory SSE event bus | `src/orgbrain/api/sse.py` |
 | Frontend route table | `ui/src/App.tsx` |
 | UI pages | `ui/src/pages/` |
 | dev.sh / health_check.sh / restart.sh | `scripts/` |
@@ -133,38 +133,38 @@ them.
 - **A new HTTP request hits the API.**
   `RequestLoggingMiddleware` wraps every request with structlog timings,
   and `IdentityMiddleware` requires a principal on everything except the
-  public health and auth routes (`src/bifrost/api/app.py`,
-  `src/bifrost/api/auth/middleware.py`).
+  public health and auth routes (`src/orgbrain/api/app.py`,
+  `src/orgbrain/api/auth/middleware.py`).
 
 - **The API process starts.**
   The async `lifespan` fires a fire-and-forget Claude CLI auth probe,
   starts the `ExtractionWorker`, schedules the hourly task auto-archive
   sweep, and starts the SSE replay-buffer janitor (every 2 minutes) —
-  see `src/bifrost/api/app.py:28-131`. You'll see something like this in
+  see `src/orgbrain/api/app.py:28-131`. You'll see something like this in
   `nohup.out`:
 
   ```
-  bifrost.startup settings_loaded=True
-  bifrost.cli_auth.probe_dispatched timeout_s=5
-  bifrost.extraction_worker.started
-  bifrost.lifespan.scheduled task=auto_archive interval_h=1
-  bifrost.lifespan.scheduled task=sse_janitor interval_s=120
+  orgbrain.startup settings_loaded=True
+  orgbrain.cli_auth.probe_dispatched timeout_s=5
+  orgbrain.extraction_worker.started
+  orgbrain.lifespan.scheduled task=auto_archive interval_h=1
+  orgbrain.lifespan.scheduled task=sse_janitor interval_s=120
   ```
 
 - **An entity needs to be embedded.**
   Local sentence-transformers `all-MiniLM-L6-v2` (384-dim), no network
-  egress (`src/bifrost/storage/models.py:134`).
+  egress (`src/orgbrain/storage/models.py:134`).
   → see [09 §URN](./09-glossary.md#u) for the canonical entity ID format.
 
 - **A handover doc is regenerated.**
   Single Sonnet call with a sectioned JSON schema (small scopes), or a
   wave-based child→parent build (multi-repo scopes ≥ 5 repos). The
   threshold is documented at
-  `src/bifrost/collaboration/handover_generator.py:80-90`.
+  `src/orgbrain/collaboration/handover_generator.py:80-90`.
 
 - **A user asks a chat question.**
   The query route delegates to `query_worker.run_query` which constructs
-  a `ResearchCoordinator` (`src/bifrost/research/coordinator.py`).
+  a `ResearchCoordinator` (`src/orgbrain/research/coordinator.py`).
   Coordinator fans out per-source agents in parallel (Jira, Confluence,
   GitHub, Slack, per-repo) and merges into a synthesised answer streamed
   over SSE. → see [02 §6.2](./02-architecture.md#62-chat-query-coordinator-fan-out--synthesis).

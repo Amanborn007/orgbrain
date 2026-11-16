@@ -4,14 +4,14 @@
 
 ## 1. Purpose and Scope
 
-This specification defines how Bifrost tracks, computes, and exposes the currency and trustworthiness of every piece of knowledge it holds. It is the "honesty layer" — the mechanism that prevents Bifrost from ever silently presenting stale, uncertain, or conflicting information as settled truth.
+This specification defines how OrgBrain tracks, computes, and exposes the currency and trustworthiness of every piece of knowledge it holds. It is the "honesty layer" — the mechanism that prevents OrgBrain from ever silently presenting stale, uncertain, or conflicting information as settled truth.
 
-Every answer Bifrost produces must declare:
+Every answer OrgBrain produces must declare:
 - **How current** the underlying knowledge is (freshness and lag).
 - **How trustworthy** the answer is (confidence).
 - **Whether disagreements exist** among contributing sources (conflicts).
 
-Without this layer, Bifrost is just another system that guesses and hopes. With it, every consumer — human or agent — can make informed decisions about whether to trust, verify, or refresh before acting.
+Without this layer, OrgBrain is just another system that guesses and hopes. With it, every consumer — human or agent — can make informed decisions about whether to trust, verify, or refresh before acting.
 
 ### Scope boundaries
 
@@ -40,11 +40,11 @@ This spec does NOT cover:
 | **T2 (Tier 2)** | Derived knowledge — cross-referenced, composed, or inferred understanding built from T1 facts. |
 | **T3 (Tier 3)** | Generated artifacts — human-readable docs, summaries, playbooks — produced from T2 knowledge. |
 | **Source revision** | An opaque identifier representing a point-in-time state of a source object (commit SHA, modification timestamp, ETag, version number). |
-| **Indexed revision** | The source revision that Bifrost last successfully processed and extracted knowledge from. |
-| **Freshness** | The relationship between the current source state and the state Bifrost has indexed. |
-| **Lag** | The measurable gap between current source state and Bifrost's indexed state. |
+| **Indexed revision** | The source revision that OrgBrain last successfully processed and extracted knowledge from. |
+| **Freshness** | The relationship between the current source state and the state OrgBrain has indexed. |
+| **Lag** | The measurable gap between current source state and OrgBrain's indexed state. |
 | **Confidence** | A declaration of how trustworthy a piece of knowledge is, given its source basis, freshness, and agreement with other sources. |
-| **Staleness** | The condition where source state has advanced beyond what Bifrost has indexed. |
+| **Staleness** | The condition where source state has advanced beyond what OrgBrain has indexed. |
 | **TTL** | Time-to-live — a configurable duration after which knowledge degrades from confirmed to stale absent re-validation. |
 
 ---
@@ -102,7 +102,7 @@ This spec does NOT cover:
 
 ### Non-Goals
 
-1. **Perfect real-time synchronization.** Bifrost is not a CDC (change data capture) pipeline. It is eventually consistent with bounded staleness.
+1. **Perfect real-time synchronization.** OrgBrain is not a CDC (change data capture) pipeline. It is eventually consistent with bounded staleness.
 
 2. **Automatic conflict resolution.** V1 detects and surfaces conflicts. It does not auto-resolve them.
 
@@ -118,7 +118,7 @@ Freshness tracks the temporal relationship between three tiers of knowledge and 
 
 ### 5.1 Source Freshness
 
-Source freshness measures the gap between the latest known source revision and the latest revision Bifrost has indexed.
+Source freshness measures the gap between the latest known source revision and the latest revision OrgBrain has indexed.
 
 **Representation:**
 
@@ -128,7 +128,7 @@ class SourceFreshness(BaseModel):
     source_type: SourceType
     scope: SourceScope  # has optional repo_id, domain_id
 
-    # What Bifrost has indexed
+    # What OrgBrain has indexed
     indexed_at: datetime
     indexed_revision: str          # commit SHA, ETag, version, etc.
 
@@ -251,22 +251,22 @@ Agents read this document at session start and branch on its contents:
 
 ## 6. Lag Computation
 
-Lag quantifies *how far behind* Bifrost is from current source state.
+Lag quantifies *how far behind* OrgBrain is from current source state.
 
 ### 6.1 Lag Types
 
 | Lag type | Measures |
 |----------|----------|
-| **behind-remote-default** | Distance between Bifrost's indexed revision and the source's current default branch HEAD. Primary lag metric for code repos. |
-| **behind-source-update** | Distance between Bifrost's indexed state and the source's latest modification. Applicable to any source type (Jira tickets, design docs, schemas). |
-| **behind-runtime-correlation** | Time since Bifrost last correlated static knowledge with runtime observations. Applicable only when runtime sources are connected. |
+| **behind-remote-default** | Distance between OrgBrain's indexed revision and the source's current default branch HEAD. Primary lag metric for code repos. |
+| **behind-source-update** | Distance between OrgBrain's indexed state and the source's latest modification. Applicable to any source type (Jira tickets, design docs, schemas). |
+| **behind-runtime-correlation** | Time since OrgBrain last correlated static knowledge with runtime observations. Applicable only when runtime sources are connected. |
 | **behind-doc-refresh** | Time since generated docs (T3) were last rebuilt from current T2 knowledge. |
 
 ### 6.2 Lag Formula
 
 **Revision-based (preferred for code):**
 ```
-lag = distance(source_current_revision, bifrost_indexed_revision)
+lag = distance(source_current_revision, orgbrain_indexed_revision)
 ```
 Where `distance` may be commit count, or when commit count is unavailable, falls back to time-based.
 
@@ -332,13 +332,13 @@ Confidence declares how trustworthy a piece of knowledge is, independent of whet
 
 ### 7.1 Confidence Levels
 
-> **This is the authoritative ConfidenceLevel definition for all Bifrost specs.**
+> **This is the authoritative ConfidenceLevel definition for all OrgBrain specs.**
 > Other specs (S1, S5, S6, S8, S9) reference this definition without re-defining it.
 > Any other definition of ConfidenceLevel found in those specs is an error to be corrected.
 
 ```python
 # CANONICAL CONFIDENCELEVEL DEFINITION
-# All Bifrost specs must use this definition from S3.
+# All OrgBrain specs must use this definition from S3.
 # Do not redefine ConfidenceLevel in any other spec.
 
 ConfidenceLevel = Literal['confirmed', 'inferred', 'stale', 'unknown', 'conflicting']
@@ -471,7 +471,7 @@ Input: Set of (source, fact, confidence) tuples for a knowledge item
 
 ## 8. Conflict Detection
 
-Conflicts are first-class objects in Bifrost. They are never silently resolved.
+Conflicts are first-class objects in OrgBrain. They are never silently resolved.
 
 ### 8.1 Conflict Types
 
@@ -648,7 +648,7 @@ The following events trigger freshness checks or invalidation:
 
 ### 11.1 Default Behavior
 
-Bifrost answers from **remote source state** by default. The remote default branch (typically `main`) is the baseline truth.
+OrgBrain answers from **remote source state** by default. The remote default branch (typically `main`) is the baseline truth.
 
 ### 11.2 Local Workspace Inclusion
 
@@ -689,7 +689,7 @@ When an agent detects staleness at session start (via the freshness state docume
    c. Set `pending_commits` to `0`.
    d. Write updated freshness document to AgentStateBackend.
 
-This is the "smart recon strategy based on lag" from the Bifrost architecture vision. It keeps re-extraction cost proportional to what actually changed, not the size of the full repo.
+This is the "smart recon strategy based on lag" from the OrgBrain architecture vision. It keeps re-extraction cost proportional to what actually changed, not the size of the full repo.
 
 **Full re-extraction (cold start) is only needed when:**
 - First-time indexing of a repo (no prior index exists).
@@ -779,7 +779,7 @@ def resolve_effective_freshness_state(doc: FreshnessStateDocument) -> EffectiveF
     return doc.freshness_state
 ```
 
-The 20-minute threshold matches the maximum expected extraction session duration for a mid-size repo. It is configurable via `BIFROST_INDEXING_TIMEOUT_MS` environment variable.
+The 20-minute threshold matches the maximum expected extraction session duration for a mid-size repo. It is configurable via `ORGBRAIN_INDEXING_TIMEOUT_MS` environment variable.
 
 ---
 
@@ -870,7 +870,7 @@ class RefreshResponse(BaseModel):
 
 V1 uses timestamp-based freshness comparison: `indexed_at` vs `source_checked_at`, supplemented by revision string equality checks where available.
 
-**Deferred:** Version vectors for concurrent multi-source freshness tracking. These are needed only when Bifrost tracks multiple parallel branches or multiple writers to the same source simultaneously.
+**Deferred:** Version vectors for concurrent multi-source freshness tracking. These are needed only when OrgBrain tracks multiple parallel branches or multiple writers to the same source simultaneously.
 
 ### 14.2 Step-function confidence decay, not linear
 
@@ -946,8 +946,8 @@ V1 uses `min(confidences)` when sources agree and `conflicting` when they disagr
 
 4. **Conflict severity escalation.** When a conflict persists unresolved for an extended period, should its severity automatically escalate? If so, what are the escalation thresholds?
 
-5. **Branch-aware freshness.** When a user is working on a feature branch, should Bifrost track freshness against that branch's HEAD, or always against the default branch? Both have valid use cases. How should the UX handle this?
+5. **Branch-aware freshness.** When a user is working on a feature branch, should OrgBrain track freshness against that branch's HEAD, or always against the default branch? Both have valid use cases. How should the UX handle this?
 
 6. **Partial staleness.** If a source has 100 files and 1 changed, is the entire source stale or only the affected T1 facts? V1 marks the source stale at the source level. Fine-grained path-level staleness tracking would be more efficient but more complex.
 
-7. **Confidence floor.** Should there be a minimum confidence below which Bifrost refuses to present knowledge at all (rather than presenting it with a low-confidence warning)? Or should the consumer always decide?
+7. **Confidence floor.** Should there be a minimum confidence below which OrgBrain refuses to present knowledge at all (rather than presenting it with a low-confidence warning)? Or should the consumer always decide?

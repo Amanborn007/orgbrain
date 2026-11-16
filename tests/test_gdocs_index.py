@@ -28,14 +28,14 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bifrost.research.gdocs_index import (
+from orgbrain.research.gdocs_index import (
     DEFAULT_FOLDER_INFERENCE_THRESHOLD,
     IndexStats,
     _infer_shared_folder,
     _RepoIndexResult,
     index_gdocs_for_org,
 )
-from bifrost.storage.models import (
+from orgbrain.storage.models import (
     Base,
     Entity,
     ExternalSyncLog,
@@ -46,7 +46,7 @@ from bifrost.storage.models import (
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test",
+    "postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test",
 )
 
 
@@ -112,7 +112,7 @@ async def _make_repo(
         rid = _uuid.uuid4()
         repo = Repo(
             id=rid,
-            urn=f"bifrost://repo/{name}",
+            urn=f"orgbrain://repo/{name}",
             name=name,
             url=f"https://github.com/example/{name}",
         )
@@ -124,7 +124,7 @@ async def _make_repo(
                 Entity(
                     id=_uuid.uuid4(),
                     entity_type="component",
-                    urn=f"bifrost://repo/{name}/component/Foo",
+                    urn=f"orgbrain://repo/{name}/component/Foo",
                     name="Foo",
                     scope_repo_id=rid,
                     knowledge_tier=1,
@@ -189,7 +189,7 @@ def _make_stub_indexer(docs_by_repo: dict[str, list[dict]]):
                 != "application/vnd.google-apps.document"
             ):
                 continue
-            from bifrost.research.gdocs_index import _parse_iso
+            from orgbrain.research.gdocs_index import _parse_iso
 
             lm = _parse_iso(str(d.get("last_modified") or ""))
             if lm is not None and lm < cutoff:

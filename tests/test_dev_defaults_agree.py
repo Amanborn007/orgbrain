@@ -7,8 +7,8 @@ from pathlib import Path
 
 from sqlalchemy.engine import make_url
 
-from bifrost.cli.commands.init import DEFAULT_CONFIG_TEMPLATE
-from bifrost.cli.config import BifrostSettings
+from orgbrain.cli.commands.init import DEFAULT_CONFIG_TEMPLATE
+from orgbrain.cli.config import OrgBrainSettings
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -35,13 +35,13 @@ def _compose_parts() -> tuple[str, str, str, int, str]:
 
 
 def test_settings_default_matches_compose():
-    default = BifrostSettings.model_fields["database_url"].default
+    default = OrgBrainSettings.model_fields["database_url"].default
     assert _parts(default) == _compose_parts()
 
 
 def test_production_sentinel_equals_settings_default():
-    default = BifrostSettings.model_fields["database_url"].default
-    assert default == BifrostSettings._DEV_DATABASE_URL_DEFAULT
+    default = OrgBrainSettings.model_fields["database_url"].default
+    assert default == OrgBrainSettings._DEV_DATABASE_URL_DEFAULT
 
 
 def test_alembic_ini_matches_compose():
@@ -51,7 +51,7 @@ def test_alembic_ini_matches_compose():
 
 
 def test_init_template_matches_compose():
-    m = re.search(r"BIFROST_DATABASE_URL=(\S+)", DEFAULT_CONFIG_TEMPLATE)
+    m = re.search(r"ORGBRAIN_DATABASE_URL=(\S+)", DEFAULT_CONFIG_TEMPLATE)
     assert m is not None
     assert _parts(m.group(1)) == _compose_parts()
 
@@ -66,5 +66,5 @@ def test_ci_test_database_urls_use_compose_credentials():
 
 def test_env_example_matches_compose():
     text = (ROOT / ".env.example").read_text()
-    url = re.search(r"^#?\s*BIFROST_DATABASE_URL=(\S+)", text, re.M).group(1)
+    url = re.search(r"^#?\s*ORGBRAIN_DATABASE_URL=(\S+)", text, re.M).group(1)
     assert _parts(url) == _compose_parts()

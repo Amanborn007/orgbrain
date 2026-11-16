@@ -7,15 +7,15 @@ import inspect
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.extraction import cli_client
-from bifrost.extraction.cli_client import CliCompletion, Usage
-from bifrost.research import coordinator
-from bifrost.research.coordinator import (
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.extraction import cli_client
+from orgbrain.extraction.cli_client import CliCompletion, Usage
+from orgbrain.research import coordinator
+from orgbrain.research.coordinator import (
     RepoBundle,
     _adversarial_verify_claims,
 )
-from bifrost.research.repo_agent import RepoReport
+from orgbrain.research.repo_agent import RepoReport
 
 ROLE = "Owns the order router and retry policy"
 EVIDENCE = "router.py:12 defines route_order"
@@ -34,8 +34,8 @@ def _bundle() -> RepoBundle:
     return RepoBundle(repo_id="r1", repo_name="svc", code=code)
 
 
-def _settings() -> BifrostSettings:
-    return BifrostSettings(llm_cache_enabled=False)
+def _settings() -> OrgBrainSettings:
+    return OrgBrainSettings(llm_cache_enabled=False)
 
 
 async def test_evidence_line_uses_role_and_evidence(monkeypatch: pytest.MonkeyPatch) -> None:

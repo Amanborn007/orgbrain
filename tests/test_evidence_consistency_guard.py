@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from bifrost.research.coordinator import (
+from orgbrain.research.coordinator import (
     _has_evidence_gap_in_answer,
     _has_evidence_gap_in_bundles,
     apply_evidence_consistency_guard,
@@ -77,7 +77,7 @@ def test_answer_text_gap_speculative() -> None:
 
 
 def test_answer_text_no_gap_returns_none() -> None:
-    a = "Clean answer. Cited urn:bifrost:repo/OrderService. All sources contributed."
+    a = "Clean answer. Cited urn:orgbrain:repo/OrderService. All sources contributed."
     assert _has_evidence_gap_in_answer(a) is None
 
 
@@ -185,7 +185,7 @@ def test_guard_does_not_change_inferred_or_uncertain() -> None:
 
 def test_guard_keeps_confirmed_when_coverage_is_clean() -> None:
     bundles = [_bundle(code=_agent(relevance="high"), jira=_agent(relevance="medium"))]
-    answer = "Citations all check out: urn:bifrost:repo/OrderService cited correctly."
+    answer = "Citations all check out: urn:orgbrain:repo/OrderService cited correctly."
     out, debug = apply_evidence_consistency_guard(
         base_confidence="confirmed",
         bundles=bundles,

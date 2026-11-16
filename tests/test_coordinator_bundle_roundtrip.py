@@ -19,16 +19,16 @@ from datetime import datetime
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.bundle_cache import (
+from orgbrain.research.bundle_cache import (
     BundleSource,
     ResearchBundle,
     reset_bundle_cache_for_tests,
 )
-from bifrost.research.coordinator import (
+from orgbrain.research.coordinator import (
     _load_prior_bundle,
     _persist_research_bundle,
 )
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture
@@ -74,8 +74,8 @@ async def test_persist_then_load_via_db(session_factory_for) -> None:
         repos_used_names=["orders"],
         scope_rationale="single repo, deep-indexed",
         subgraph_entity_urns=[
-            "urn:bifrost:repo/orders/component/RetryQueue",
-            "urn:bifrost:repo/orders/component/GatewayClient",
+            "urn:orgbrain:repo/orders/component/RetryQueue",
+            "urn:orgbrain:repo/orders/component/GatewayClient",
         ],
         sources=[
             BundleSource(kind="jira", ref="SHIP-1", title="retry bug"),
@@ -140,7 +140,7 @@ async def test_load_prefers_cache_over_db(session_factory_for) -> None:
     # Now corrupt the DB row to prove the load came from cache.
     from sqlalchemy import update
 
-    from bifrost.storage.models import ConversationResearchState
+    from orgbrain.storage.models import ConversationResearchState
 
     async with session_factory_for() as session:
         await session.execute(
@@ -174,7 +174,7 @@ async def test_load_falls_back_to_db_when_cache_cold(
         repos_used=[],
         repos_used_names=["orders"],
         scope_rationale="x",
-        subgraph_entity_urns=["urn:bifrost:repo/orders/component/X"],
+        subgraph_entity_urns=["urn:orgbrain:repo/orders/component/X"],
         sources=[BundleSource(kind="jira", ref="J-1")],
         last_question_embedding=[0.5],
     )
@@ -194,7 +194,7 @@ async def test_load_falls_back_to_db_when_cache_cold(
     assert loaded is not None
     assert loaded.last_question == "cold-start question"
     assert loaded.subgraph_entity_urns == [
-        "urn:bifrost:repo/orders/component/X",
+        "urn:orgbrain:repo/orders/component/X",
     ]
     assert loaded.last_question_embedding == [0.5]
 
@@ -237,7 +237,7 @@ async def test_persist_overwrites_prior_turn_bundle(
         repos_used=[],
         repos_used_names=["orders", "auth"],
         scope_rationale="extended",
-        subgraph_entity_urns=["urn:bifrost:repo/orders/component/X"],
+        subgraph_entity_urns=["urn:orgbrain:repo/orders/component/X"],
         sources=[BundleSource(kind="jira", ref="J-2")],
     )
     await _persist_research_bundle(
@@ -260,5 +260,5 @@ async def test_persist_overwrites_prior_turn_bundle(
     assert loaded.last_question == "turn 2"
     assert loaded.repos_used_names == ["orders", "auth"]
     assert loaded.subgraph_entity_urns == [
-        "urn:bifrost:repo/orders/component/X",
+        "urn:orgbrain:repo/orders/component/X",
     ]

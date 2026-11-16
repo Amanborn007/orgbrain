@@ -1,9 +1,9 @@
-# Bifrost research and experiment roadmap
+# OrgBrain research and experiment roadmap
 
 **Companion to:** [prd.md](archive/prd.md) (PRD), [trd.md](archive/trd.md) (TRD), [handbook/](handbook/README.md)
 **Status:** research and plan only. No experiment in this document has run yet. Decisions recorded on 2026-11-05.
 
-> **TL;DR.** Teams building similar platforms index the same kinds of sources bifrost already reads. They differ in how they extract structure, retrieve, verify and measure. This roadmap starts with measurement, because the current benchmark cannot yet tell a real gain from noise. It holds 25 experiment cards in six phases, plus a standing security gate before any multi-user deployment.
+> **TL;DR.** Teams building similar platforms index the same kinds of sources orgbrain already reads. They differ in how they extract structure, retrieve, verify and measure. This roadmap starts with measurement, because the current benchmark cannot yet tell a real gain from noise. It holds 25 experiment cards in six phases, plus a standing security gate before any multi-user deployment.
 
 > **Read this when** a change touches retrieval, verification, planning or the benchmark, or the question is why the next experiments run in this order.
 > **Skip if** the question is how the system works today. The [handbook](handbook/README.md) covers that.
@@ -12,11 +12,11 @@
 
 ## 1. Verdict
 
-**Do not add sources yet. Fix measurement first, then verification, planning and retrieval.** Among the 20 systems surveyed, only Unblocked documents more source categories than bifrost's six of eight. Where bifrost differs from the evidence is on three axes, and its benchmark cannot tell whether a change on any of them helps.
+**Do not add sources yet. Fix measurement first, then verification, planning and retrieval.** Among the 20 systems surveyed, only Unblocked documents more source categories than orgbrain's six of eight. Where orgbrain differs from the evidence is on three axes, and its benchmark cannot tell whether a change on any of them helps.
 
-- **Structure.** bifrost extracts structure with an LLM only. Leaders extract it with parsers such as SCIP, tree-sitter and static analysis, and use the LLM to explain what the parser found.
-- **Retrieval.** bifrost retrieves with generic MiniLM vectors and has no lexical index outside handover docs. Leaders use hybrid lexical and dense retrieval, or grep-first agents over a lexical index.
-- **Verification.** bifrost runs one LLM adversarial verifier, which times out on about 30% of benchmark turns [ran]. Leaders run deterministic checks first, then cheap checkers, and send only disputed claims to an LLM.
+- **Structure.** orgbrain extracts structure with an LLM only. Leaders extract it with parsers such as SCIP, tree-sitter and static analysis, and use the LLM to explain what the parser found.
+- **Retrieval.** orgbrain retrieves with generic MiniLM vectors and has no lexical index outside handover docs. Leaders use hybrid lexical and dense retrieval, or grep-first agents over a lexical index.
+- **Verification.** orgbrain runs one LLM adversarial verifier, which times out on about 30% of benchmark turns [ran]. Leaders run deterministic checks first, then cheap checkers, and send only disputed claims to an LLM.
 - **Measurement.** The benchmark has 12 questions and a regex scorer. A full A/B/C run cost about $44-51 in model usage in late 2026. The three baseline run means were 0.734, 0.741 and 0.738, so the 0.007 spread between identical runs is as large as the +0.006 that a later experiment run reported over the baseline mean [ran].
 
 So measurement comes first. Phase 0 re-scores runs that already exist, so it needs almost no new benchmark spend.
@@ -34,7 +34,7 @@ So measurement comes first. Phase 0 re-scores runs that already exist, so it nee
 5. **Phase 2, retrieval and structure, on the DeepCodeBench subset.** It starts once Phase 0b has registered the subset with its own noise floor. P2.1, the retrieval matrix, runs first. Two of its five configs use small local models on CPU, one a reranker and one a code embedder. P2.2 to P2.5 follow in card order.
 6. **Phase 3, design bets, after the P2.1 matrix.** P3.1, one hybrid index with one search tool, starts only after P2.1 and reuses the hybrid index P2.1 builds. It also needs benchmark questions that use non-code sources, seeded first. P3.2, the conflict policy, and P3.3, the PR "why" lineage, follow.
 7. **Phases 4 and 5, after Phase 3.** Both need the AcmeCo seeds and questions extended first. Phase 4 adds new sources in three cards. P4.1 joins CI and deploys to code by commit SHA, P4.2 retrieves similar past incidents weighted by recency, and P4.3 links feature-flag keys to the code that reads them. Phase 5 covers learning and trust. P5.1 turns feedback into eval scenarios, P5.2 stores bitemporal facts and keeps raw pages, and P5.3 checks an activity-based expert graph against CODEOWNERS.
-8. **Before more than one user, the standing gate.** bifrost has to mirror source permissions and treat ingested Slack, Jira and PR text as untrusted before it serves more than one user. This gates deployment, not any one phase.
+8. **Before more than one user, the standing gate.** orgbrain has to mirror source permissions and treat ingested Slack, Jira and PR text as untrusted before it serves more than one user. This gates deployment, not any one phase.
 
 Two prerequisites are still open, labelling time for E0.2 and model-usage spend during Phase 0. [Section 12](#12-open-prerequisites) lists both.
 
@@ -44,25 +44,25 @@ Two prerequisites are still open, labelling time for E0.2 and model-usage spend 
 
 - Almost every system indexes code, and most add PR and commit history. Enterprise-knowledge products add docs, tickets and chat. Incident tools add telemetry and deploys.
 - The logic the leaders share is parsers for structure, lexical plus dense retrieval, deterministic checks before LLM checks, and fact-level judges over large question sets.
-- The roadmap has 25 experiment cards in six phases, with Phase 0b split out of Phase 0. The first three are measurement and cost almost nothing, because they re-score runs bifrost already has.
+- The roadmap has 25 experiment cards in six phases, with Phase 0b split out of Phase 0. The first three are measurement and cost almost nothing, because they re-score runs orgbrain already has.
 
 ---
 
 ## 4. Method and limits
 
 - The survey ran four web research slices. They covered about 25 commercial products, in-house builds at about 15 companies, open-source tools and papers, and organisational knowledge sources and trust.
-- The bifrost capability map comes from a read-only scan of the code at commit 660d5cc. Benchmark numbers come from three baseline runs and two later experiment runs on the AcmeCo set.
+- The orgbrain capability map comes from a read-only scan of the code at commit 660d5cc. Benchmark numbers come from three baseline runs and two later experiment runs on the AcmeCo set.
 - Amazon publishes nothing usable on this. LinkedIn, Pinterest and Booking had no usable write-ups beyond one LinkedIn paper.
 - Netflix's Pensive post and a DoorDash post returned 403. Grab's Kinabalu post returned 404, an Atlassian Code Context page returned 403 and a Tabnine page returned 404. Pensive detail comes from secondary sources.
-- The survey did not read Spotify's slide PDF or bifrost's `src/bifrost/orchestration/skeptic.py`, and it ran no experiment.
+- The survey did not read Spotify's slide PDF or orgbrain's `src/orgbrain/orchestration/skeptic.py`, and it ran no experiment.
 
 Source tags used below:
 
 - `[primary]` is a paper or a team's own write-up of an in-house system.
 - `[vendor]` is a company describing its own product. Numbers with this tag are vendor-reported.
 - `[secondary]` is someone else's report.
-- `[read]` marks a bifrost fact taken from the code scan.
-- `[ran]` marks a bifrost fact taken from benchmark runs.
+- `[read]` marks a orgbrain fact taken from the code scan.
+- `[ran]` marks a orgbrain fact taken from benchmark runs.
 
 Every field number is reported by its source and has not been reproduced here.
 
@@ -82,11 +82,11 @@ Every field number is reported by its source and has not been reproduced here.
 | Docs generators | DeepWiki, Swimm, Moderne, Google Code Wiki | Code, with a PR check for drift (Swimm) | Static analysis or file clustering first, then the LLM writes prose. |
 | In-house assistants | Uber Genie and EAg-RAG, Spotify AiKA | Docs, Slack channels, the Backstage catalog | Enriched chunks, BM25 plus vectors, golden sets written by subject experts. |
 | Incident and RCA tools | Meta RCA and DrP, RCACopilot, Datadog Bits, Sentry Seer | Code changes, incidents, telemetry, ownership | Ownership and the code graph narrow the candidates, then a ranker orders them. Similar past incidents are retrieved by recency. |
-| bifrost | this repo | Code, PRs (live agent), Jira, Confluence, Google Docs, Slack (live agent), Backstage and CODEOWNERS | LLM-only extraction, MiniLM vectors, a sparse graph, one agent per source. |
+| orgbrain | this repo | Code, PRs (live agent), Jira, Confluence, Google Docs, Slack (live agent), Backstage and CODEOWNERS | LLM-only extraction, MiniLM vectors, a sparse graph, one agent per source. |
 
 ### 5.2 Source categories by how many systems ingest them
 
-| Source category | Systems out of 20 that ingest it | bifrost ingests it |
+| Source category | Systems out of 20 that ingest it | orgbrain ingests it |
 |---|---|---|
 | Code | 16 | yes |
 | PR and commit history | 12 | yes |
@@ -132,16 +132,16 @@ The counts come from the docs and posts in the research slices. A source the doc
 
 ---
 
-## 6. Where bifrost stands
+## 6. Where orgbrain stands
 
-**bifrost's source coverage is already broad. Its gaps are in structure, retrieval, verification and measurement.**
+**orgbrain's source coverage is already broad. Its gaps are in structure, retrieval, verification and measurement.**
 
 ### 6.1 Current state
 
 - Code is always on, and Jira and Google Docs agents run by default. The Slack, GitHub and Confluence agents are opt-in, because they cited a source on only about 0-5% of turns [read].
 - Extraction is LLM-only across pipeline phases A to I. There is no tree-sitter, AST or SCIP layer [read].
 - Embeddings are MiniLM-L6-v2 at 384 dimensions with a 128-token cap. Full-text search exists only on handover docs [read].
-- The graph has about 0.12 edges per entity, and cross-repo edges come from name matching. Both facts come from the docstring in `src/bifrost/research/graph_retrieval.py` [read].
+- The graph has about 0.12 edges per entity, and cross-repo edges come from name matching. Both facts come from the docstring in `src/orgbrain/research/graph_retrieval.py` [read].
 - The benchmark has 12 questions over a fictional 5-repo AcmeCo, scored by regex and substring match. Specificity counts file:line, Jira and PR references without checking that they exist [read].
 
 ### 6.2 The question pipeline and its gaps
@@ -162,11 +162,11 @@ One gap sits outside this pipeline. The blast-radius benchmark derives its groun
 
 ### 6.3 Pushback on the per-source fan-out
 
-**Adding more per-source agents is not the next step. The agents bifrost has beyond code are rarely cited, and the teams that ran many live tools cut them.**
+**Adding more per-source agents is not the next step. The agents orgbrain has beyond code are rarely cited, and the teams that ran many live tools cut them.**
 
-- bifrost's Slack, GitHub and Confluence agents cited a source on only about 0-5% of turns, which is why they are opt-in [read].
-- Coverage is not where bifrost trails. Of the 20 systems surveyed, only Unblocked documents more source categories than bifrost's six of eight.
-- More agents mean more planner-to-agent handoffs, and the handoff is already where bifrost fails. Its planner dispatched no agents on 4 of the 12 questions [ran], and SWE-QA traced 41.8% of agentic failures to the planner-to-subagent handoff [primary].
+- orgbrain's Slack, GitHub and Confluence agents cited a source on only about 0-5% of turns, which is why they are opt-in [read].
+- Coverage is not where orgbrain trails. Of the 20 systems surveyed, only Unblocked documents more source categories than orgbrain's six of eight.
+- More agents mean more planner-to-agent handoffs, and the handoff is already where orgbrain fails. Its planner dispatched no agents on 4 of the 12 questions [ran], and SWE-QA traced 41.8% of agentic failures to the planner-to-subagent handoff [primary].
 - Teams with many tools or live APIs cut them. Vercel cut 17 tools to 2 and reports success going from 80% to 100% at 3.5x the speed, vendor-reported numbers [vendor]. Dropbox replaced 5-10 tools with one after its MCP path took up to 45s [vendor].
 - SWE-QA measured an index-based system at 65.2% against 46.2% for an agentic one, at under half the cost per correct answer [primary]. The evidence on index against grep is split, as [section 7](#7-where-the-evidence-disagrees) shows, so this is a reason to test, not a result.
 - The alternative is tested rather than assumed. P3.1 builds one hybrid index with one search tool after P2.1, and keeps the per-source agents as fallbacks. If the non-code citation rate does not move, the per-source agents stay.
@@ -215,11 +215,11 @@ Value means expected impact times strength of evidence. Cost means effort plus b
 - The external set (E0.5) and the non-circular blast truth (E0.6) form a Phase 0b that gates Phase 2, not Phase 1. Phase 1 fixes failures already visible on AcmeCo and measurable with the new judge, while external repos need extraction spend first.
 - The specificity diagnostic sits at the top of Phase 1 (P1.3) as the gate between an anchor rule and localisation. It is free from existing data. Because the scorer counts anchors without checking them, an anchor rule without the E0.3 existence check could raise the score with made-up references.
 - The planner floor (P1.1) ships now under the existing regression rule. It is a bug fix on 4 of the 12 questions and the cheapest item on the list.
-- The structured evidence handoff (P1.5) is its own card after the floor. It refactors the mature 6,300-line coordinator in `src/bifrost/research/coordinator.py`, which is where AI help shrinks effort the least.
-- Typed cross-service edges (P2.2) come ahead of the tree-sitter layer. Blast radius is the question bifrost answers that most others do not, and `src/bifrost/manifest/env_miner.py` already mines the host, URL, topic and queue keys. Neither has published accuracy evidence.
-- Permission mirroring and untrusted ingested text sit outside the ranking, as a standing gate before any multi-user deployment. Research agents read Slack, Jira and PR text while holding tools, and the task executor in `src/bifrost/actions/executor.py` runs with `bypassPermissions`.
-- E0.3 includes calibration of the headline confidence. No surveyed system publishes calibrated confidence, and bifrost already emits confirmed, inferred or uncertain on every answer.
-- P5.2 includes raw-page retention. `src/bifrost/research/external_indexer.py` distils Confluence pages with Sonnet before embedding them, and one memory study found verbatim retrieval beat extracted facts 67.4% to 45.4% [primary].
+- The structured evidence handoff (P1.5) is its own card after the floor. It refactors the mature 6,300-line coordinator in `src/orgbrain/research/coordinator.py`, which is where AI help shrinks effort the least.
+- Typed cross-service edges (P2.2) come ahead of the tree-sitter layer. Blast radius is the question orgbrain answers that most others do not, and `src/orgbrain/manifest/env_miner.py` already mines the host, URL, topic and queue keys. Neither has published accuracy evidence.
+- Permission mirroring and untrusted ingested text sit outside the ranking, as a standing gate before any multi-user deployment. Research agents read Slack, Jira and PR text while holding tools, and the task executor in `src/orgbrain/actions/executor.py` runs with `bypassPermissions`.
+- E0.3 includes calibration of the headline confidence. No surveyed system publishes calibrated confidence, and orgbrain already emits confirmed, inferred or uncertain on every answer.
+- P5.2 includes raw-page retention. `src/orgbrain/research/external_indexer.py` distils Confluence pages with Sonnet before embedding them, and one memory study found verbatim retrieval beat extracted facts 67.4% to 45.4% [primary].
 
 ### 8.3 Top ten
 
@@ -292,11 +292,11 @@ Three rules sit on top of this order. The planner floor (P1.1) ships before Phas
 
 | Field | Detail |
 |---|---|
-| Hypothesis | bifrost answers questions its sources cannot support, and some correct answers come from model priors rather than retrieval. |
+| Hypothesis | orgbrain answers questions its sources cannot support, and some correct answers come from model priors rather than retrieval. |
 | Change | Add about 8 unanswerable questions, built from symbols and facts that are not in any seed, in a separate question file, because [`acme.yml`](benchmarks/acme.yml) is frozen. Run the 12 questions once with retrieval off. |
 | Metric | Abstention rate on the unanswerable set, and the score gap between retrieval on and off. |
 | Target | At least 80% of unanswerable questions get "could not determine". |
-| Kill criterion | This is a measurement. A small closed-book gap means the benchmark mostly measures the model, not bifrost. |
+| Kill criterion | This is a measurement. A small closed-book gap means the benchmark mostly measures the model, not orgbrain. |
 | Evidence | Google's sufficient-context work raised selective accuracy by 2-10 points [primary]. Code-QA-Bench's closed-book control found code added +0.23 and docs +0.07 [primary]. Meta's RCA withholds low-confidence answers [primary]. |
 | Effort | Human baseline 3 days. AI-assisted 1.5 days. |
 | Benchmark cost | Estimated at about $15-20 for an A-only run of the new file and about $15 for the closed-book run. |
@@ -325,7 +325,7 @@ Three rules sit on top of this order. The planner floor (P1.1) ships before Phas
 | Metric | Blast-radius precision and recall against the seeded truth. |
 | Target | A baseline that P2.2 and P2.3 must beat. |
 | Kill criterion | This is a measurement. |
-| Evidence | bifrost's own `src/bifrost/benchmarks/blast_radius_benchmark.py` derives truth from the walked graph [read]. |
+| Evidence | orgbrain's own `src/orgbrain/benchmarks/blast_radius_benchmark.py` derives truth from the walked graph [read]. |
 | Effort | Human baseline 2 days. AI-assisted 1 day. |
 | Benchmark cost | $0. |
 
@@ -485,7 +485,7 @@ These start once E0.1-E0.3 are done, per decision D1. P1.1 is the exception and 
 | Field | Detail |
 |---|---|
 | Hypothesis | An explicit rule for code, docs and chat disagreeing, plus showing the conflict, beats silent weighting. |
-| Change | bifrost's evidence tiers already rank code over config over docs. Add recency and author authority, seed stale docs in AcmeCo, and show unresolved conflicts in the answer. |
+| Change | orgbrain's evidence tiers already rank code over config over docs. Add recency and author authority, seed stale docs in AcmeCo, and show unresolved conflicts in the answer. |
 | Metric | Correct resolution on the seeded conflicts. |
 | Target | At least 80% resolved correctly, with every unresolved conflict shown. |
 | Kill criterion | No gain over the current tiers. |
@@ -512,8 +512,8 @@ These start once E0.1-E0.3 are done, per decision D1. P1.1 is the exception and 
 
 | Field | Detail |
 |---|---|
-| Hypothesis | Joining deploys to code by SHA answers "what is running where" questions bifrost cannot answer today. |
-| Change | Read deploy events through the Backstage annotations bifrost already parses and OpenTelemetry `vcs.*` attributes, keyed by SHA. |
+| Hypothesis | Joining deploys to code by SHA answers "what is running where" questions orgbrain cannot answer today. |
+| Change | Read deploy events through the Backstage annotations orgbrain already parses and OpenTelemetry `vcs.*` attributes, keyed by SHA. |
 | Metric | Recall on new deploy questions. |
 | Target | Recall on the new deploy questions up by more than the noise floor. |
 | Kill criterion | The seeded questions show no gain over today's answers. |
@@ -581,7 +581,7 @@ Database migrations, infrastructure-as-code graphs and meeting transcripts stay 
 
 | Field | Detail |
 |---|---|
-| Hypothesis | Activity-based expertise names better code owners than CODEOWNERS for questions bifrost cannot answer. |
+| Hypothesis | Activity-based expertise names better code owners than CODEOWNERS for questions orgbrain cannot answer. |
 | Change | Validate first. Compare a time-decayed activity graph against CODEOWNERS on seeded questions before routing anything with it. |
 | Metric | Agreement with the seeded right code owner. |
 | Target | Agreement above CODEOWNERS by more than the noise floor. |
@@ -592,9 +592,9 @@ Database migrations, infrastructure-as-code graphs and meeting transcripts stay 
 
 ### 8.12 Standing security gate before multi-user use
 
-**Mirror source permissions, and treat ingested Slack, Jira and PR text as untrusted, before bifrost serves more than one user.**
+**Mirror source permissions, and treat ingested Slack, Jira and PR text as untrusted, before orgbrain serves more than one user.**
 
-- Research agents read that text while holding tools, and the task executor in `src/bifrost/actions/executor.py` runs with `bypassPermissions` [read].
+- Research agents read that text while holding tools, and the task executor in `src/orgbrain/actions/executor.py` runs with `bypassPermissions` [read].
 - Slack AI was shown to leak private-channel data through instructions planted in public messages [secondary].
 - Glean enforces permissions per edge [vendor] and Onyx mirrors source permissions [vendor].
 - This gate is not ranked, because it gates deployment rather than answer quality.
@@ -613,7 +613,7 @@ Database migrations, infrastructure-as-code graphs and meeting transcripts stay 
 
 The gap between the two effort columns is widest for greenfield pieces such as the judge, the extractors and the retrieval matrix. It is narrowest for the coordinator refactor and for labelling. Review, labelling and benchmark wall-clock do not shrink with an agent.
 
-- A full A/B/C run on the 12-question AcmeCo set cost about $44-51 in model usage in late 2026. Run A is cold cache, run B is warm cache with a fresh conversation, and run C is warm cache with paraphrased questions, as defined in `src/bifrost/benchmarks/runner.py`.
+- A full A/B/C run on the 12-question AcmeCo set cost about $44-51 in model usage in late 2026. Run A is cold cache, run B is warm cache with a fresh conversation, and run C is warm cache with paraphrased questions, as defined in `src/orgbrain/benchmarks/runner.py`.
 - An A-only run is estimated at about a third of a full run, so $15-17. That figure is inferred and listed under [Not yet proven](#10-not-yet-proven).
 - Phase 0's judge work re-scores existing runs, so it needs no new benchmark runs.
 
@@ -621,9 +621,9 @@ The gap between the two effort columns is widest for greenfield pieces such as t
 
 ## 9. Not doing now
 
-- Fine-tuned rankers or RL-trained retrieval, such as Cognition's SWE-grep or the CoRNStack and SweRank rerankers. They need labelled data bifrost does not have.
+- Fine-tuned rankers or RL-trained retrieval, such as Cognition's SWE-grep or the CoRNStack and SweRank rerankers. They need labelled data orgbrain does not have.
 - Late-interaction, ColBERT-style retrieval for code, such as LateOn-Code. It needs a vector store with MaxSim scoring, and pgvector is believed to have none. That belief is listed under [Not yet proven](#10-not-yet-proven).
-- A graph database at query time. Dropbox dropped one, and bifrost's Postgres graph already serves bounded walks.
+- A graph database at query time. Dropbox dropped one, and orgbrain's Postgres graph already serves bounded walks.
 - LLM-generated Cypher or graph queries. CodexGraph spent about 7 times the tokens of BM25 [primary].
 
 ---
@@ -657,7 +657,7 @@ The gap between the two effort columns is widest for greenfield pieces such as t
 - Prompt edits are guarded by the golden test, the few-shot shape tests and the benchmark isolation test. A Phase 1 change that touches prompts updates those tests in the same commit and never weakens them.
 - Judge bias can make a gain look real. Swapped order, the median of 3 and the human labels in E0.2 are the guard.
 - Untrusted ingested text can reach agents that hold tools. The standing gate covers it before any multi-user use.
-- Tuning against 12 questions overfits. Phase 0b exists so Phase 2 decisions are made on questions bifrost has never seen.
+- Tuning against 12 questions overfits. Phase 0b exists so Phase 2 decisions are made on questions orgbrain has never seen.
 - Small local models add model downloads and install weight, which decision D3 accepted. P2.1 drops the local reranker or embedder if it does not beat the noise floor, and P1.2 falls back to deterministic checks if precision does not move.
 
 ---
@@ -687,7 +687,7 @@ All four decisions were taken on 2026-11-05. The plan in [section 2](#2-decided-
 - **Passed over.** A SWE-QA subset is an academic set of 576 questions. Its repos are larger, so extraction costs more.
 - **Passed over.** Extending AcmeCo only has no extraction spend. It cannot show retrieval gains or memorisation effects.
 
-### D3 · May bifrost take local model dependencies beyond `claude -p` and MiniLM?
+### D3 · May orgbrain take local model dependencies beyond `claude -p` and MiniLM?
 
 - **Chosen.** Yes, small local models. E0.3 and P1.2 use a small local claim checker, and P2.1 tests a local reranker and a local code embedder, all running on CPU.
 - **Reason.** Code stays on the machine. The cost is extra model downloads and install weight.

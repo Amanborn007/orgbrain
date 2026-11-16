@@ -9,28 +9,28 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import text
 
-from bifrost.actions.pr_observer import _looks_like_gh_pr_url, poll_one_cycle
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
+from orgbrain.actions.pr_observer import _looks_like_gh_pr_url, poll_one_cycle
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
 
 # ── pure helpers ─────────────────────────────────────────────────────
 
 
 def test_looks_like_gh_pr_url_accepts_canonical_form() -> None:
     assert _looks_like_gh_pr_url(
-        "https://github.com/AcmeCo/bifrost/pull/1234",
+        "https://github.com/AcmeCo/orgbrain/pull/1234",
     )
     assert _looks_like_gh_pr_url(
-        "http://github.com/AcmeCo/bifrost/pull/1",
+        "http://github.com/AcmeCo/orgbrain/pull/1",
     )
 
 
 def test_looks_like_gh_pr_url_rejects_other_shapes() -> None:
     assert not _looks_like_gh_pr_url("")
-    assert not _looks_like_gh_pr_url("https://github.com/AcmeCo/bifrost")
+    assert not _looks_like_gh_pr_url("https://github.com/AcmeCo/orgbrain")
     assert not _looks_like_gh_pr_url("https://gitlab.com/x/y/pull/1")
     assert not _looks_like_gh_pr_url(
-        "https://github.com/AcmeCo/bifrost/issues/1234",
+        "https://github.com/AcmeCo/orgbrain/issues/1234",
     )
 
 
@@ -80,7 +80,7 @@ async def test_observer_no_op_when_no_open_pr_tasks(factory) -> None:
 
 @pytest.mark.asyncio
 async def test_observer_transitions_merged_pr_to_pr_merged(factory) -> None:
-    pr = "https://github.com/AcmeCo/bifrost/pull/4242"
+    pr = "https://github.com/AcmeCo/orgbrain/pull/4242"
     task_id = await _seed_success_task_with_pr(factory, pr_url=pr)
     try:
 
@@ -109,7 +109,7 @@ async def test_observer_transitions_merged_pr_to_pr_merged(factory) -> None:
 
 @pytest.mark.asyncio
 async def test_observer_skips_open_prs(factory) -> None:
-    pr = "https://github.com/AcmeCo/bifrost/pull/4243"
+    pr = "https://github.com/AcmeCo/orgbrain/pull/4243"
     task_id = await _seed_success_task_with_pr(factory, pr_url=pr)
     try:
 
@@ -133,7 +133,7 @@ async def test_observer_skips_open_prs(factory) -> None:
 
 @pytest.mark.asyncio
 async def test_observer_handles_gh_failure_gracefully(factory) -> None:
-    pr = "https://github.com/AcmeCo/bifrost/pull/4244"
+    pr = "https://github.com/AcmeCo/orgbrain/pull/4244"
     task_id = await _seed_success_task_with_pr(factory, pr_url=pr)
     try:
 

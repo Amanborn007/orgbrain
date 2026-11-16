@@ -8,19 +8,19 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.adapters.base import SourceObjectRef, SourceObjectType, UserContext
-from bifrost.adapters.git import GitAdapter, GitAdapterError, GitPermissionError
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import GitHubSourceConfig, LocalSourceConfig, SourcesConfig
-from bifrost.manifest.files import GhError
+from orgbrain.adapters.base import SourceObjectRef, SourceObjectType, UserContext
+from orgbrain.adapters.git import GitAdapter, GitAdapterError, GitPermissionError
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import GitHubSourceConfig, LocalSourceConfig, SourcesConfig
+from orgbrain.manifest.files import GhError
 
 USER = UserContext(user_id="u1")
 
 
 def _settings(
     *, roots: list[str] | None = None, host: str = "github.com", production: bool = False
-) -> BifrostSettings:
-    return BifrostSettings(
+) -> OrgBrainSettings:
+    return OrgBrainSettings(
         production_mode=production,
         sources=SourcesConfig(
             github=GitHubSourceConfig(host=host),
@@ -53,7 +53,7 @@ def _repo(path: Path, remote: str | None) -> Path:
 
 def _ref(repo: Path | str) -> SourceObjectRef:
     return SourceObjectRef(
-        urn="bifrost:git:inst:file:a.py",
+        urn="orgbrain:git:inst:file:a.py",
         adapter_id="git",
         source_instance=str(repo),
         object_type=SourceObjectType.FILE,

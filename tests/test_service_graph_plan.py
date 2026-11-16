@@ -6,18 +6,18 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.cli.config_sections import ConventionsConfig, ManifestConfig
-from bifrost.manifest.files import LocalRepoFiles
-from bifrost.manifest.graph_plan import GraphPlan, plan_service_graph
-from bifrost.manifest.loader import load_manifest
-from bifrost.manifest.model import ServiceManifest
+from orgbrain.cli.config_sections import ConventionsConfig, ManifestConfig
+from orgbrain.manifest.files import LocalRepoFiles
+from orgbrain.manifest.graph_plan import GraphPlan, plan_service_graph
+from orgbrain.manifest.loader import load_manifest
+from orgbrain.manifest.model import ServiceManifest
 
 ACME = Path(__file__).resolve().parents[1] / "examples" / "acmeco"
 REPOS = ["delivery-gateway", "dispatcher", "signing-keys", "usage-metering", "webhook-api"]
 
 
 def _urn(repo: str) -> str:
-    return f"urn:bifrost:service:{repo}"
+    return f"urn:orgbrain:service:{repo}"
 
 
 async def _load_all(*providers: str) -> dict[str, ServiceManifest]:
@@ -45,8 +45,8 @@ async def test_acmeco_services_domains_and_teams() -> None:
     assert teams[_urn("signing-keys")] == "plat"
     assert teams[_urn("usage-metering")] == "plat"
     assert [(d.name, d.urn) for d in plan.domains] == [
-        ("dlvr", "urn:bifrost:domain:dlvr"),
-        ("plat", "urn:bifrost:domain:plat"),
+        ("dlvr", "urn:orgbrain:domain:dlvr"),
+        ("plat", "urn:orgbrain:domain:plat"),
     ]
     assert plan.unresolved == []
 
@@ -198,11 +198,11 @@ def test_placeholder_team_does_not_create_domain() -> None:
     assert [d.name for d in plan.domains] == ["Core"]
     assert [s.domain_urn for s in sorted(plan.services, key=lambda s: s.urn)] == [
         None,
-        "urn:bifrost:domain:core",
+        "urn:orgbrain:domain:core",
     ]
 
 
 @pytest.mark.parametrize("repo", REPOS)
 def test_service_urn_format_is_frozen(repo: str) -> None:
     plan = plan_service_graph({repo: _m()})
-    assert plan.services[0].urn == f"urn:bifrost:service:{repo}"
+    assert plan.services[0].urn == f"urn:orgbrain:service:{repo}"

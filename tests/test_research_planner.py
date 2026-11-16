@@ -11,8 +11,8 @@ import math
 
 import pytest
 
-from bifrost.research.bundle_cache import BundleSource, ResearchBundle
-from bifrost.research.planner import (
+from orgbrain.research.bundle_cache import BundleSource, ResearchBundle
+from orgbrain.research.planner import (
     MODE_CLARIFY,
     MODE_EXTEND_BUNDLE,
     MODE_NEW_SCOPE,
@@ -36,7 +36,7 @@ def _make_bundle(
         repos_used=["00000000-0000-0000-0000-000000000001"],
         repos_used_names=repos_used_names or ["orders"],
         scope_rationale="x",
-        subgraph_entity_urns=["bifrost://repo/orders/component/X"],
+        subgraph_entity_urns=["orgbrain://repo/orders/component/X"],
         sources=[BundleSource(kind="jira", ref="SHIP-1")],
         last_question_embedding=last_question_embedding,
     )

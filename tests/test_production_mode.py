@@ -1,6 +1,6 @@
 """Tests for production-mode startup validation.
 
-The validator in ``BifrostSettings.validate_production_secrets()`` is
+The validator in ``OrgBrainSettings.validate_production_secrets()`` is
 called at lifespan startup. We don't spin up the full app here — the
 contract is a pure function over settings, so unit-testing the method
 directly is cleaner and faster than booting the app.
@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings
+from orgbrain.cli.config import OrgBrainSettings
 
 HEADER_IDENTITY: dict[str, object] = {
     "provider": "header",
@@ -25,27 +25,27 @@ OIDC_IDENTITY: dict[str, object] = {
     "oidc": {
         "jwks_url": "https://idp.example.com/oauth2/default/v1/keys",
         "issuer": "https://idp.example.com/oauth2/default",
-        "audience": "bifrost",
+        "audience": "orgbrain",
     },
 }
 
 
 @pytest.fixture(autouse=True)
 def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Remove any BIFROST_* env vars so kwargs-only settings are deterministic.
+    """Remove any ORGBRAIN_* env vars so kwargs-only settings are deterministic.
 
-    The session-scoped conftest sets BIFROST_DEMO_MODE=true to keep
+    The session-scoped conftest sets ORGBRAIN_DEMO_MODE=true to keep
     IdentityMiddleware happy in API-route tests. Pydantic
     Settings gives keyword-args precedence over env vars, but only if
     the env var is unset OR matches — to make these unit tests
-    purely declarative, scrub every BIFROST_* var on the way in.
+    purely declarative, scrub every ORGBRAIN_* var on the way in.
     """
-    for key in [k for k in os.environ if k.startswith("BIFROST_")]:
+    for key in [k for k in os.environ if k.startswith("ORGBRAIN_")]:
         monkeypatch.delenv(key, raising=False)
 
 
-def _settings(**overrides: object) -> BifrostSettings:
-    """Construct a BifrostSettings without reading the environment.
+def _settings(**overrides: object) -> OrgBrainSettings:
+    """Construct a OrgBrainSettings without reading the environment.
 
     Pydantic v2 reads env at instantiation time, so passing keyword
     arguments bypasses the env entirely — exactly what we want for
@@ -55,7 +55,7 @@ def _settings(**overrides: object) -> BifrostSettings:
         "_env_file": None,  # don't read .env from cwd
     }
     base.update(overrides)
-    return BifrostSettings(**base)  # type: ignore[arg-type]
+    return OrgBrainSettings(**base)  # type: ignore[arg-type]
 
 
 class TestProductionModeOff:
@@ -79,8 +79,8 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key=None,
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity=HEADER_IDENTITY,
         ).validate_production_secrets()
         assert any("SESSION_SIGNING_KEY" in e for e in errors)
@@ -89,7 +89,7 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key="some-key",
-            cors_origins="https://bifrost.example.com",
+            cors_origins="https://orgbrain.example.com",
             identity=HEADER_IDENTITY,
         ).validate_production_secrets()
         assert any("DATABASE_URL" in e for e in errors)
@@ -98,7 +98,7 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key="some-key",
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
             identity=HEADER_IDENTITY,
         ).validate_production_secrets()
         assert any("CORS_ORIGINS" in e for e in errors)
@@ -108,8 +108,8 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key="some-key",
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
         ).validate_production_secrets()
         assert any("identity.provider" in e for e in errors)
         assert not any("alias" in e.lower() for e in errors)
@@ -118,8 +118,8 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key="some-key",
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity={"provider": "oidc_jwt"},
         ).validate_production_secrets()
         assert any("identity.oidc.jwks_url" in e for e in errors)
@@ -129,8 +129,8 @@ class TestProductionModeOn:
         errors = _settings(
             production_mode=True,
             session_signing_key="some-key",
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity=HEADER_IDENTITY,
             demo_mode=True,
         ).validate_production_secrets()
@@ -141,21 +141,21 @@ class TestProductionModeOn:
             production_mode=True,
             credential_key="YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=",
             session_signing_key="32-char-secure-key-from-token-urlsafe",
-            database_url="postgresql+asyncpg://prod-db.example.com:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db.example.com:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity=HEADER_IDENTITY,
             demo_mode=False,
         ).validate_production_secrets()
         assert errors == []
 
     def test_jwt_verifier_path_passes(self) -> None:
-        """Production with Bifrost-side JWT verification (no service mesh)."""
+        """Production with OrgBrain-side JWT verification (no service mesh)."""
         errors = _settings(
             production_mode=True,
             credential_key="YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=",
             session_signing_key="32-char-secure-key-from-token-urlsafe",
-            database_url="postgresql+asyncpg://prod-db.example.com:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db.example.com:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity=OIDC_IDENTITY,
         ).validate_production_secrets()
         assert errors == []
@@ -168,8 +168,8 @@ class TestErrorMessagesAreHelpful:
         errors = _settings(
             production_mode=True,
             session_signing_key=None,
-            database_url="postgresql+asyncpg://prod-db:5432/bifrost",
-            cors_origins="https://bifrost.example.com",
+            database_url="postgresql+asyncpg://prod-db:5432/orgbrain",
+            cors_origins="https://orgbrain.example.com",
             identity=HEADER_IDENTITY,
         ).validate_production_secrets()
         signing_err = next((e for e in errors if "SESSION_SIGNING_KEY" in e), "")
@@ -200,8 +200,8 @@ class TestErrorMessagesAreHelpful:
         # Set the OTHER required field so the only error is the one
         # we're testing.
         if field != "database_url":
-            kwargs["database_url"] = "postgresql+asyncpg://prod-db:5432/bifrost"
+            kwargs["database_url"] = "postgresql+asyncpg://prod-db:5432/orgbrain"
         if field != "cors_origins":
-            kwargs["cors_origins"] = "https://bifrost.example.com"
+            kwargs["cors_origins"] = "https://orgbrain.example.com"
         errors = _settings(**kwargs).validate_production_secrets()
         assert any(expect_substr in e for e in errors), errors

@@ -13,11 +13,11 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.benchmarks import scorer
-from bifrost.benchmarks.loader import REPO_ROOT
-from bifrost.research import coordinator
-from bifrost.research.confidence_policy import CODE_IS_TRUTH_POLICY
-from bifrost.research.diagram_standards import DIAGRAM_RULES_BLOCK
+from orgbrain.benchmarks import scorer
+from orgbrain.benchmarks.loader import REPO_ROOT
+from orgbrain.research import coordinator
+from orgbrain.research.confidence_policy import CODE_IS_TRUTH_POLICY
+from orgbrain.research.diagram_standards import DIAGRAM_RULES_BLOCK
 
 SYNTH = coordinator._SYNTHESIS_SYSTEM_PROMPT
 SYNTH_BASE = SYNTH.split(CODE_IS_TRUTH_POLICY)[0]
@@ -337,7 +337,7 @@ def test_sources_example_matches_scorer_and_ui_patterns():
     footnotes = re.findall(r"^\s+\[\^(\d)\]: (.+)$", sources, re.M)
     assert [n for n, _ in footnotes] == ["1", "2"]
     assert scorer._URN_RE.search(footnotes[0][1]), (
-        "first footnote example must carry a urn:bifrost: URN"
+        "first footnote example must carry a urn:orgbrain: URN"
     )
     assert scorer._JIRA_RE.search(footnotes[1][1]), "second footnote example must carry a Jira key"
     assert scorer._FILE_LINE_RE.search(SYNTH_BASE), "DEPTH example must carry a path:line citation"
@@ -465,7 +465,7 @@ def test_ui_prose_splits_sources_and_tldr_from_a_prompt_shaped_answer():
     tldr_re = _js_regex(src, "TL;?DR|Summary")
     answer = (
         "\n".join(f"### {h}\nbody text [^1]\n" for h in SYNTH_HEADINGS if h != "Sources")
-        + "\n### Sources\n[^1]: `urn:bifrost:x` — y\n"
+        + "\n### Sources\n[^1]: `urn:orgbrain:x` — y\n"
     )
     hit = sources_re.search("\n" + answer)
     assert hit and hit.group(1).strip() == "### Sources"

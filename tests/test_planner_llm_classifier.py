@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.cli import config as cfg
-from bifrost.cli.config import BifrostSettings
-from bifrost.extraction import cli_client
-from bifrost.extraction.cli_client import CliCompletion, Usage
-from bifrost.research.bundle_cache import ResearchBundle
-from bifrost.research.planner import (
+from orgbrain.cli import config as cfg
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.extraction import cli_client
+from orgbrain.extraction.cli_client import CliCompletion, Usage
+from orgbrain.research.bundle_cache import ResearchBundle
+from orgbrain.research.planner import (
     MODE_EXTEND_BUNDLE,
     MODE_NEW_SCOPE,
     classify_followup,
@@ -34,7 +34,7 @@ def _bundle() -> ResearchBundle:
 
 @pytest.fixture(autouse=True)
 def _settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(cfg, "get_settings", lambda: BifrostSettings(llm_cache_enabled=False))
+    monkeypatch.setattr(cfg, "get_settings", lambda: OrgBrainSettings(llm_cache_enabled=False))
 
 
 async def test_llm_classifier_returns_parsed_verdict(monkeypatch: pytest.MonkeyPatch) -> None:

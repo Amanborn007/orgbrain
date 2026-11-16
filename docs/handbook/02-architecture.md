@@ -1,6 +1,6 @@
 # 02 — Architecture
 
-> **TL;DR.** Bifrost is a single async FastAPI process plus one Postgres 16
+> **TL;DR.** OrgBrain is a single async FastAPI process plus one Postgres 16
 > database. There is no Celery, no Redis, no message broker — every
 > "background worker" is an `asyncio` task in the same process. Every LLM
 > call is a fresh `claude -p` subprocess (no API keys). External sources
@@ -79,7 +79,7 @@ arrows are the mechanism (REST, SSE, subprocess spawn, SQLAlchemy).
 The Backend subgraph is *one process* — `WK`, `AA`, `SJ`, and `API` are
 co-resident `asyncio` tasks, not separate workers. The MCP subgraph is
 intentionally rendered as a child of LLM: those processes are spawned
-*by* the CLI, not by Bifrost.
+*by* the CLI, not by OrgBrain.
 
 Every box in that diagram is reachable from the source code. The rest
 of this chapter walks through them one at a time.
@@ -92,12 +92,12 @@ of this chapter walks through them one at a time.
 
 ## 2. Process model
 
-> **Mini-TL;DR.** Bifrost runs as a single async FastAPI process. The
+> **Mini-TL;DR.** OrgBrain runs as a single async FastAPI process. The
 > things that look like background workers are `asyncio` tasks
 > launched from the lifespan. This is a deliberate choice that
 > trades horizontal scalability for operator simplicity.
 
-Bifrost is a **single async FastAPI process plus zero background workers**.
+OrgBrain is a **single async FastAPI process plus zero background workers**.
 There is no Celery, no Redis queue, no separate scheduler. The
 "workers" you might expect to be processes are, instead, async tasks
 running inside the same process.
@@ -105,12 +105,12 @@ running inside the same process.
 ### 2.1 The lifespan
 
 The async lifespan
-([`src/bifrost/api/app.py`](../../src/bifrost/api/app.py), the `lifespan`
+([`src/orgbrain/api/app.py`](../../src/orgbrain/api/app.py), the `lifespan`
 function) does the following at startup, in order:
 
-1. **Reads settings.** `bifrost.cli.config.get_settings()` —
+1. **Reads settings.** `orgbrain.cli.config.get_settings()` —
    environment-variable driven (Pydantic).
-2. **Checks production secrets.** With `BIFROST_PRODUCTION_MODE=true`,
+2. **Checks production secrets.** With `ORGBRAIN_PRODUCTION_MODE=true`,
    startup raises if a required secret is missing or still on its dev
    default. There is no Claude-CLI auth probe at startup. Commit
    fbe27e6 removed it, and auth is checked when an extraction runs
@@ -132,14 +132,14 @@ function) does the following at startup, in order:
 In `nohup.out` you'll see roughly:
 
 ```
-bifrost.startup track=... log_level=...
-bifrost.worker_started dry_run=False
-bifrost.sse_janitor_started interval_s=120
-bifrost.pr_observer_started interval_s=60.0
+orgbrain.startup track=... log_level=...
+orgbrain.worker_started dry_run=False
+orgbrain.sse_janitor_started interval_s=120
+orgbrain.pr_observer_started interval_s=60.0
 ```
 
 On shutdown, every task is cancelled and awaited; the worker is
-stopped; structlog emits `bifrost.shutdown`.
+stopped; structlog emits `orgbrain.shutdown`.
 
 ### 2.2 Why single-process
 
@@ -153,7 +153,7 @@ code:
    (`nohup.out`).
 
 2. **No cross-process state to manage.** The SSE bus
-   (`src/bifrost/api/sse.py`) is a Python `dict` of `asyncio.Queue`s.
+   (`src/orgbrain/api/sse.py`) is a Python `dict` of `asyncio.Queue`s.
    It cannot be shared across worker processes. The architecture
    chooses correctness here over horizontal scaling — the explicit
    warning in the SSE module is that **multi-worker scaling will
@@ -174,7 +174,7 @@ The system runs concurrent work via three patterns:
   the lifespan teardown.
 
 - **`asyncio.gather` for parallel fan-out.** Used heavily in the
-  research coordinator (`bifrost.research.coordinator`) — when a
+  research coordinator (`orgbrain.research.coordinator`) — when a
   question fans out to N per-repo agents, they run as a single
   `gather` call with bounded concurrency.
 
@@ -184,7 +184,7 @@ The system runs concurrent work via three patterns:
 
 Bounded-concurrency primitives (semaphores) are used in the
 handover generator's wave-based child build (inferred from
-`src/bifrost/collaboration/handover_generator.py:80-90`) where the
+`src/orgbrain/collaboration/handover_generator.py:80-90`) where the
 threshold for switching from a single Sonnet call to a wave-based
 build is 5 repos and the parallel cap is set to keep the
 total CLI subprocess load bounded.
@@ -204,7 +204,7 @@ total CLI subprocess load bounded.
 
 ### 3.1 The `claude -p` subprocess pattern
 
-This is the central architectural choice. Every LLM call in Bifrost
+This is the central architectural choice. Every LLM call in OrgBrain
 is a fresh subprocess spawn of the Claude Code CLI:
 
 ```
@@ -225,7 +225,7 @@ emits) looks like:
 ]
 ```
 
-(`src/bifrost/extraction/cli_client.py:1-100`, verified.) The file's
+(`src/orgbrain/extraction/cli_client.py:1-100`, verified.) The file's
 docstring is unambiguous:
 
 > Replaces AsyncAnthropic. Every LLM call spawns `claude -p` as a
@@ -252,7 +252,7 @@ Three properties matter:
    chat synthesiser is the one place text streaming is allowed.
 
 The dataclass `CliCompletion`
-(`src/bifrost/extraction/cli_client.py:53-58`, verified) carries:
+(`src/orgbrain/extraction/cli_client.py:53-58`, verified) carries:
 
 - `parsed: dict` — the structured output (matches the caller's schema)
 - `usage: Usage` — input/output/cache tokens + `total_cost_usd` from
@@ -264,7 +264,7 @@ The dataclass `CliCompletion`
 
 The CLI client classifies stderr into `transient` (rate-limit / 503 /
 network) and `auth` (OAuth dead) — see
-`src/bifrost/extraction/cli_client.py:61-83` (verified). Transient
+`src/orgbrain/extraction/cli_client.py:61-83` (verified). Transient
 errors retry with backoff; auth errors raise `ClaudeCliAuthError` and
 bail — because the operator must run `claude auth login` to recover.
 
@@ -285,14 +285,14 @@ direct HTTP scraping when an MCP path exists) is enforced by both
 convention and a CI gate.
 
 The MCP servers themselves are subprocesses of the Claude CLI — they
-are not separate processes Bifrost manages. Bifrost authenticates
+are not separate processes OrgBrain manages. OrgBrain authenticates
 to them by relying on the operator's `gh auth`, Atlassian OAuth,
 and Slack OAuth being set up before the system starts.
 → see [09 §MCP](./09-glossary.md#m).
 
 > **Remember:** every LLM call is a fresh subprocess; structured output
 > via `--json-schema` is mandatory; MCP servers are *children* of the
-> CLI, not of Bifrost. If a Python file in `src/` is calling
+> CLI, not of OrgBrain. If a Python file in `src/` is calling
 > `httpx.get("https://confluence.../")`, that is a bug — it should
 > route through MCP.
 
@@ -309,7 +309,7 @@ and Slack OAuth being set up before the system starts.
 
 PostgreSQL access is via SQLAlchemy 2.0 with the asyncpg driver. A single
 `async_sessionmaker` (constructed lazily by
-`bifrost.api.deps.get_session_factory(settings)`) is shared across the
+`orgbrain.api.deps.get_session_factory(settings)`) is shared across the
 process. Routes acquire sessions via `Depends(get_session)` which
 yields one session per request.
 
@@ -321,7 +321,7 @@ exact pool size — it is set by Pydantic settings, not hard-coded.)
 ### 4.2 Naming and migrations
 
 A naming convention is set on the SQLAlchemy `MetaData`
-(`src/bifrost/storage/models.py:33-43`, verified) so that all
+(`src/orgbrain/storage/models.py:33-43`, verified) so that all
 constraint and index names are deterministic across migrations:
 
 ```python
@@ -342,11 +342,11 @@ The schema lives in a single baseline migration,
 The `entities`, `confluence_pages`, `jira_issues`, and
 `entity_communities` tables all carry a `Vector(384)` column.
 384-dim matches sentence-transformers `all-MiniLM-L6-v2`
-(`src/bifrost/storage/models.py:134`, verified). This is a *local*
+(`src/orgbrain/storage/models.py:134`, verified). This is a *local*
 embedding model: no API key, no network egress for embedding. The
 HNSW index parameters (`m=16, ef_construction=64`,
 `cosine_ops`) are committed in the model definition
-(`src/bifrost/storage/models.py:182-188`, verified).
+(`src/orgbrain/storage/models.py:182-188`, verified).
 
 > **Remember:** one async sessionmaker, one DB, one local embedding
 > model. The DB is the only durable state — every other layer is
@@ -356,13 +356,13 @@ HNSW index parameters (`m=16, ef_construction=64`,
 
 ## 5. Major code packages
 
-> **Mini-TL;DR.** The `src/bifrost/` tree is organised by intent
+> **Mini-TL;DR.** The `src/orgbrain/` tree is organised by intent
 > (`extraction/`, `research/`, `collaboration/`, `actions/`) plus
 > infrastructure (`api/`, `storage/`, `cli/`). Every package below has
 > a single, clear responsibility — no "utils.py" anti-pattern.
 
 ```
-src/bifrost/
+src/orgbrain/
 ├── actions/         # Task action layer — Discuss / Plan / Execute / Verify
 ├── adapters/        # Source adapters (git, mock)
 ├── agents/          # Agent runtime abstractions [needs verification]
@@ -418,13 +418,13 @@ The 7-phase extraction pipeline plus its support cast:
   so a partial run resumes mid-pipeline.
 - `worker.py` — the `ExtractionWorker` that drives the queue.
 - `query_worker.py` — the chat-side runtime that wraps
-  `bifrost.research.coordinator` invocations as SSE events.
+  `orgbrain.research.coordinator` invocations as SSE events.
 - `cli_auth.py` — `verify_claude_cli_auth`, used by the extraction worker and `GET /health/claude-cli`.
 
 ### 5.3 `research/`
 
 The chat side. The entry point is `coordinator.py:ResearchCoordinator`
-(`src/bifrost/research/coordinator.py:1-90`, verified):
+(`src/orgbrain/research/coordinator.py:1-90`, verified):
 
 ```
 question → scope resolution → freshness/clone ensure (parallel)
@@ -466,7 +466,7 @@ The collaboration surface. Three sub-areas:
   `handover_generator.py` is a single-Sonnet-call generator with a
   sectioned JSON schema for small scopes. Multi-repo scopes ≥ 5
   repos switch to a wave-based child→parent build
-  (`src/bifrost/collaboration/handover_generator.py:80-90`, verified)
+  (`src/orgbrain/collaboration/handover_generator.py:80-90`, verified)
   with parallelism capped to keep total CLI subprocess load
   bounded.
 
@@ -491,7 +491,7 @@ The collaboration surface. Three sub-areas:
 
 The action layer. `task_lifecycle.py` is the state-machine
 authority — every legal transition is enumerated in
-`_LEGAL_TRANSITIONS` (`src/bifrost/actions/task_lifecycle.py:57-68`,
+`_LEGAL_TRANSITIONS` (`src/orgbrain/actions/task_lifecycle.py:57-68`,
 verified). The agents are:
 
 - `discussion_agent.py` — context-gathering agent.
@@ -572,7 +572,7 @@ sequenceDiagram
 ```
 
 The phase letters (`A` – `I`) come from the pipeline docstring
-(`src/bifrost/extraction/pipeline.py:1-16`, verified). Phase B
+(`src/orgbrain/extraction/pipeline.py:1-16`, verified). Phase B
 (clone) and Phase C (file inventory) are *not* run by the pipeline
 itself — they are pre-conditions handled by `GitAdapter` and the
 worker before invoking `ExtractionPipeline.run()`.
@@ -580,7 +580,7 @@ worker before invoking `ExtractionPipeline.run()`.
 The crucial property: **partial outputs are persisted between
 phases**. The `on_partial_output` callback lets the worker upsert
 entities after each phase so the UI sees them live, not just at the
-very end (`src/bifrost/extraction/pipeline.py:359-363`, verified).
+very end (`src/orgbrain/extraction/pipeline.py:359-363`, verified).
 
 A typical SSE frame on the wire during this flow:
 
@@ -759,7 +759,7 @@ sequenceDiagram
 ```
 
 The `clarifier_agent` and `synthesizer_agent` are role values in the
-`collab_messages.role` enum (`src/bifrost/storage/models.py:1152-1154`,
+`collab_messages.role` enum (`src/orgbrain/storage/models.py:1152-1154`,
 verified). They are stored as messages so the session transcript
 reads top-to-bottom as a coherent conversation, regardless of who
 (or what) emitted each turn.
@@ -791,7 +791,7 @@ reads top-to-bottom as a coherent conversation, regardless of who
 > a per-task ring-buffer for replay. Survives reconnect, does *not*
 > survive multi-worker scaling — that day requires Redis.
 
-[`src/bifrost/api/sse.py`](../../src/bifrost/api/sse.py) hosts a
+[`src/orgbrain/api/sse.py`](../../src/orgbrain/api/sse.py) hosts a
 `TaskEventBus` (line 64, verified) that keeps:
 
 - A dict of `subscribers[task_id] -> list[asyncio.Queue]`.
@@ -821,7 +821,7 @@ Three properties matter:
 
 3. **Terminal events survive TTL.** `done`, `error`,
    `assistant_message`, `task_complete`, `task_failed`
-   (`src/bifrost/api/sse.py:42-44`, verified) — survive past the TTL
+   (`src/orgbrain/api/sse.py:42-44`, verified) — survive past the TTL
    so a *very* late subscriber still sees end-of-stream and closes
    cleanly rather than hanging in "waiting for data."
 
@@ -868,7 +868,7 @@ liveness probes always pass.
 
 User identity is a cookie/session id. There is no user table.
 The `Conversation` table has a `session_id: Text` column
-(`src/bifrost/storage/models.py:669`, verified) and that's it.
+(`src/orgbrain/storage/models.py:669`, verified) and that's it.
 This is appropriate for V1 (single operator) and explicitly does
 not scale to multi-tenant — adding tenancy is a deliberate future
 project, not a hidden TODO.
@@ -876,7 +876,7 @@ project, not a hidden TODO.
 ### 8.3 Secrets handling
 
 The extraction pipeline runs a secret scanner
-(`src/bifrost/extraction/secrets.py`) over file content *before*
+(`src/orgbrain/extraction/secrets.py`) over file content *before*
 sending anything to the LLM. Detected secrets are redacted in-place;
 a `RedactionEvent` is emitted for audit. This protects against the
 class of bug where a `.env` file in the repo would otherwise be sent
@@ -937,7 +937,7 @@ final, surfaced here so an owner reading the handbook knows what
 hasn't been decided.
 
 1. **Multi-worker scaling path.** The SSE bus is process-local. The
-   day Bifrost goes from one operator to many will require either
+   day OrgBrain goes from one operator to many will require either
    Redis pub-sub or moving SSE into a sidecar with a durable queue.
    No code change for this exists yet.
 

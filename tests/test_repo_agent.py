@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.agents.context import CHARS_PER_TOKEN, ContextBuilder
-from bifrost.agents.extraction import ExtractionAgent
-from bifrost.agents.repo import RepoAgent
-from bifrost.agents.runtime import (
+from orgbrain.agents.context import CHARS_PER_TOKEN, ContextBuilder
+from orgbrain.agents.extraction import ExtractionAgent
+from orgbrain.agents.repo import RepoAgent
+from orgbrain.agents.runtime import (
     AgentRuntime,
     AgentState,
     AgentStatus,
@@ -49,7 +49,7 @@ class TestAgentState:
             success=True,
             answer="42",
             confidence_level="confirmed",
-            source_urns=["urn:bifrost:entity:comp:x"],
+            source_urns=["urn:orgbrain:entity:comp:x"],
             reasoning="Direct evidence",
         )
         assert result.success
@@ -72,7 +72,7 @@ def _make_entity(
     return {
         "name": name,
         "entity_type": entity_type,
-        "urn": urn or f"urn:bifrost:entity:{entity_type}:{name}",
+        "urn": urn or f"urn:orgbrain:entity:{entity_type}:{name}",
         "qualified_name": f"src.{name}",
         "confidence_level": "confirmed",
         "entity_metadata": {"purpose": summary} if summary else {},
@@ -147,7 +147,7 @@ def _mock_tool_response(
     tool_block.input = {
         "answer": answer,
         "confidence_level": confidence,
-        "source_urns": urns or ["urn:bifrost:entity:comp:test"],
+        "source_urns": urns or ["urn:orgbrain:entity:comp:test"],
         "reasoning": reasoning,
     }
     response = MagicMock()
@@ -165,7 +165,7 @@ class TestRepoAgent:
             return_value=_mock_tool_response(
                 answer="ShipmentService handles all shipment logic",
                 confidence="confirmed",
-                urns=["urn:bifrost:entity:component:ShipmentService"],
+                urns=["urn:orgbrain:entity:component:ShipmentService"],
                 reasoning="Found in component metadata",
             )
         )

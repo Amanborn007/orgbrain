@@ -1,7 +1,7 @@
 """Edge-tier bucketing in the evidence block.
 
 Smoke tests for ``_render_evidence_block`` in
-``bifrost.research.coordinator``. The synthesizer relies on the
+``orgbrain.research.coordinator``. The synthesizer relies on the
 block being split into three tier sections so it can pick hedging
 tone per-claim. These tests exercise:
 
@@ -14,8 +14,8 @@ tone per-claim. These tests exercise:
 
 from __future__ import annotations
 
-from bifrost.research.coordinator import _render_evidence_block
-from bifrost.research.repo_agent import EntitySnippet, GraphEdge
+from orgbrain.research.coordinator import _render_evidence_block
+from orgbrain.research.repo_agent import EntitySnippet, GraphEdge
 
 
 def _entity(
@@ -64,9 +64,9 @@ def test_block_header_describes_three_buckets() -> None:
     the synthesizer knows what to expect — without this, the LLM may
     just see one big edge dump."""
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
-        out=[_edge("urn:bifrost:repo/repo-a/component/B", tier=1)],
+        out=[_edge("urn:orgbrain:repo/repo-a/component/B", tier=1)],
     )
     block = _render_evidence_block([a])
     assert "Relationships are split into three sections" in block
@@ -80,12 +80,12 @@ def test_block_header_describes_three_buckets() -> None:
 
 def test_t1_t2_edges_go_to_high_bucket() -> None:
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         out=[
-            _edge("urn:bifrost:repo/repo-a/component/B", tier=1, source_type="code_verified"),
+            _edge("urn:orgbrain:repo/repo-a/component/B", tier=1, source_type="code_verified"),
             _edge(
-                "urn:bifrost:repo/repo-a/component/C",
+                "urn:orgbrain:repo/repo-a/component/C",
                 tier=2,
                 source_type="manifest",
                 rel="depends-on",
@@ -103,9 +103,9 @@ def test_t1_t2_edges_go_to_high_bucket() -> None:
 
 def test_t3_edges_go_to_medium_bucket() -> None:
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
-        out=[_edge("urn:bifrost:repo/repo-a/component/B", tier=3, source_type="metadata_match")],
+        out=[_edge("urn:orgbrain:repo/repo-a/component/B", tier=3, source_type="metadata_match")],
     )
     block = _render_evidence_block([a])
     assert "### Medium-confidence edges (T3" in block
@@ -116,11 +116,11 @@ def test_t3_edges_go_to_medium_bucket() -> None:
 
 def test_t4_t5_edges_go_to_low_bucket() -> None:
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         out=[
-            _edge("urn:bifrost:repo/repo-a/component/B", tier=4, source_type="confluence"),
-            _edge("urn:bifrost:repo/repo-a/component/C", tier=5, source_type="fuzzy_match"),
+            _edge("urn:orgbrain:repo/repo-a/component/B", tier=4, source_type="confluence"),
+            _edge("urn:orgbrain:repo/repo-a/component/C", tier=5, source_type="fuzzy_match"),
         ],
     )
     block = _render_evidence_block([a])
@@ -136,14 +136,14 @@ def test_mixed_tiers_render_all_three_sections() -> None:
     sure the block separates them cleanly so the synthesizer can hedge
     appropriately."""
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         out=[
-            _edge("urn:bifrost:repo/repo-a/component/B", tier=1, source_type="code_verified"),
-            _edge("urn:bifrost:repo/repo-a/component/C", tier=2, source_type="manifest"),
-            _edge("urn:bifrost:repo/repo-a/component/D", tier=3, source_type="metadata_match"),
-            _edge("urn:bifrost:repo/repo-a/component/E", tier=4, source_type="jira"),
-            _edge("urn:bifrost:repo/repo-a/component/F", tier=5, source_type="fuzzy_match"),
+            _edge("urn:orgbrain:repo/repo-a/component/B", tier=1, source_type="code_verified"),
+            _edge("urn:orgbrain:repo/repo-a/component/C", tier=2, source_type="manifest"),
+            _edge("urn:orgbrain:repo/repo-a/component/D", tier=3, source_type="metadata_match"),
+            _edge("urn:orgbrain:repo/repo-a/component/E", tier=4, source_type="jira"),
+            _edge("urn:orgbrain:repo/repo-a/component/F", tier=5, source_type="fuzzy_match"),
         ],
     )
     block = _render_evidence_block([a])
@@ -164,13 +164,13 @@ def test_cross_repo_edges_sort_first_within_bucket() -> None:
     """Cross-repo edges carry product-narrative weight, so they appear
     before in-repo edges within the same tier bucket."""
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         out=[
             # In-repo (same repo prefix)
-            _edge("urn:bifrost:repo/repo-a/component/B", tier=1),
+            _edge("urn:orgbrain:repo/repo-a/component/B", tier=1),
             # Cross-repo (different prefix)
-            _edge("urn:bifrost:repo/repo-b/component/Z", tier=1),
+            _edge("urn:orgbrain:repo/repo-b/component/Z", tier=1),
         ],
     )
     block = _render_evidence_block([a])
@@ -182,8 +182,8 @@ def test_cross_repo_edges_sort_first_within_bucket() -> None:
     assert in_repo_idx >= 0
     assert cross_idx < in_repo_idx
     # And the cross-repo line itself must precede the in-repo line.
-    z_idx = block.index("urn:bifrost:repo/repo-b/component/Z")
-    b_idx = block.index("urn:bifrost:repo/repo-a/component/B")
+    z_idx = block.index("urn:orgbrain:repo/repo-b/component/Z")
+    b_idx = block.index("urn:orgbrain:repo/repo-a/component/B")
     assert z_idx < b_idx
 
 
@@ -195,12 +195,12 @@ def test_each_bucket_carries_its_hedging_directive() -> None:
     hedge claims supported by that tier. The notes are the
     machine-readable contract for the prompt's HARD RULE 1.5."""
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         out=[
-            _edge("urn:bifrost:repo/repo-a/component/B", tier=1, source_type="code_verified"),
-            _edge("urn:bifrost:repo/repo-a/component/C", tier=3, source_type="metadata_match"),
-            _edge("urn:bifrost:repo/repo-a/component/D", tier=4, source_type="jira"),
+            _edge("urn:orgbrain:repo/repo-a/component/B", tier=1, source_type="code_verified"),
+            _edge("urn:orgbrain:repo/repo-a/component/C", tier=3, source_type="metadata_match"),
+            _edge("urn:orgbrain:repo/repo-a/component/D", tier=4, source_type="jira"),
         ],
     )
     block = _render_evidence_block([a])
@@ -220,18 +220,18 @@ def test_unknown_tier_falls_into_low_bucket() -> None:
     """Defensive: a malformed edge with no tier (default 5) should
     still land somewhere — the low bucket — never silently disappear."""
     a = _entity(
-        "urn:bifrost:repo/repo-a/component/A",
+        "urn:orgbrain:repo/repo-a/component/A",
         "A",
         # GraphEdge default tier=5
         out=[
             GraphEdge(
                 rel_type="calls",
                 other_name="B",
-                other_urn="urn:bifrost:repo/repo-a/component/B",
+                other_urn="urn:orgbrain:repo/repo-a/component/B",
                 other_type="component",
             )
         ],
     )
     block = _render_evidence_block([a])
     assert "### Low-confidence" in block
-    assert "urn:bifrost:repo/repo-a/component/B" in block
+    assert "urn:orgbrain:repo/repo-a/component/B" in block

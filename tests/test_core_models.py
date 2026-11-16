@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from bifrost.core.enums import (
+from orgbrain.core.enums import (
     ArtifactClassification,
     ComponentType,
     ConfidenceLevel,
@@ -20,8 +20,7 @@ from bifrost.core.enums import (
     SegmentType,
     SourceObjectType,
 )
-from bifrost.core.models import (
-    BifrostInterface,
+from orgbrain.core.models import (
     Component,
     Correction,
     DependencyReference,
@@ -29,8 +28,9 @@ from bifrost.core.models import (
     FlowSegment,
     GapReport,
     KnowledgeArtifact,
+    OrgBrainInterface,
 )
-from bifrost.core.types import (
+from orgbrain.core.types import (
     ConfidenceInfo,
     EvidenceRef,
     FreshnessInfo,
@@ -38,7 +38,7 @@ from bifrost.core.types import (
     LineRange,
     MetadataEnvelope,
 )
-from bifrost.core.urn import VALID_TYPES, ParsedURN, generate_urn, parse_urn
+from orgbrain.core.urn import VALID_TYPES, ParsedURN, generate_urn, parse_urn
 
 # ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -86,13 +86,13 @@ class TestEnums:
 class TestURN:
     def test_generate_urn_with_id(self):
         urn = generate_urn("repo-abc", "component", "my-id")
-        assert urn == "bifrost:repo-abc:component:my-id"
+        assert urn == "orgbrain:repo-abc:component:my-id"
 
     def test_generate_urn_auto_uuid(self):
         urn = generate_urn("repo-abc", "flow")
         parts = urn.split(":")
         assert len(parts) == 4
-        assert parts[0] == "bifrost"
+        assert parts[0] == "orgbrain"
         # Should be a valid UUID
         uuid.UUID(parts[3])
 
@@ -101,22 +101,22 @@ class TestURN:
             generate_urn("scope", "invalid_type")
 
     def test_parse_urn(self):
-        parsed = parse_urn("bifrost:repo-abc:component:id-123")
+        parsed = parse_urn("orgbrain:repo-abc:component:id-123")
         assert parsed == ParsedURN(
-            prefix="bifrost", scope="repo-abc", type="component", id="id-123"
+            prefix="orgbrain", scope="repo-abc", type="component", id="id-123"
         )
 
     def test_parse_urn_malformed(self):
         with pytest.raises(ValueError, match="Malformed URN"):
-            parse_urn("bifrost:only:two")
+            parse_urn("orgbrain:only:two")
 
     def test_parse_urn_bad_prefix(self):
         with pytest.raises(ValueError, match="Invalid URN prefix"):
-            parse_urn("notbifrost:s:t:id")
+            parse_urn("notorgbrain:s:t:id")
 
     def test_parse_urn_bad_type(self):
         with pytest.raises(ValueError, match="Invalid URN type"):
-            parse_urn("bifrost:s:badtype:id")
+            parse_urn("orgbrain:s:badtype:id")
 
     def test_valid_types_complete(self):
         expected = {
@@ -233,7 +233,7 @@ class TestEntityModels:
     def test_component(self):
         c = Component(
             id=uuid.uuid4(),
-            urn="bifrost:r:component:1",
+            urn="orgbrain:r:component:1",
             repo_id=uuid.uuid4(),
             name="AuthService",
             type=ComponentType.SERVICE,
@@ -247,9 +247,9 @@ class TestEntityModels:
         assert c.type == ComponentType.SERVICE
 
     def test_interface(self):
-        iface = BifrostInterface(
+        iface = OrgBrainInterface(
             id=uuid.uuid4(),
-            urn="bifrost:r:interface:1",
+            urn="orgbrain:r:interface:1",
             component_id=uuid.uuid4(),
             type=InterfaceType.API,
             name="POST /login",
@@ -263,13 +263,13 @@ class TestEntityModels:
     def test_flow_reference(self):
         seg = FlowSegment(
             order=1,
-            component_urn="bifrost:r:component:1",
+            component_urn="orgbrain:r:component:1",
             repo_id=uuid.uuid4(),
             segment_type=SegmentType.SYNC_CALL,
         )
         flow = FlowReference(
             id=uuid.uuid4(),
-            urn="bifrost:r:flow:1",
+            urn="orgbrain:r:flow:1",
             name="Login Flow",
             flow_type=FlowType.REQUEST_RESPONSE,
             segments=[seg],
@@ -284,11 +284,11 @@ class TestEntityModels:
     def test_dependency_reference(self):
         dep = DependencyReference(
             id=uuid.uuid4(),
-            urn="bifrost:r:dependency:1",
+            urn="orgbrain:r:dependency:1",
             source_id=uuid.uuid4(),
-            source_urn="bifrost:r:component:1",
+            source_urn="orgbrain:r:component:1",
             target_id=uuid.uuid4(),
-            target_urn="bifrost:r:component:2",
+            target_urn="orgbrain:r:component:2",
             dep_type=DependencyType.CODE,
             confidence=ConfidenceLevel.INFERRED,
             discovery_method=DiscoveryMethod.STATIC_ANALYSIS,
@@ -301,13 +301,13 @@ class TestEntityModels:
     def test_knowledge_artifact(self):
         ka = KnowledgeArtifact(
             id=uuid.uuid4(),
-            urn="bifrost:r:artifact:1",
+            urn="orgbrain:r:artifact:1",
             tier=1,
             classification=ArtifactClassification.REPO_OVERVIEW,
             title="Auth Service Overview",
             content="# Auth Service\nHandles authentication.",
             content_format="markdown",
-            target_urn="bifrost:r:component:1",
+            target_urn="orgbrain:r:component:1",
             metadata=_make_envelope(),
             publication_state="draft",
             created_at=datetime.now(tz=UTC),
@@ -348,7 +348,7 @@ class TestEntityModels:
         """Verify we have all 8 entity types per TRD §2."""
         models = [
             Component,
-            BifrostInterface,
+            OrgBrainInterface,
             FlowReference,
             DependencyReference,
             KnowledgeArtifact,

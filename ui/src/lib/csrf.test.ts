@@ -27,23 +27,23 @@ afterEach(() => {
 describe("csrf header", () => {
   it("is the value the server middleware requires", () => {
     expect(CSRF_HEADER_NAME).toBe("X-Requested-With");
-    expect(CSRF_HEADER_VALUE).toBe("bifrost-ui");
-    expect(csrfHeaders()).toEqual({ "X-Requested-With": "bifrost-ui" });
+    expect(CSRF_HEADER_VALUE).toBe("orgbrain-ui");
+    expect(csrfHeaders()).toEqual({ "X-Requested-With": "orgbrain-ui" });
   });
 
   it("is sent by the main api request wrapper", async () => {
     const fetchMock = stubFetch({ data: { impacts: [] } });
     await getBlastRadius("urn:x");
-    expect(sentHeaders(fetchMock)["X-Requested-With"]).toBe("bifrost-ui");
+    expect(sentHeaders(fetchMock)["X-Requested-With"]).toBe("orgbrain-ui");
   });
 
   it("is sent by the auth client on POSTs", async () => {
     const fetchMock = stubFetch({ email: "a@example.com", groups: [], source: "header" });
     await logout();
-    expect(sentHeaders(fetchMock)["X-Requested-With"]).toBe("bifrost-ui");
+    expect(sentHeaders(fetchMock)["X-Requested-With"]).toBe("orgbrain-ui");
 
     const refreshMock = stubFetch({ email: "a@example.com", groups: [], source: "oidc_jwt" });
     await refreshAuth();
-    expect(sentHeaders(refreshMock)["X-Requested-With"]).toBe("bifrost-ui");
+    expect(sentHeaders(refreshMock)["X-Requested-With"]).toBe("orgbrain-ui");
   });
 });

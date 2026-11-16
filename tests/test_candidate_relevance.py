@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.research.research_depth import rank_candidate_repos_by_relevance
+from orgbrain.research.research_depth import rank_candidate_repos_by_relevance
 
 
 @pytest.mark.asyncio

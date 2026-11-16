@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.extraction.changes import ChangeDetector, compute_hash, has_changed
-from bifrost.extraction.cost import (
+from orgbrain.extraction.changes import ChangeDetector, compute_hash, has_changed
+from orgbrain.extraction.cost import (
     BudgetExceededError,
     CostRecord,
     CostTracker,
     estimate_cost,
 )
-from bifrost.extraction.secrets import SecretScanner
+from orgbrain.extraction.secrets import SecretScanner
 
 # ═══════════════════════════════════════════════════════════════════════
 # Cost tracking

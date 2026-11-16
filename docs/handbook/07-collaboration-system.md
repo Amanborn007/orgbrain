@@ -19,16 +19,16 @@ The collaboration feature solves two distinct problems with one substrate:
 These two problems share data (`CollabDoubt` ↔ doubt candidates promote to handover sections) and infrastructure (Sonnet agents, SSE channels, Postgres tables). The system is built so that *every cycle of a session improves the handover, and every improvement to a handover reduces the next session's questions*.
 
 **Source-of-truth files:**
-- `src/bifrost/collaboration/clarifier.py` (462 lines) — the per-turn clarifier agent
-- `src/bifrost/collaboration/synthesizer.py` (439 lines) — the session-close brief generator
-- `src/bifrost/collaboration/handover_generator.py` (2,861 lines) — all four scope variants + tree decomp + per-section regen
-- `src/bifrost/collaboration/matching.py` (330 lines) — Haiku scope matcher + substring fallback
-- `src/bifrost/collaboration/loopback.py` (394 lines) — doubt-candidate clustering
-- `src/bifrost/collaboration/cost_estimate.py` (349 lines) — per-scope cost preview
-- `src/bifrost/collaboration/rate_limit.py` — per-cookie rate limit
-- `src/bifrost/collaboration/slack_escalation.py` (~130 lines) — Slack auto-post (Slack Web API)
-- `src/bifrost/api/routes/collaboration.py` (652 lines) — session HTTP routes
-- `src/bifrost/api/routes/handover_docs.py` (1,475 lines) — handover HTTP routes
+- `src/orgbrain/collaboration/clarifier.py` (462 lines) — the per-turn clarifier agent
+- `src/orgbrain/collaboration/synthesizer.py` (439 lines) — the session-close brief generator
+- `src/orgbrain/collaboration/handover_generator.py` (2,861 lines) — all four scope variants + tree decomp + per-section regen
+- `src/orgbrain/collaboration/matching.py` (330 lines) — Haiku scope matcher + substring fallback
+- `src/orgbrain/collaboration/loopback.py` (394 lines) — doubt-candidate clustering
+- `src/orgbrain/collaboration/cost_estimate.py` (349 lines) — per-scope cost preview
+- `src/orgbrain/collaboration/rate_limit.py` — per-cookie rate limit
+- `src/orgbrain/collaboration/slack_escalation.py` (~130 lines) — Slack auto-post (Slack Web API)
+- `src/orgbrain/api/routes/collaboration.py` (652 lines) — session HTTP routes
+- `src/orgbrain/api/routes/handover_docs.py` (1,475 lines) — handover HTTP routes
 
 ---
 
@@ -64,7 +64,7 @@ Before the details, here is what an actual session looks like turn by turn. Walk
 
 **Optional — Slack escalation.**
 - An unresolved doubt is escalated → `POST /collab-sessions/{id}/doubts/{did}/resolve {status: escalated}`.
-- If `BIFROST_SLACK_ESCALATION_CHANNEL` and `BIFROST_SLACK_BOT_TOKEN` are both set, `slack_escalation.py` posts the templated `draft_ask_message` to that channel through the Slack Web API (`chat.postMessage`, then `chat.getPermalink`). Otherwise it stays as an on-disk artifact for Alice to copy-paste.
+- If `ORGBRAIN_SLACK_ESCALATION_CHANNEL` and `ORGBRAIN_SLACK_BOT_TOKEN` are both set, `slack_escalation.py` posts the templated `draft_ask_message` to that channel through the Slack Web API (`chat.postMessage`, then `chat.getPermalink`). Otherwise it stays as an on-disk artifact for Alice to copy-paste.
 
 **Optional — Loop-back.**
 - Months later, three sessions have escalated similar retry-limit doubts. The next time anyone hits `GET /handover-docs/{id}`, `loopback.py` clusters them and surfaces a candidate. A team owner clicks "Promote to section" and the answer lands in the handover. Future asks resolve as `answered_by_doc` automatically.
@@ -137,7 +137,7 @@ All of these tables are created by the baseline migration, `alembic/versions/001
 
 ### If you remember nothing else
 - Sessions and handovers are joined by *citation*, not foreign key. The clarifier records a `doc_source_ref` when it grounds an answer.
-- Cookie identity, not user identity. Sessions are scoped to `bifrost_session` cookies.
+- Cookie identity, not user identity. Sessions are scoped to `orgbrain_session` cookies.
 
 ---
 
@@ -149,7 +149,7 @@ The interaction model alone, no generation pipeline. Validates the UX before bur
 - `collaboration_sessions` / `collab_messages` / `collab_doubts` / `collab_artifacts` tables (baseline migration)
 - Bare CRUD routes (`/collab-sessions`, `…/messages`, `…/doubts/{id}/resolve`, `…/close`)
 - Session state machine: `open` → `resolved` → `briefed` → (optional `closed`)
-- Cookie-based identity (`bifrost_session`)
+- Cookie-based identity (`orgbrain_session`)
 - SSE channel `collab_session:{id}` for live message + doubt updates
 - Manual mode: a human-in-the-loop drives the clarifier role
 
@@ -159,7 +159,7 @@ The substrate has no agents of its own: the clarifier and synthesizer (section 4
 
 ## 4. Clarifier and synthesizer agents
 
-**Clarifier** (`src/bifrost/collaboration/clarifier.py:59-115`):
+**Clarifier** (`src/orgbrain/collaboration/clarifier.py:59-115`):
 - Runs after every requester message
 - Single Sonnet call, 45s timeout
 - Reads requirement + chat history + open doubts (no handover grounding yet)
@@ -167,7 +167,7 @@ The substrate has no agents of its own: the clarifier and synthesizer (section 4
 - Output schema includes `resolved_doubt_indices[]` (close doubts the user just answered) — the foundation for loop-back
 - Fallback: a stub message so the user is not blocked on LLM failure
 
-**Synthesizer** (`src/bifrost/collaboration/synthesizer.py:65-118`):
+**Synthesizer** (`src/orgbrain/collaboration/synthesizer.py:65-118`):
 - Runs at `POST …/close`
 - Single Sonnet call, 180s timeout
 - 8-section brief: title / summary / affected_scopes / owning_teams / estimated_work / required_artifacts / contacts / open_risks / draft_ask_message
@@ -247,7 +247,7 @@ Throughout, SSE on `handover:domain:webhooks` publishes `handover:run_started`, 
 
 **Loop-back.**
 - `loopback.py::compute_doubt_candidates()` — clusters unresolved/escalated doubts across recent collab sessions
-- Two-phase clustering: normalize-equal first (cheap), then MiniLM-384 cosine similarity ≥ `_DEFAULT_CLUSTER_THRESHOLD = 0.85` (`BIFROST_DOUBT_CLUSTER_THRESHOLD` overrides)
+- Two-phase clustering: normalize-equal first (cheap), then MiniLM-384 cosine similarity ≥ `_DEFAULT_CLUSTER_THRESHOLD = 0.85` (`ORGBRAIN_DOUBT_CLUSTER_THRESHOLD` overrides)
 - Surfaces clusters with `occurrence_count >= 3` via `GET /handover-docs/{id}/candidates`
 - Pure Python + local embedding — no LLM call. Runs on every handover-detail GET.
 
@@ -272,7 +272,7 @@ Throughout, SSE on `handover:domain:webhooks` publishes `handover:run_started`, 
 ## 8. Cost ceiling, promotion, embedding clustering
 
 **Cost ceiling.**
-- `BIFROST_HANDOVER_MAX_COST_USD` (default `$10`) — when a tree-decomp would exceed this, the API returns `409 Conflict` unless caller passes `?force=true`
+- `ORGBRAIN_HANDOVER_MAX_COST_USD` (default `$10`) — when a tree-decomp would exceed this, the API returns `409 Conflict` unless caller passes `?force=true`
 - Pre-flight estimator: `cost_estimate.py` walks the scope and returns `{ estimated_cost_usd, child_count, breakdown }`
 - Routes: `GET /handover-docs/{repos|domains|teams|regions}/{X}/estimate`
 
@@ -286,7 +286,7 @@ Throughout, SSE on `handover:domain:webhooks` publishes `handover:run_started`, 
 - Catches paraphrases that string-equal misses
 
 **Per-cookie rate limit.**
-- `BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE` (default `6`) — caps how many `…/generate` calls a single cookie can fire
+- `ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE` (default `6`) — caps how many `…/generate` calls a single cookie can fire
 - Prevents "queue 100 generates in parallel and burn the cost ceiling 100×"
 - `0` disables the gate
 
@@ -368,7 +368,7 @@ Throughout, SSE on `handover:domain:webhooks` publishes `handover:run_started`, 
 ## 12. Search, staleness, Slack auto-post, bearer auth
 
 **Slack auto-post.**
-- When a doubt is escalated *and* `BIFROST_SLACK_ESCALATION_CHANNEL` and `BIFROST_SLACK_BOT_TOKEN` are set, the resolve handler also posts the templated `draft_ask_message` through the Slack Web API
+- When a doubt is escalated *and* `ORGBRAIN_SLACK_ESCALATION_CHANNEL` and `ORGBRAIN_SLACK_BOT_TOKEN` are set, the resolve handler also posts the templated `draft_ask_message` through the Slack Web API
 - Implementation: `slack_escalation.py`, plain `httpx`, no LLM and no subprocess
 - Each Slack call is tried twice. Then the resolve request returns 502 with `slack.escalation.post_failed` or `slack.escalation.permalink_failed`; the on-disk draft is still there
 - **Security note.** The body is posted verbatim to the one configured channel, so text inside a doubt cannot redirect it. The bot token is a `SecretStr` and is never logged.
@@ -382,8 +382,8 @@ Throughout, SSE on `handover:domain:webhooks` publishes `handover:run_started`, 
 - Triggered from the extraction worker's freshness writeback hook
 
 **Bearer-token API gate.**
-- `BIFROST_API_TOKEN` and the `require_api_token` gate were removed; setting the variable stops startup
-- Scripts use `bft_` API tokens listed under `api_tokens` (`bifrost token new`)
+- `ORGBRAIN_API_TOKEN` and the `require_api_token` gate were removed; setting the variable stops startup
+- Scripts use `bft_` API tokens listed under `api_tokens` (`orgbrain token new`)
 - Every `/api/v1/*` route except health and auth needs a principal
 
 ---
@@ -643,7 +643,7 @@ stateDiagram-v2
 | Slack escalation draft | $0.005 | Haiku |
 | Hybrid edit (`llm_revise`) | $0.05-0.20 | Sonnet |
 
-The `BIFROST_HANDOVER_MAX_COST_USD = $10` ceiling is calibrated to make a domain handover with ~30-50 repos require explicit `?force=true`. The estimator runs Postgres-side (no LLM call) so the user sees the price tag before authorizing.
+The `ORGBRAIN_HANDOVER_MAX_COST_USD = $10` ceiling is calibrated to make a domain handover with ~30-50 repos require explicit `?force=true`. The estimator runs Postgres-side (no LLM call) so the user sees the price tag before authorizing.
 
 ### If you remember nothing else
 - Sessions are cheap (cents per turn). Handovers are expensive (dollars per scope).
@@ -658,7 +658,7 @@ These are the points in the substrate that handle untrusted content, cookies, or
 | Moment | Why it matters | Hardening |
 |---|---|---|
 | **Slack escalation auto-post** | Posts to a channel using the operator's MCP auth | Channel ID validated; message body sanitised; falls back silently if MCP not authenticated |
-| **Cookie identity verification** | `bifrost_session` cookie is the only identity signal | Sliding-window rate limit per cookie; audit log records cookie hash, not raw value |
+| **Cookie identity verification** | `orgbrain_session` cookie is the only identity signal | Sliding-window rate limit per cookie; audit log records cookie hash, not raw value |
 | **Body-history persistence** | `handover_body_history` retains pre-overwrite snapshots; replays must not bypass canary | Insert path runs the same validation pipeline as fresh generation |
 | **`PATCH /body` with `llm_revise`** | Untrusted natural-language instruction → Sonnet rewrite | Instruction wrapped in prompt-safety boundary; output canary-validated |
 | **Promote-candidate** | Human-supplied answer body merges into a handover | Body sanitised, audit logged, body-history snapshot captured |
@@ -674,8 +674,8 @@ These are the points in the substrate that handle untrusted content, cookies, or
 
 - **The state machine is `open → resolved → briefed → closed`.** Reopening goes back to `open`. Do not confuse session state with doubt status — they are separate enums.
 - **Loop-back fires on handover-detail GET.** Every `GET /handover-docs/{id}` runs the loopback clustering. It is cheap (no LLM call), but if you see slow handover-detail loads on a busy system, this is one place to look.
-- **Cookie identity, not user identity.** Sessions are scoped to `bifrost_session` cookies, not authenticated users. Same browser = same identity.
-- **Slack auto-post is opt-in.** It needs both `BIFROST_SLACK_ESCALATION_CHANNEL` and `BIFROST_SLACK_BOT_TOKEN`. Without them it is the on-disk artifact only (the requester copy-pastes).
+- **Cookie identity, not user identity.** Sessions are scoped to `orgbrain_session` cookies, not authenticated users. Same browser = same identity.
+- **Slack auto-post is opt-in.** It needs both `ORGBRAIN_SLACK_ESCALATION_CHANNEL` and `ORGBRAIN_SLACK_BOT_TOKEN`. Without them it is the on-disk artifact only (the requester copy-pastes).
 - **Tree decomposition kicks in at 6 repos.** `_TREE_THRESHOLD = 5` is "above which to decompose"; ≤5 stays pooled. Lower the threshold to make decomposition more aggressive (better signal, higher cost).
 - **The synthesizer hallucinates team names if you let it.** The prompt explicitly forbids inventing names — but the prompt also is just a prompt. If a brief lists a "Delivery Gateway Team" and the manifest says `delivery-gateway`, treat that as the synthesizer's best guess, not a fact.
 - **Per-section regen preserves human edits.** Without it, a human override followed by a full regen loses the edits. With it, you can regen `architecture` while keeping a humans-edited `ownership` intact.

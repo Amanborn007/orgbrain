@@ -9,8 +9,8 @@ from typing import Any
 import pytest
 from starlette.requests import Request
 
-from bifrost.api.auth.principal import SOURCE_OIDC_JWT
-from bifrost.api.auth.providers import InvalidCredentials, OidcJwtProvider
+from orgbrain.api.auth.principal import SOURCE_OIDC_JWT
+from orgbrain.api.auth.providers import InvalidCredentials, OidcJwtProvider
 
 
 class _StubVerifier:

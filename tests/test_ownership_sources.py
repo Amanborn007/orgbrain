@@ -10,25 +10,25 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.api.routes import admin as admin_routes
-from bifrost.api.routes import catalog as catalog_routes
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import (
+from orgbrain.api.routes import admin as admin_routes
+from orgbrain.api.routes import catalog as catalog_routes
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import (
     GitHubSourceConfig,
     LocalSourceConfig,
     SourcesConfig,
 )
-from bifrost.manifest.files import GitHubRepoFiles, LocalRepoFiles
-from bifrost.manifest.graph_apply import GraphRefresher
-from bifrost.manifest.model import ServiceManifest
-from bifrost.research import org_catalog
-from bifrost.research.ownership_sync import manifest_to_ownership_values, resolve_repo_files
-from bifrost.storage.models import RepoOwnership
+from orgbrain.manifest.files import GitHubRepoFiles, LocalRepoFiles
+from orgbrain.manifest.graph_apply import GraphRefresher
+from orgbrain.manifest.model import ServiceManifest
+from orgbrain.research import org_catalog
+from orgbrain.research.ownership_sync import manifest_to_ownership_values, resolve_repo_files
+from orgbrain.storage.models import RepoOwnership
 from tests import leak_terms
 
 
-def _settings(*, roots: list[str] | None = None, host: str = "github.com") -> BifrostSettings:
-    return BifrostSettings(
+def _settings(*, roots: list[str] | None = None, host: str = "github.com") -> OrgBrainSettings:
+    return OrgBrainSettings(
         sources=SourcesConfig(
             github=GitHubSourceConfig(host=host),
             local=LocalSourceConfig(allowed_roots=roots or []),

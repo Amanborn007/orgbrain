@@ -15,12 +15,12 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.manifest.model import ServiceManifest
-from bifrost.research.ownership_sync import manifest_to_ownership_values
-from bifrost.storage.models import Repo, RepoOwnership
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.manifest.model import ServiceManifest
+from orgbrain.research.ownership_sync import manifest_to_ownership_values
+from orgbrain.storage.models import Repo, RepoOwnership
+from orgbrain.storage.repository import EntityRepository
 
 LOOKUP_KEYS = ("contact", "owner", "maintainer", "oncall")
 
@@ -77,7 +77,7 @@ def test_backstage_contact_annotation_is_carried() -> None:
 
 @pytest.fixture(autouse=True)
 def _stub_worker():
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -106,7 +106,7 @@ async def test_synced_manifest_feeds_the_ownership_route(
 ) -> None:
     repo = Repo(
         id=uuid.uuid4(),
-        urn="urn:bifrost:repo:contact-sync-svc",
+        urn="urn:orgbrain:repo:contact-sync-svc",
         name="contact-sync-svc",
         url="https://example.com/acme/contact-sync-svc",
         adapter_config={},

@@ -1,5 +1,5 @@
 """Tests for the keyword prefilter + squad-match helpers in
-``bifrost.research.coordinator``.
+``orgbrain.research.coordinator``.
 
 Invariant: a term such as "dlvr" that survives stop-word filtering but
 matches 0 repos by name must not be padded with unrelated repos.
@@ -24,14 +24,14 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import delete
 
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
-from bifrost.research.coordinator import (
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
+from orgbrain.research.coordinator import (
     _keyword_prefilter_repos,
     _question_keywords,
     _squad_match_filter,
 )
-from bifrost.storage.models import Repo, RepoOwnership
+from orgbrain.storage.models import Repo, RepoOwnership
 
 
 def _factory():
@@ -365,7 +365,7 @@ def _make_test_repo(name: str, sort_idx: int) -> Repo:
     isolated namespace. Callers are responsible for cleanup."""
     return Repo(
         id=_uuid.uuid4(),
-        urn=f"urn:bifrost:repo/{name}",
+        urn=f"urn:orgbrain:repo/{name}",
         name=name,
         url=f"https://example.invalid/{name}",
         adapter_config={"description": ""},

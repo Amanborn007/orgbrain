@@ -12,9 +12,9 @@
 
 ## 1. Purpose and Scope
 
-This specification defines how Bifrost represents, discovers, stores, queries, and compares **flows** -- the end-to-end paths that engineering work actually follows across services, repos, and async boundaries.
+This specification defines how OrgBrain represents, discovers, stores, queries, and compares **flows** -- the end-to-end paths that engineering work actually follows across services, repos, and async boundaries.
 
-Flows are **first-class objects** in Bifrost, not incidental notes or materialized views. They have their own identity, lifecycle, versioning, freshness tracking, and query surface. This is a key differentiator: most engineering knowledge platforms treat flows as documentation artifacts or inferred by-products. Bifrost treats them as independently managed entities with the same rigor applied to repos, domains, and dependencies.
+Flows are **first-class objects** in OrgBrain, not incidental notes or materialized views. They have their own identity, lifecycle, versioning, freshness tracking, and query surface. This is a key differentiator: most engineering knowledge platforms treat flows as documentation artifacts or inferred by-products. OrgBrain treats them as independently managed entities with the same rigor applied to repos, domains, and dependencies.
 
 The scope of this specification covers:
 
@@ -42,7 +42,7 @@ This specification does **not** cover:
 | **FlowEdge**       | A typed connection between two segments in a flow DAG. Edges encode sequencing, conditionality, parallelism, async boundaries, and fallback paths. |
 | **FlowParticipation** | A mapping that records which repo/component plays which role in a given flow. |
 | **Dependency**     | A relationship between two entities where one relies on the other. Flows expose dependencies as a side effect of their segment-to-segment structure. |
-| **KnowledgeArtifact** | Any entity stored in the Bifrost knowledge model with a metadata envelope (source basis, freshness, confidence, scope). Flows are T2 (Tier 2) knowledge artifacts. |
+| **KnowledgeArtifact** | Any entity stored in the OrgBrain knowledge model with a metadata envelope (source basis, freshness, confidence, scope). Flows are T2 (Tier 2) knowledge artifacts. |
 | **Source Basis**   | The set of source references (commits, files, tickets, traces, manual annotations) that provide evidence for a knowledge claim. |
 | **Metadata Envelope** | The standard wrapper around any knowledge artifact carrying freshness, confidence, source basis, known gaps, and scope. |
 
@@ -99,9 +99,9 @@ This specification does **not** cover:
 
 ### 4.2 Non-Goals
 
-1. **Runtime execution engine.** Bifrost does not execute flows. It models understanding of flows.
+1. **Runtime execution engine.** OrgBrain does not execute flows. It models understanding of flows.
 
-2. **Workflow orchestration.** Bifrost does not manage saga state machines, retry policies, or queue consumers. It represents them as segments for understanding purposes.
+2. **Workflow orchestration.** OrgBrain does not manage saga state machines, retry policies, or queue consumers. It represents them as segments for understanding purposes.
 
 3. **Full formal verification.** Flows are best-effort representations of real system behavior. They carry confidence signals, not correctness proofs.
 
@@ -152,7 +152,7 @@ class Flow(BaseModel):
     """Which repos/components participate and in what roles."""
 
     metadata_envelope: MetadataEnvelope
-    """Standard Bifrost metadata envelope."""
+    """Standard OrgBrain metadata envelope."""
 
     version: int
     """Flow-level version; incremented on structural changes."""
@@ -520,7 +520,7 @@ graph LR
 
 ## 8. Flow Representation Storage
 
-Flows are stored as **T2 knowledge artifacts** in the Bifrost knowledge model (defined in S1). This means they carry the full metadata envelope and participate in the standard freshness, invalidation, and versioning lifecycle.
+Flows are stored as **T2 knowledge artifacts** in the OrgBrain knowledge model (defined in S1). This means they carry the full metadata envelope and participate in the standard freshness, invalidation, and versioning lifecycle.
 
 ### 8.1 Storage Structure
 
@@ -623,7 +623,7 @@ Track B: TaskCoordinator session reads per-repo flow segments from attached memo
 #### Track B Flow Analysis Constraints
 
 - **DAG traversal** (FlowEdge graph analysis) runs via PostgreSQL CTE in Track A.
-- In Track B, full graph traversal requires READ access to the storage MCP sidecar (`bifrost-storage-mcp`). Track B agents do not have direct DB access.
+- In Track B, full graph traversal requires READ access to the storage MCP sidecar (`orgbrain-storage-mcp`). Track B agents do not have direct DB access.
 - **Track B flow queries** fetch pre-computed `FlowReference` documents from Memory Store at path `/repo/{id}/flows/*.md` — no live graph traversal in initial V1.
 - **Live graph traversal in Track B is deferred to Track B V2:** it requires the storage MCP tool `execute_graph_query(cte: string)`, which is not in the V1 MCP tool set.
 - **V1 Track B flow answers are based on stored flow entities only.** Dynamic edges discovered after the last extraction run may be absent; callers should treat Track B flow answers as best-effort until a fresh extraction has run.

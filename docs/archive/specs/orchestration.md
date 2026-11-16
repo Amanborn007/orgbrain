@@ -37,7 +37,7 @@ Scope excludes:
 
 | Term | Definition |
 |------|-----------|
-| **Task** | A unit of work submitted to Bifrost — a question, analysis request, or action request with defined scope and budget. |
+| **Task** | A unit of work submitted to OrgBrain — a question, analysis request, or action request with defined scope and budget. |
 | **Specialist / Agent** | A scoped worker with expertise over a particular repo, domain, source type, or cross-cutting concern. Defined in S8. |
 | **Flow** | An end-to-end path through one or more repos and services representing a business or technical operation. |
 | **Dependency** | A relationship where one entity relies on another — code, API, schema, event, runtime, or inferred. |
@@ -238,7 +238,7 @@ Task Lifecycle
 State: received → analyzed → scoped → dispatched → gathered → synthesized → delivered
 
 Track A implementation:
-  received:    Bifrost API receives user query, creates task record in PostgreSQL
+  received:    OrgBrain API receives user query, creates task record in PostgreSQL
   analyzed:    TaskCoordinator LLM call: parse intent, identify task type (trace-flow, assess-impact, etc.)
   scoped:      TaskCoordinator queries PostgreSQL to determine relevant repos (5-10 for typical query)
   dispatched:  await asyncio.gather(repo_agent1.execute(task), repo_agent2.execute(task), ...)
@@ -247,7 +247,7 @@ Track A implementation:
   delivered:   stream synthesis response to user via SSE; write findings to AgentStateBackend
 
 Track B implementation:
-  received:    Bifrost API receives user query
+  received:    OrgBrain API receives user query
   analyzed:    TaskCoordinator Session created; coordinator's first LLM turn parses intent
   scoped:      Coordinator queries knowledge graph via MCP tools, determines relevant repos
   dispatched:  Coordinator invokes RepoAgent session threads (session.thread_created events emitted)
@@ -316,7 +316,7 @@ Track A Implementation:
   Scope determination: PostgreSQL query (JOIN repos, domains, entities WHERE relevant to task)
   Consultation: await asyncio.gather(*(RepoAgent(repo).execute(subtask) for repo in relevant_repos))
   Synthesis: one LLM call with all agent responses (max 2,000 tokens per agent response to stay in window)
-  Streaming: AsyncGenerator yields text chunks to Bifrost API → proxied as SSE to user
+  Streaming: AsyncGenerator yields text chunks to OrgBrain API → proxied as SSE to user
   State: reads from AgentStateBackend to get domain context; writes task findings on completion
 
 Track B Implementation:
@@ -1190,18 +1190,18 @@ Response: paginated list of task summaries.
 ## 13.6 Streaming Architecture
 
 Track A:
-  1. User connects to GET /bifrost/v1/tasks/{id}/stream (Bifrost API)
-  2. Bifrost API creates TaskCoordinator instance
+  1. User connects to GET /orgbrain/v1/tasks/{id}/stream (OrgBrain API)
+  2. OrgBrain API creates TaskCoordinator instance
   3. TaskCoordinator.execute() returns AsyncGenerator[AgentEvent]
-  4. Bifrost API proxy: async for event in coordinator.execute(task): response.write(sse_format(event))
+  4. OrgBrain API proxy: async for event in coordinator.execute(task): response.write(sse_format(event))
   5. Events include: status updates, partial text, agent consultation start/end, final answer
   6. No custom streaming infrastructure beyond Python async response stream
 
 Track B:
-  1. User connects to GET /bifrost/v1/tasks/{id}/stream (Bifrost API)
-  2. Bifrost API creates TaskCoordinator Session (POST /v1/sessions)
-  3. Bifrost API subscribes to session event stream (GET /v1/sessions/{id}/stream)
-  4. Bifrost API proxies filtered events to user SSE stream
+  1. User connects to GET /orgbrain/v1/tasks/{id}/stream (OrgBrain API)
+  2. OrgBrain API creates TaskCoordinator Session (POST /v1/sessions)
+  3. OrgBrain API subscribes to session event stream (GET /v1/sessions/{id}/stream)
+  4. OrgBrain API proxies filtered events to user SSE stream
   5. Filtered events: agent.message (text chunks), session.thread_created (status),
      session.thread_idle (status), session.complete
   6. No custom SSE implementation beyond proxying Anthropic session stream
@@ -1213,11 +1213,11 @@ Track B:
 When a sub-agent session thread needs permission to run an always_ask tool:
 1. Event surfaces on primary session stream with type: user.tool_confirmation_request
 2. Event includes session_thread_id field indicating which thread is waiting
-3. Bifrost control plane auto-approves known-safe tools:
+3. OrgBrain control plane auto-approves known-safe tools:
    - git clone (to container filesystem only)
    - file reads (read-only tools)
    - MCP server calls for configured source systems (GitHub, Jira)
-4. Bifrost escalates to user for unknown/dangerous tools
+4. OrgBrain escalates to user for unknown/dangerous tools
 5. Confirmation response must include same session_thread_id to route back correctly
 
 ---
@@ -1256,13 +1256,13 @@ L8. **STREAMING DIFFERENCE**: Track A streams incrementally per agent. Track B s
 | **Structured communication protocol** | Requirement 15.4 demands structured communication. Typed schemas ensure agents return machine-parseable responses that the coordinator can merge deterministically. Eliminates ambiguity in inter-agent communication. |
 | **Full audit logging** | Requirement 15.5 demands logging of participating specialists, consultation order, evidence, conflicts, and synthesis. Every orchestration decision is traceable after the fact. |
 | **min() for confidence aggregation in V1** | Conservative and simple. The weakest link determines overall reliability. More sophisticated weighted aggregation is deferred to V2. |
-| **Conflicts surfaced, not silently resolved** | Requirement 16.2 demands conflict detection. Automatically picking a winner without evidence is antithetical to Bifrost's design. Present both sides with evidence and let the consumer decide or investigate further. |
+| **Conflicts surfaced, not silently resolved** | Requirement 16.2 demands conflict detection. Automatically picking a winner without evidence is antithetical to OrgBrain's design. Present both sides with evidence and let the consumer decide or investigate further. |
 
 ---
 
 ## 16. V1 Scope
 
-V1 implements Track A orchestration: TaskCoordinator Python class, parallel RepoAgent calls via asyncio.gather, in-process synthesis, custom SSE streaming in Bifrost API. Max parallel agents: 5. Budget tracking and cost alerting implemented from day 1. Track B (session threads) is designed into all interfaces — migration requires adding callable_agents to coordinator Agent Definition and switching streaming to session stream proxy. No business logic changes needed.
+V1 implements Track A orchestration: TaskCoordinator Python class, parallel RepoAgent calls via asyncio.gather, in-process synthesis, custom SSE streaming in OrgBrain API. Max parallel agents: 5. Budget tracking and cost alerting implemented from day 1. Track B (session threads) is designed into all interfaces — migration requires adding callable_agents to coordinator Agent Definition and switching streaming to session stream proxy. No business logic changes needed.
 
 ### What V1 includes
 

@@ -1,6 +1,6 @@
 """Cookie signing tests.
 
-The ``bifrost_session`` cookie is the rate-limit bucket key and the
+The ``orgbrain_session`` cookie is the rate-limit bucket key and the
 audit ``actor``. These tests pin the contract that:
 
   - Minted cookies round-trip through ``parse_signed_cookie``.
@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.api import _cookie_signing as cs
-from bifrost.cli.config import reset_settings
+from orgbrain.api import _cookie_signing as cs
+from orgbrain.cli.config import reset_settings
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +30,7 @@ def _reset_signing() -> None:
 
 
 def test_round_trip_with_configured_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "test-key-deterministic")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "test-key-deterministic")
     reset_settings()
     cs.reset_signing_key()
 
@@ -45,7 +45,7 @@ def test_round_trip_with_configured_key(monkeypatch: pytest.MonkeyPatch) -> None
 def test_tampered_signature_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     """A signed cookie whose signature does not validate is not a
     session: the route mints a fresh one rather than trusting the id."""
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "k1")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "k1")
     reset_settings()
     cs.reset_signing_key()
 
@@ -58,7 +58,7 @@ def test_tampered_signature_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_tampered_session_id_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     """A cookie whose ID half isn't 32-hex shape is rejected
     (recovery only kicks in when the ID is shape-correct)."""
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "k1")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "k1")
     reset_settings()
     cs.reset_signing_key()
 
@@ -95,13 +95,13 @@ def test_empty_or_none_rejected() -> None:
 def test_key_rotation_invalidates_old_cookies(monkeypatch: pytest.MonkeyPatch) -> None:
     """After the signing key rotates, cookies minted under the old key are
     rejected (fresh session), and a new mint validates under the new key."""
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "first-key")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "first-key")
     reset_settings()
     cs.reset_signing_key()
     minted_under_k1 = cs.mint_signed_cookie()
     sid_part = minted_under_k1.split(".", 1)[0]
 
-    monkeypatch.setenv("BIFROST_SESSION_SIGNING_KEY", "second-key")
+    monkeypatch.setenv("ORGBRAIN_SESSION_SIGNING_KEY", "second-key")
     reset_settings()
     cs.reset_signing_key()
     assert cs.parse_signed_cookie(minted_under_k1) is None
@@ -109,9 +109,9 @@ def test_key_rotation_invalidates_old_cookies(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_ephemeral_key_used_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    """When BIFROST_SESSION_SIGNING_KEY is unset, an ephemeral key
+    """When ORGBRAIN_SESSION_SIGNING_KEY is unset, an ephemeral key
     is generated and cookies still round-trip within one process."""
-    monkeypatch.delenv("BIFROST_SESSION_SIGNING_KEY", raising=False)
+    monkeypatch.delenv("ORGBRAIN_SESSION_SIGNING_KEY", raising=False)
     reset_settings()
     cs.reset_signing_key()
 

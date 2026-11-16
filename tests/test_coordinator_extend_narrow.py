@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bifrost.research.bundle_cache import BundleSource, ResearchBundle
-from bifrost.research.coordinator import _maybe_narrow_for_extend
-from bifrost.research.planner import (
+from orgbrain.research.bundle_cache import BundleSource, ResearchBundle
+from orgbrain.research.coordinator import _maybe_narrow_for_extend
+from orgbrain.research.planner import (
     MODE_CLARIFY,
     MODE_EXTEND_BUNDLE,
     MODE_NEW_SCOPE,

@@ -16,7 +16,7 @@ assert the new behavior:
 DB-free: we hand-build ``CollabDoubt`` instances without any session.
 
 Threshold choice: the test pairs use a 0.6 threshold (set via the
-``BIFROST_DOUBT_CLUSTER_THRESHOLD`` env var) which sits above the
+``ORGBRAIN_DOUBT_CLUSTER_THRESHOLD`` env var) which sits above the
 unrelated-pair noise floor (~0.13-0.46 measured on real MiniLM
 output) and below paraphrase similarity (~0.79-0.94 measured). The
 production default is 0.85; the test exercises the mechanism rather
@@ -31,15 +31,15 @@ from datetime import UTC, datetime
 
 import pytest
 
-from bifrost.cli.config import reset_settings
-from bifrost.collaboration.loopback import _cluster_doubts
-from bifrost.storage.models import CollabDoubt
+from orgbrain.cli.config import reset_settings
+from orgbrain.collaboration.loopback import _cluster_doubts
+from orgbrain.storage.models import CollabDoubt
 
 
 @pytest.fixture(autouse=True)
 def _reset_settings():
     """The cluster threshold comes from the cached settings
-    singleton, so tests that set BIFROST_DOUBT_CLUSTER_THRESHOLD must
+    singleton, so tests that set ORGBRAIN_DOUBT_CLUSTER_THRESHOLD must
     reset it (and clean up after) — see each setenv + reset_settings()."""
     reset_settings()
     yield
@@ -78,7 +78,7 @@ def test_paraphrased_questions_cluster_together(
     is wired in without depending on MiniLM's specific calibration
     against an arbitrary 0.85 cutoff.
     """
-    monkeypatch.setenv("BIFROST_DOUBT_CLUSTER_THRESHOLD", "0.6")
+    monkeypatch.setenv("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "0.6")
     reset_settings()
 
     s1, s2 = uuid.uuid4(), uuid.uuid4()
@@ -111,7 +111,7 @@ def test_unrelated_questions_do_not_cluster(
     above. If MiniLM-similarity false-positives unrelated questions,
     the whole feature is worse than the normalized-string baseline.
     """
-    monkeypatch.setenv("BIFROST_DOUBT_CLUSTER_THRESHOLD", "0.6")
+    monkeypatch.setenv("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "0.6")
     reset_settings()
 
     doubts = [
@@ -169,7 +169,7 @@ def test_embedding_failure_falls_back_to_normalized_clustering(
         raise RuntimeError("simulated model load failure")
 
     monkeypatch.setattr(
-        "bifrost.research.embeddings.embed_texts",
+        "orgbrain.research.embeddings.embed_texts",
         _boom,
     )
 
@@ -196,10 +196,10 @@ def test_embedding_failure_falls_back_to_normalized_clustering(
 def test_threshold_env_var_controls_clustering(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``BIFROST_DOUBT_CLUSTER_THRESHOLD=0.99`` should make even close
+    """``ORGBRAIN_DOUBT_CLUSTER_THRESHOLD=0.99`` should make even close
     paraphrases stay in separate clusters. Validates the env var is
     actually wired in and read on each invocation."""
-    monkeypatch.setenv("BIFROST_DOUBT_CLUSTER_THRESHOLD", "0.99")
+    monkeypatch.setenv("ORGBRAIN_DOUBT_CLUSTER_THRESHOLD", "0.99")
     reset_settings()
 
     doubts = [

@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-EXECUTOR = REPO_ROOT / "src" / "bifrost" / "actions" / "executor.py"
-VERIFIER = REPO_ROOT / "src" / "bifrost" / "actions" / "verifier.py"
-DEBUGGER = REPO_ROOT / "src" / "bifrost" / "actions" / "debugger.py"
+EXECUTOR = REPO_ROOT / "src" / "orgbrain" / "actions" / "executor.py"
+VERIFIER = REPO_ROOT / "src" / "orgbrain" / "actions" / "verifier.py"
+DEBUGGER = REPO_ROOT / "src" / "orgbrain" / "actions" / "debugger.py"
 
 
 def _tools_block(path: Path) -> str:

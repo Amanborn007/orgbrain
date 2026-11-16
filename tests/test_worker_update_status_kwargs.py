@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import inspect
 
-from bifrost.extraction import worker
+from orgbrain.extraction import worker
 
 
 def test_update_task_status_call_sites_match_signature() -> None:

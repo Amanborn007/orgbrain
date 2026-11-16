@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.manifest.env_miner import (
+from orgbrain.manifest.env_miner import (
     MinedDeps,
     iter_compose_env,
     iter_helm_env,

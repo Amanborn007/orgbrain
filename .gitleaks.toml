@@ -1,4 +1,4 @@
-title = "Bifrost gitleaks config"
+title = "OrgBrain gitleaks config"
 
 [extend]
 useDefault = true

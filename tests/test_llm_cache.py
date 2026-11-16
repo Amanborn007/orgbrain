@@ -6,14 +6,14 @@ import asyncio
 
 import pytest
 
-from bifrost.extraction.cli_client import (
+from orgbrain.extraction.cli_client import (
     ClaudeLlmClient,
     CliCompletion,
     Usage,
     _completion_is_cacheable,
     _is_cacheable_text,
 )
-from bifrost.extraction.llm_cache import make_cache_key
+from orgbrain.extraction.llm_cache import make_cache_key
 
 
 def _completion(parsed: dict, text: str = "") -> CliCompletion:
@@ -115,9 +115,9 @@ async def test_cache_key_override_is_used(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_no_cache_when_disabled() -> None:
-    from bifrost.cli.config import BifrostSettings
+    from orgbrain.cli.config import OrgBrainSettings
 
-    client = ClaudeLlmClient(BifrostSettings(llm_cache_enabled=False))
+    client = ClaudeLlmClient(OrgBrainSettings(llm_cache_enabled=False))
     assert client._cache is None  # noqa: SLF001
 
 

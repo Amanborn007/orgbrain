@@ -1,6 +1,6 @@
-# Bifrost UI
+# OrgBrain UI
 
-React, TypeScript and Vite frontend for Bifrost.
+React, TypeScript and Vite frontend for OrgBrain.
 
 ```bash
 npm install

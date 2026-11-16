@@ -1,4 +1,4 @@
-# Bifrost Interface Specification
+# OrgBrain Interface Specification
 
 **Spec ID:** S10
 **Status:** Draft
@@ -7,7 +7,7 @@
 
 ## 1. Purpose and Scope
 
-This specification defines the three external surfaces through which users and agents interact with Bifrost:
+This specification defines the three external surfaces through which users and agents interact with OrgBrain:
 
 1. **REST API** -- the single source of truth for all platform operations.
 2. **CLI** -- a developer-facing command-line tool that calls the REST API.
@@ -21,7 +21,7 @@ Every operation that the CLI or UI can perform is backed by an API call. There a
 
 | Term | Definition |
 |------|-----------|
-| **Task** | An asynchronous unit of work submitted to Bifrost (a question, trace, impact analysis, etc.). |
+| **Task** | An asynchronous unit of work submitted to OrgBrain (a question, trace, impact analysis, etc.). |
 | **Specialist / Agent** | A scoped AI agent responsible for a repo, source, domain, or coordination role. |
 | **Flow** | An end-to-end path of execution across one or more repos and services. |
 | **Freshness** | A measure of how current a knowledge artifact is relative to its upstream source state. |
@@ -82,7 +82,7 @@ Long-running tasks expose an SSE stream for real-time progress updates. Both the
 
 ## 5. Capability Catalog
 
-Every operation Bifrost supports is listed here. Each operation maps to at least one API endpoint and at least one CLI command.
+Every operation OrgBrain supports is listed here. Each operation maps to at least one API endpoint and at least one CLI command.
 
 | Operation | Description | Category |
 |---|---|---|
@@ -207,7 +207,7 @@ class ResponseMetadata(BaseModel):
     task_id: str
     duration_ms: int
 
-class BifrostResponse(BaseModel, Generic[T]):
+class OrgBrainResponse(BaseModel, Generic[T]):
     data: T
     metadata: ResponseMetadata
 ```
@@ -263,7 +263,7 @@ The full envelope (with populated confidence, evidence, gaps, conflicts) is avai
 
 ### 7.2 Authentication
 
-Bifrost resolves a principal for every non-public route in `IdentityMiddleware` (`src/bifrost/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `bifrost token new`, which Bifrost matches by sha256 against `api_tokens` in `bifrost.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../../RUNNING.md#6-identity) and [handbook 02 §8.1](../../handbook/02-architecture.md#81-auth-at-the-api-boundary).
+OrgBrain resolves a principal for every non-public route in `IdentityMiddleware` (`src/orgbrain/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `orgbrain token new`, which OrgBrain matches by sha256 against `api_tokens` in `orgbrain.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../../RUNNING.md#6-identity) and [handbook 02 §8.1](../../handbook/02-architecture.md#81-auth-at-the-api-boundary).
 
 ### 7.3 Endpoint Reference
 
@@ -384,7 +384,7 @@ data: {"task_id":"tsk_01HXYZ...","error":"agent timeout","partial_result":{}}
 
 ## Streaming Architecture
 
-Bifrost streams task progress and results to clients via Server-Sent Events (SSE).
+OrgBrain streams task progress and results to clients via Server-Sent Events (SSE).
 The client-facing SSE API is identical in both tracks. Internal implementation differs.
 
 ### Client-Facing SSE Endpoint
@@ -468,17 +468,17 @@ Track A is the V1 implementation: Python `AsyncGenerator`-based streaming inside
 
 ### Track B Internal Implementation
 
-Track B is the future implementation: Bifrost proxies an Anthropic Managed Agents session event stream to users.
+Track B is the future implementation: OrgBrain proxies an Anthropic Managed Agents session event stream to users.
 
 1. Client calls `GET /api/v1/tasks/{id}/stream`
-2. Bifrost creates a Managed Agent Session (`POST /v1/sessions`)
-3. Bifrost subscribes to the session stream (`GET /v1/sessions/{id}/stream`)
-4. Bifrost maps session events to Bifrost SSE format:
+2. OrgBrain creates a Managed Agent Session (`POST /v1/sessions`)
+3. OrgBrain subscribes to the session stream (`GET /v1/sessions/{id}/stream`)
+4. OrgBrain maps session events to OrgBrain SSE format:
    - `session.thread_created` → `agent.consulting` event
    - `session.thread_idle` → `agent.found` event
    - `agent.message` (text) → `text.delta` event
    - `session.complete` → `task.complete` event
-5. Bifrost proxies transformed events to the client stream
+5. OrgBrain proxies transformed events to the client stream
 
 The client-facing API contract (endpoint, event types, event payloads) is identical in both tracks. Track B is an internal implementation change with no client-facing API changes.
 
@@ -1021,7 +1021,7 @@ All API endpoints are versioned under `/api/v{N}/`.
 **Deprecation policy:**
 - Breaking changes require a new version (`/api/v2/`)
 - Deprecated v1 endpoints remain functional for minimum 6 months after v2 launch
-- Deprecation is signaled via `Bifrost-Deprecation: {date}` response header
+- Deprecation is signaled via `OrgBrain-Deprecation: {date}` response header
 - Deprecated endpoints return `"deprecated": true` in response metadata
 
 **V1 availability target:** 99.5% uptime (single-instance deployment). Multi-instance for HA is V2.
@@ -1032,10 +1032,10 @@ All API endpoints are versioned under `/api/v{N}/`.
 
 ### 8.1 Overview
 
-The CLI is a Python package (`bifrost`) built with Typer that wraps the REST API. It is installed via `uv pip install bifrost` and provides a `bifrost` entry point. It adds convenience features for developer workflows: human-readable output formatting, local workspace integration, and an interactive shell mode.
+The CLI is a Python package (`orgbrain`) built with Typer that wraps the REST API. It is installed via `uv pip install orgbrain` and provides a `orgbrain` entry point. It adds convenience features for developer workflows: human-readable output formatting, local workspace integration, and an interactive shell mode.
 
 ```
-bifrost <command> [subcommand] [options]
+orgbrain <command> [subcommand] [options]
 ```
 
 Typer app definition:
@@ -1043,7 +1043,7 @@ Typer app definition:
 ```python
 import typer
 
-app = typer.Typer(name="bifrost", help="Bifrost engineering knowledge platform CLI.")
+app = typer.Typer(name="orgbrain", help="OrgBrain engineering knowledge platform CLI.")
 ```
 
 ### 8.2 Global Options
@@ -1079,7 +1079,7 @@ def main(
 #### 8.3.0 Init -- First-Run Initialization
 
 ```
-bifrost init [options]
+orgbrain init [options]
 ```
 
 Typer command definition:
@@ -1091,15 +1091,15 @@ def init(
     non_interactive: bool = typer.Option(False, "--non-interactive", help="Fail instead of prompting"),
     skip_llm_check: bool = typer.Option(False, "--skip-llm-check", help="Skip Anthropic API key validation"),
 ) -> None:
-    """Initialize a new Bifrost instance. Run once on first deployment."""
+    """Initialize a new OrgBrain instance. Run once on first deployment."""
     ...
 ```
 
-Initializes a new Bifrost instance. Run once on first deployment.
+Initializes a new OrgBrain instance. Run once on first deployment.
 
 **Steps performed:**
 
-1. Reads environment variables (`DATABASE_URL`, `ANTHROPIC_API_KEY`, `BIFROST_TRACK`)
+1. Reads environment variables (`DATABASE_URL`, `ANTHROPIC_API_KEY`, `ORGBRAIN_TRACK`)
 2. Runs database migrations via Alembic (creates all tables from S4 schema)
 3. Creates the Organization entity (prompts for org name if interactive)
 4. Validates Anthropic API key (test LLM call)
@@ -1137,9 +1137,9 @@ def ask(
 ```
 
 ```
-bifrost ask "how does webhook delivery work?"
-bifrost ask "what depends on the User model?" --scope domain:delivery
-bifrost ask "what changed in webhook-api this week?" --include-local
+orgbrain ask "how does webhook delivery work?"
+orgbrain ask "what depends on the User model?" --scope domain:delivery
+orgbrain ask "what changed in webhook-api this week?" --include-local
 ```
 
 Submits a task with the appropriate operation inferred from the question. Streams progress via the SSE endpoint (`GET /api/v1/tasks/{task_id}/stream`), then prints the result. SSE events are rendered as:
@@ -1164,66 +1164,66 @@ The delivery flow starts at web-frontend/src/webhooks/trigger.ts and calls...
 #### 8.3.2 Trace -- Flow Tracing
 
 ```
-bifrost trace "webhook delivery"
-bifrost trace "user signup" --scope domain:identity --max-depth 5
-bifrost trace "webhook retry" --include-runtime
+orgbrain trace "webhook delivery"
+orgbrain trace "user signup" --scope domain:identity --max-depth 5
+orgbrain trace "webhook retry" --include-runtime
 ```
 
 #### 8.3.3 Impact -- Blast Radius Analysis
 
 ```
-bifrost impact --repo webhook-api --path src/handlers/deliver.ts
-bifrost impact --repo webhook-api --path src/handlers/deliver.ts --change "add idempotency key"
-bifrost impact --repo webhook-api --include-indirect --max-depth 3
+orgbrain impact --repo webhook-api --path src/handlers/deliver.ts
+orgbrain impact --repo webhook-api --path src/handlers/deliver.ts --change "add idempotency key"
+orgbrain impact --repo webhook-api --include-indirect --max-depth 3
 ```
 
 #### 8.3.4 Deps -- Dependency Analysis
 
 ```
-bifrost deps --repo webhook-api
-bifrost deps --repo webhook-api --direction both --type api,schema
-bifrost deps --domain delivery --include-indirect
+orgbrain deps --repo webhook-api
+orgbrain deps --repo webhook-api --direction both --type api,schema
+orgbrain deps --domain delivery --include-indirect
 ```
 
 #### 8.3.5 Similar -- Find Similar Code
 
 ```
-bifrost similar --repo webhook-api --path src/handlers/deliver.ts
-bifrost similar --concept "retry with exponential backoff" --scope domain:delivery
+orgbrain similar --repo webhook-api --path src/handlers/deliver.ts
+orgbrain similar --concept "retry with exponential backoff" --scope domain:delivery
 ```
 
 #### 8.3.6 Plan -- Change Planning
 
 ```
-bifrost plan "add idempotency to webhook delivery" --repo webhook-api
-bifrost plan "migrate user auth to OAuth2" --domain identity
+orgbrain plan "add idempotency to webhook delivery" --repo webhook-api
+orgbrain plan "migrate user auth to OAuth2" --domain identity
 ```
 
 #### 8.3.7 Status -- Freshness and Lag
 
 ```
-bifrost status
-bifrost status --repo webhook-api
-bifrost status --domain delivery
-bifrost status --repo webhook-api --source code
+orgbrain status
+orgbrain status --repo webhook-api
+orgbrain status --domain delivery
+orgbrain status --repo webhook-api --source code
 ```
 
 #### 8.3.8 Refresh -- Trigger Knowledge Refresh
 
 ```
-bifrost refresh --repo webhook-api
-bifrost refresh --domain delivery
-bifrost refresh --repo webhook-api --source code,tickets
-bifrost refresh --repo webhook-api --depth full
+orgbrain refresh --repo webhook-api
+orgbrain refresh --domain delivery
+orgbrain refresh --repo webhook-api --source code,tickets
+orgbrain refresh --repo webhook-api --depth full
 ```
 
 #### 8.3.9 Docs -- Documentation Management
 
 ```
-bifrost docs generate --repo webhook-api
-bifrost docs generate --repo webhook-api --type onboarding,flow
-bifrost docs status --repo webhook-api
-bifrost docs status --domain delivery
+orgbrain docs generate --repo webhook-api
+orgbrain docs generate --repo webhook-api --type onboarding,flow
+orgbrain docs status --repo webhook-api
+orgbrain docs status --domain delivery
 ```
 
 #### 8.3.10 Repos -- Repository Management
@@ -1250,10 +1250,10 @@ def repos_show(
 ```
 
 ```
-bifrost repos list
-bifrost repos list --domain delivery --freshness stale
-bifrost repos show webhook-api
-bifrost repos show webhook-api --include flows,deps,patterns
+orgbrain repos list
+orgbrain repos list --domain delivery --freshness stale
+orgbrain repos show webhook-api
+orgbrain repos show webhook-api --include flows,deps,patterns
 ```
 
 #### 8.3.11 Domains -- Domain Management
@@ -1274,8 +1274,8 @@ def domains_show(domain_id: str = typer.Argument(..., help="Domain ID or name"))
 ```
 
 ```
-bifrost domains list
-bifrost domains show delivery
+orgbrain domains list
+orgbrain domains show delivery
 ```
 
 #### 8.3.12 Agents -- Agent Visibility
@@ -1298,9 +1298,9 @@ def agents_show(agent_id: str = typer.Argument(..., help="Agent ID")) -> None:
 ```
 
 ```
-bifrost agents list
-bifrost agents list --scope repo:webhook-api
-bifrost agents show agent:webhook-api
+orgbrain agents list
+orgbrain agents list --scope repo:webhook-api
+orgbrain agents show agent:webhook-api
 ```
 
 #### 8.3.13 Tasks -- Task Management
@@ -1328,10 +1328,10 @@ def tasks_cancel(task_id: str = typer.Argument(..., help="Task ID")) -> None:
 ```
 
 ```
-bifrost tasks list
-bifrost tasks list --status running
-bifrost tasks show tsk_01HXYZ...
-bifrost tasks cancel tsk_01HXYZ...
+orgbrain tasks list
+orgbrain tasks list --status running
+orgbrain tasks show tsk_01HXYZ...
+orgbrain tasks cancel tsk_01HXYZ...
 ```
 
 #### 8.3.14 Auth -- Authentication
@@ -1344,7 +1344,7 @@ app.add_typer(auth_app, name="auth")
 def login(
     server: str = typer.Option(None, "--server", help="API server URL"),
 ) -> None:
-    """Authenticate with a Bifrost server."""
+    """Authenticate with a OrgBrain server."""
     ...
 
 @auth_app.command()
@@ -1359,18 +1359,18 @@ def logout() -> None:
 ```
 
 ```
-bifrost auth login
-bifrost auth login --server https://bifrost.example.com
-bifrost auth status
-bifrost auth logout
+orgbrain auth login
+orgbrain auth login --server https://orgbrain.example.com
+orgbrain auth status
+orgbrain auth logout
 ```
 
-Stores credentials via the `keyring` library (OS keychain) or falls back to `~/.bifrost/credentials`.
+Stores credentials via the `keyring` library (OS keychain) or falls back to `~/.orgbrain/credentials`.
 
 #### 8.3.15 Shell -- Interactive Mode
 
 ```
-bifrost shell
+orgbrain shell
 ```
 
 Opens a conversational REPL where the user can ask follow-up questions, refine scope, and issue commands without re-typing context. The shell maintains session state including the most recent task, repo context, and domain scope.
@@ -1378,16 +1378,16 @@ Opens a conversational REPL where the user can ask follow-up questions, refine s
 Example session:
 
 ```
-bifrost> trace "webhook delivery"
+orgbrain> trace "webhook delivery"
 [streaming results...]
 
-bifrost> what if we add a retry here?
+orgbrain> what if we add a retry here?
 [impact analysis...]
 
-bifrost> show deps for that handler
+orgbrain> show deps for that handler
 [dependency output...]
 
-bifrost> exit
+orgbrain> exit
 ```
 
 #### 8.3.16 Feedback -- Submit Task Feedback
@@ -1411,7 +1411,7 @@ Submit feedback on the most recent (or specified) task result. If `task-id` is o
 Example:
 
 ```
-bifrost feedback tsk_01HXYZ... --partial \
+orgbrain feedback tsk_01HXYZ... --partial \
   --gap "retry behavior after delivery-gateway timeout is not documented" \
   --correction "deliver handler is at src/handlers/deliver_v2.ts, not deliver.ts"
 ```
@@ -1474,7 +1474,7 @@ When `--include-local` is passed, the CLI:
 | Technology | React + TypeScript (frontend), FastAPI (backend API) |
 | State management | Server state via API (React Query / SWR); local UI state only for ephemeral concerns |
 | Real-time | SSE for task progress and freshness updates (FastAPI `StreamingResponse`) |
-| Auth | The identity providers in 7.2. The `bifrost_session` cookie is only a rate-limit and audit key |
+| Auth | The identity providers in 7.2. The `orgbrain_session` cookie is only a rate-limit and audit key |
 
 The UI is a read-heavy dashboard with task submission and refresh trigger capabilities. It does not implement any business logic -- all operations are API calls.
 
@@ -1610,8 +1610,8 @@ A machine-readable OpenAPI 3.1 specification describes all REST API endpoints, r
 Each CLI command has a corresponding man page generated from the command definition. Available via:
 
 ```
-bifrost help <command>
-bifrost <command> --help
+orgbrain help <command>
+orgbrain <command> --help
 ```
 
 ### 10.3 UI Component API
@@ -1681,7 +1681,7 @@ UI components consume the API via a typed TypeScript client library generated fr
 | Surface | Planned Enhancement |
 |---|---|
 | **API** | GraphQL endpoint for flexible knowledge graph queries. Batch task submission. Webhook callbacks for task completion. |
-| **API** | MCP (Model Context Protocol) server integration so Bifrost can act as a tool provider for LLM agents. |
+| **API** | MCP (Model Context Protocol) server integration so OrgBrain can act as a tool provider for LLM agents. |
 | **CLI** | Interactive shell mode with session context. Plugin system for custom output formatters. |
 | **CLI** | IDE extensions (VS Code, JetBrains) that wrap CLI commands with in-editor UI. |
 | **UI** | Flow Explorer with full DAG visualization, animated runtime replay. |

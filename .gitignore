@@ -8,7 +8,7 @@
 .claude/settings.local.json
 
 # ── Local script output ───────────────────────────────────────
-.bifrost-out/
+.orgbrain-out/
 
 # ── Python ─────────────────────────────────────────────────────
 __pycache__/
@@ -43,18 +43,18 @@ ui/coverage/
 # ── Local state / runtime ─────────────────────────────────────
 nohup.out
 *.log
-/tmp/bifrost-*
+/tmp/orgbrain-*
 .python-version
 *.pid
 
 # ── Worktrees created by the action-layer executor ────────────
 .claude/worktrees/
 
-# ── Bifrost runtime artifacts ─────────────────────────────────
-/tmp/bifrost-checkpoints/
-/tmp/bifrost-clones/
-/tmp/bifrost_claude_cli_cwd/
-/tmp/bifrost_st_cache/
+# ── OrgBrain runtime artifacts ─────────────────────────────────
+/tmp/orgbrain-checkpoints/
+/tmp/orgbrain-clones/
+/tmp/orgbrain_claude_cli_cwd/
+/tmp/orgbrain_st_cache/
 
 # Handover/brief artifacts (sessions + repo-scoped handovers).
 # These are operator-generated Markdown owned by the local machine,
@@ -63,4 +63,4 @@ nohup.out
 docs/handovers/
 
 
-/bifrost.yaml
+/orgbrain.yaml

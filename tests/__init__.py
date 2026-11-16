@@ -1,1 +1,1 @@
-"""Bifrost test suite."""
+"""OrgBrain test suite."""

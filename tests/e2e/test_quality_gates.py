@@ -16,7 +16,7 @@ import pytest
 
 # Paths relative to project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SRC_DIR = PROJECT_ROOT / "src" / "bifrost"
+SRC_DIR = PROJECT_ROOT / "src" / "orgbrain"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -112,12 +112,12 @@ async def test_cost_gate(db_session) -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Type Safety Gate: pyright passes on entire src/bifrost/ with zero errors
+# Type Safety Gate: pyright passes on entire src/orgbrain/ with zero errors
 # ──────────────────────────────────────────────────────────────────────
 
 
 def test_type_safety_gate() -> None:
-    """Verify pyright reports zero errors on src/bifrost/.
+    """Verify pyright reports zero errors on src/orgbrain/.
 
     Pyright must pass with zero errors before any phase is complete.
     """

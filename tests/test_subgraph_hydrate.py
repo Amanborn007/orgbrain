@@ -12,12 +12,12 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bifrost.research.subgraph_hydrate import (
+from orgbrain.research.subgraph_hydrate import (
     HydratedSubgraph,
     hydrate_prior_subgraph,
     hydrated_summary,
 )
-from bifrost.storage.models import Entity, EntityRelationship, Repo
+from orgbrain.storage.models import Entity, EntityRelationship, Repo
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ async def _make_repo(
 ) -> Repo:
     repo = Repo(
         id=uuid.uuid4(),
-        urn=urn or f"urn:bifrost:repo:{name}",
+        urn=urn or f"urn:orgbrain:repo:{name}",
         name=name,
         url=f"https://github.com/test/{name}",
     )
@@ -111,11 +111,11 @@ async def test_returns_empty_when_all_urns_missing(
 ) -> None:
     # No entities exist at these URNs.
     out = await hydrate_prior_subgraph(
-        urns=["urn:bifrost:repo:does-not-exist/component/X"],
+        urns=["urn:orgbrain:repo:does-not-exist/component/X"],
         session_factory=session_factory_for,
     )
     assert out.is_empty()
-    assert "urn:bifrost:repo:does-not-exist/component/X" in out.missing_urns
+    assert "urn:orgbrain:repo:does-not-exist/component/X" in out.missing_urns
 
 
 @pytest.mark.asyncio

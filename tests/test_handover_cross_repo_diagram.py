@@ -1,5 +1,5 @@
 """Unit tests for the cross-repo flow diagram helpers in
-``bifrost.collaboration.handover_generator``.
+``orgbrain.collaboration.handover_generator``.
 
 We don't need a live DB — the helper accepts an ``EntityRepository``
 and only touches ``repo._session.execute(stmt)``. A fake session that
@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from bifrost.collaboration import handover_generator as hg
+from orgbrain.collaboration import handover_generator as hg
 
 
 class _FakeResult:

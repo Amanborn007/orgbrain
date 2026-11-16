@@ -82,7 +82,7 @@ def baseline_sql() -> str:
         **os.environ,
         "DATABASE_URL": "postgresql+asyncpg://u:p@localhost:5432/offline_only",
     }
-    env.pop("BIFROST_DATABASE_URL", None)
+    env.pop("ORGBRAIN_DATABASE_URL", None)
     proc = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head", "--sql"],
         cwd=ROOT,

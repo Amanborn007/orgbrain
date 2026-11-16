@@ -13,11 +13,11 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.errors import UpstreamError
-from bifrost.storage.models import Domain, Repo
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.errors import UpstreamError
+from orgbrain.storage.models import Domain, Repo
+from orgbrain.storage.repository import EntityRepository
 from tests import leak_terms
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -26,7 +26,7 @@ TAG = uuid.uuid4().hex[:8]
 
 @pytest.fixture(autouse=True)
 def _stub_worker():
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -58,14 +58,14 @@ async def client(app) -> AsyncGenerator[AsyncClient]:
 
 @pytest.fixture
 async def domain(db_session: AsyncSession) -> Domain:
-    d = Domain(id=uuid.uuid4(), urn=f"urn:bifrost:domain:orders-{TAG}", name=f"orders-{TAG}")
+    d = Domain(id=uuid.uuid4(), urn=f"urn:orgbrain:domain:orders-{TAG}", name=f"orders-{TAG}")
     db_session.add(d)
     await db_session.flush()
     return d
 
 
 def _match(name: str, *, team: str = "orders"):
-    from bifrost.manifest.team_repos import TeamRepoMatch
+    from orgbrain.manifest.team_repos import TeamRepoMatch
 
     return TeamRepoMatch(
         owner="acme",
@@ -87,13 +87,13 @@ def _patch_discover(
             seen["kwargs"] = kwargs
         return list(matches)
 
-    monkeypatch.setattr("bifrost.api.routes.domains.discover_team_repos", fake)
+    monkeypatch.setattr("orgbrain.api.routes.domains.discover_team_repos", fake)
 
 
 async def _add_repo(db: AsyncSession, name: str, domain_id: uuid.UUID | None) -> Repo:
     r = Repo(
         id=uuid.uuid4(),
-        urn=f"urn:bifrost:repo:acme:{name}-{TAG}",
+        urn=f"urn:orgbrain:repo:acme:{name}-{TAG}",
         name=name,
         url=f"https://github.com/acme/{name}.git",
         domain_id=domain_id,
@@ -139,7 +139,7 @@ async def test_adds_new_repos_and_links_existing_ones(
     unlinked = await _add_repo(db_session, f"unlinked-{TAG}", None)
     mine = await _add_repo(db_session, f"mine-{TAG}", domain.id)
     other_domain = Domain(
-        id=uuid.uuid4(), urn=f"urn:bifrost:domain:other-{TAG}", name=f"other-{TAG}"
+        id=uuid.uuid4(), urn=f"urn:orgbrain:domain:other-{TAG}", name=f"other-{TAG}"
     )
     db_session.add(other_domain)
     await db_session.flush()
@@ -225,7 +225,7 @@ async def test_upstream_failure_surfaces_through_the_error_handler(
     async def boom(team: str, **kwargs: Any):
         raise UpstreamError("gh search failed")
 
-    monkeypatch.setattr("bifrost.api.routes.domains.discover_team_repos", boom)
+    monkeypatch.setattr("orgbrain.api.routes.domains.discover_team_repos", boom)
     resp = await client.post(_url(domain), json={"team": "orders"})
     assert resp.status_code == 502
 
@@ -244,6 +244,6 @@ def test_no_route_path_carries_a_banned_name() -> None:
 
 
 def test_domains_route_names_no_banned_term_nor_github_com() -> None:
-    text = (REPO_ROOT / "src/bifrost/api/routes/domains.py").read_text(encoding="utf-8")
+    text = (REPO_ROOT / "src/orgbrain/api/routes/domains.py").read_text(encoding="utf-8")
     assert "github.com" not in text.lower()
     assert not leak_terms.matches(text)

@@ -1,6 +1,6 @@
 """Unit tests for bidirectional staleness propagation.
 
-Two helpers in :mod:`bifrost.storage.repository`:
+Two helpers in :mod:`orgbrain.storage.repository`:
 
   * ``mark_parent_handovers_enriched(repo_name)`` — when a child repo
     handover regenerates, flag fresh parent (domain/team/region)
@@ -30,7 +30,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 # ── mark_parent_handovers_enriched ────────────────────────────────────
 
@@ -96,7 +96,7 @@ async def test_enriched_with_domain_squad_region_flags_all_three_parent_scopes(
     )
     repo = EntityRepository(session)
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_parent_handovers_enriched("batch-orders")
 
     assert flagged == 3
@@ -149,7 +149,7 @@ async def test_enriched_orphan_repo_is_silent_noop(
     )
     repo = EntityRepository(session)
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_parent_handovers_enriched("orphan-repo")
 
     assert flagged == 0
@@ -227,7 +227,7 @@ async def test_validate_children_domain_parent_bumps_member_repos(
     repo = EntityRepository(session)
     parent_id = uuid.uuid4()
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_children_validated_by_parent(parent_id)
 
     assert flagged == 2
@@ -267,7 +267,7 @@ async def test_validate_children_repo_scope_parent_is_noop(
     repo = EntityRepository(session)
     parent_id = uuid.uuid4()
 
-    with caplog.at_level(logging.INFO, logger="bifrost.storage.repository"):
+    with caplog.at_level(logging.INFO, logger="orgbrain.storage.repository"):
         flagged = await repo.mark_children_validated_by_parent(parent_id)
 
     assert flagged == 0

@@ -2,7 +2,7 @@
 
 Uses the same httpx.AsyncClient + real DB pattern as test_api_routes.py.
 Verifies:
-  - Route returns a valid BifrostEnvelope
+  - Route returns a valid OrgBrainEnvelope
   - Registered repos with RepoOwnership data are returned first
   - OrgRepo catalog rows fill gaps for unregistered repos
   - Pattern matching: query hits name, squad, and description fields
@@ -20,11 +20,11 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_db, get_repository
-from bifrost.api.routes.ownership import is_ownership_question
-from bifrost.storage.models import OrgRepo, Repo, RepoOwnership
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.api.routes.ownership import is_ownership_question
+from orgbrain.storage.models import OrgRepo, Repo, RepoOwnership
+from orgbrain.storage.repository import EntityRepository
 
 # ── App fixture (mirrors test_api_routes.py pattern) ──────────────────
 
@@ -34,7 +34,7 @@ def _stub_worker():
     """No-op worker so routes that touch the singleton don't break."""
     from unittest.mock import MagicMock
 
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -76,7 +76,7 @@ async def seed_registered_repo_with_ownership(db_session: AsyncSession):
     """A registered Repo with full RepoOwnership metadata."""
     repo = Repo(
         id=uuid.uuid4(),
-        urn="urn:bifrost:repo:order-service",
+        urn="urn:orgbrain:repo:order-service",
         name="order-service",
         url="https://github.com/AcmeCo/order-service",
         description="Handles order processing and fulfillment",
@@ -103,7 +103,7 @@ async def seed_registered_repo_with_ownership(db_session: AsyncSession):
 
 @pytest.fixture
 async def seed_org_repo(db_session: AsyncSession):
-    """An OrgRepo catalog row (not registered as a Bifrost Repo)."""
+    """An OrgRepo catalog row (not registered as a OrgBrain Repo)."""
     org_repo = OrgRepo(
         id=uuid.uuid4(),
         owner="AcmeCo",
@@ -222,7 +222,7 @@ class TestOwnershipRoute:
         client: AsyncClient,
         seed_registered_repo_with_ownership,
     ) -> None:
-        """Response is a BifrostEnvelope with data + meta."""
+        """Response is a OrgBrainEnvelope with data + meta."""
         resp = await client.get("/api/v1/ownership?q=shipment")
         assert resp.status_code == 200
         body = resp.json()

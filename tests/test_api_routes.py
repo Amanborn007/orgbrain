@@ -14,11 +14,11 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.api.sse import SSEEvent, event_bus
-from bifrost.storage.models import Domain, ExtractionTask, Repo
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.api.sse import SSEEvent, event_bus
+from orgbrain.storage.models import Domain, ExtractionTask, Repo
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +31,7 @@ def _stub_worker():
     """
     from unittest.mock import MagicMock
 
-    from bifrost.extraction import worker as _w
+    from orgbrain.extraction import worker as _w
 
     prior = _w._worker
     _w._worker = MagicMock(spec=_w.ExtractionWorker)
@@ -66,7 +66,7 @@ async def seed_repo(db_session: AsyncSession) -> Repo:
     """Seed a test repo."""
     repo = Repo(
         id=uuid.uuid4(),
-        urn="urn:bifrost:repo:test-repo",
+        urn="urn:orgbrain:repo:test-repo",
         name="test-repo",
         url="https://github.com/test/repo",
         adapter_config={},
@@ -81,7 +81,7 @@ async def seed_domain(db_session: AsyncSession) -> Domain:
     """Seed a test domain."""
     domain = Domain(
         id=uuid.uuid4(),
-        urn="urn:bifrost:domain:test-domain",
+        urn="urn:orgbrain:domain:test-domain",
         name="test-domain",
         description="A test domain",
     )
@@ -138,7 +138,7 @@ class TestRepos:
         assert "data" in body
         assert "meta" in body
         assert body["data"]["status"] == "registered"
-        assert body["data"]["urn"] == "urn:bifrost:repo:new-repo"
+        assert body["data"]["urn"] == "urn:orgbrain:repo:new-repo"
 
     async def test_list_repos(self, client: AsyncClient, seed_repo: Repo) -> None:
         resp = await client.get("/api/v1/repos")
@@ -195,7 +195,7 @@ class TestDomains:
         )
         assert resp.status_code == 201
         body = resp.json()
-        assert body["data"]["urn"] == "urn:bifrost:domain:orders"
+        assert body["data"]["urn"] == "urn:orgbrain:domain:orders"
 
     async def test_list_domains(self, client: AsyncClient, seed_domain: Domain) -> None:
         resp = await client.get("/api/v1/domains")
@@ -243,7 +243,7 @@ class TestEntities:
         assert isinstance(resp.json()["data"], list)
 
     async def test_get_entity_not_found(self, client: AsyncClient) -> None:
-        resp = await client.get("/api/v1/entities/urn:bifrost:entity:nonexistent")
+        resp = await client.get("/api/v1/entities/urn:orgbrain:entity:nonexistent")
         assert resp.status_code == 404
 
 
@@ -255,7 +255,7 @@ class TestBlastRadius:
         """Seed seed→callee + caller→seed so downstream/upstream differ."""
         import uuid as _uuid
 
-        from bifrost.storage.models import Entity, EntityRelationship
+        from orgbrain.storage.models import Entity, EntityRelationship
 
         ids = {k: _uuid.uuid4() for k in ("seed", "callee", "caller")}
         # Source-file + line metadata so the reason string can cite
@@ -388,7 +388,7 @@ class TestEntityRelationships:
         """seed --calls--> callee (outbound) and caller --calls--> seed (inbound)."""
         import uuid as _uuid
 
-        from bifrost.storage.models import Entity, EntityRelationship
+        from orgbrain.storage.models import Entity, EntityRelationship
 
         ids = {k: _uuid.uuid4() for k in ("seed", "callee", "caller")}
         for label, eid in ids.items():
@@ -451,7 +451,7 @@ class TestEntityRelationships:
     ) -> None:
         import uuid as _uuid
 
-        from bifrost.storage.models import Entity
+        from orgbrain.storage.models import Entity
 
         eid = _uuid.uuid4()
         db_session.add(
@@ -529,7 +529,7 @@ class TestQuery:
         assert "task_id" in body["data"]
         # Trust contract (S10): confidence must also ride the uniform
         # `meta` location, with a canonical ConfidenceLevel value.
-        from bifrost.core.enums import ConfidenceLevel
+        from orgbrain.core.enums import ConfidenceLevel
 
         meta = body["meta"]
         assert meta["confidence"] in {c.value for c in ConfidenceLevel}
@@ -655,7 +655,7 @@ class TestHandoverDocSearch:
         client: AsyncClient,
         db_session: AsyncSession,
     ) -> None:
-        from bifrost.storage.models import HandoverDoc
+        from orgbrain.storage.models import HandoverDoc
 
         doc = HandoverDoc(
             id=uuid.uuid4(),
@@ -683,7 +683,7 @@ class TestHandoverDocSearch:
         client: AsyncClient,
         db_session: AsyncSession,
     ) -> None:
-        from bifrost.storage.models import HandoverDoc
+        from orgbrain.storage.models import HandoverDoc
 
         # Session-scoped doc that contains the term — must NOT show up.
         doc = HandoverDoc(

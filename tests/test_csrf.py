@@ -1,5 +1,5 @@
 """CSRF middleware: mutating requests from a browser must come from a
-configured CORS origin and carry ``X-Requested-With: bifrost-ui``."""
+configured CORS origin and carry ``X-Requested-With: orgbrain-ui``."""
 
 from __future__ import annotations
 
@@ -8,18 +8,18 @@ from collections.abc import AsyncIterator
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from bifrost.cli.config import reset_settings
+from orgbrain.cli.config import reset_settings
 
 ALLOWED = "http://localhost:5173"
 MUTATING = ["POST", "PUT", "PATCH", "DELETE"]
-UI = {"X-Requested-With": "bifrost-ui"}
+UI = {"X-Requested-With": "orgbrain-ui"}
 
 
 @pytest.fixture
 async def client(monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[AsyncClient]:
-    monkeypatch.setenv("BIFROST_CORS_ORIGINS", f"{ALLOWED},https://bifrost.example.com")
+    monkeypatch.setenv("ORGBRAIN_CORS_ORIGINS", f"{ALLOWED},https://orgbrain.example.com")
     reset_settings()
-    from bifrost.api.app import create_app
+    from orgbrain.api.app import create_app
 
     transport = ASGITransport(app=create_app())
     async with AsyncClient(transport=transport, base_url="http://t") as ac:
@@ -45,7 +45,7 @@ async def test_cross_origin_mutation_rejected(client: AsyncClient, method: str) 
 
 async def test_same_origin_with_header_accepted(client: AsyncClient) -> None:
     assert await _logout(client, Origin=ALLOWED, **UI) == 200
-    assert await _logout(client, Origin="https://bifrost.example.com", **UI) == 200
+    assert await _logout(client, Origin="https://orgbrain.example.com", **UI) == 200
 
 
 async def test_allowed_origin_without_header_rejected(client: AsyncClient) -> None:
@@ -60,9 +60,9 @@ async def test_wrong_header_value_rejected(client: AsyncClient) -> None:
 
 
 async def test_cookie_auth_without_header_rejected(client: AsyncClient) -> None:
-    status = await _logout(client, Cookie="bifrost_session=abc")
+    status = await _logout(client, Cookie="orgbrain_session=abc")
     assert status == 403
-    assert await _logout(client, Cookie="bifrost_session=abc", **UI) == 200
+    assert await _logout(client, Cookie="orgbrain_session=abc", **UI) == 200
 
 
 async def test_sec_fetch_site_used_when_origin_absent(client: AsyncClient) -> None:

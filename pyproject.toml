@@ -1,5 +1,5 @@
 [project]
-name = "bifrost"
+name = "orgbrain"
 version = "0.1.0"
 description = "AI-powered engineering knowledge platform"
 readme = "README.md"
@@ -41,9 +41,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Amanborn007/bifrost"
-Repository = "https://github.com/Amanborn007/bifrost"
-Issues = "https://github.com/Amanborn007/bifrost/issues"
+Homepage = "https://github.com/Amanborn007/orgbrain"
+Repository = "https://github.com/Amanborn007/orgbrain"
+Issues = "https://github.com/Amanborn007/orgbrain/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -56,14 +56,14 @@ dev = [
 ]
 
 [project.scripts]
-bifrost = "bifrost.cli.app:app"
+orgbrain = "orgbrain.cli.app:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bifrost", "extraction_probe"]
+packages = ["src/orgbrain", "extraction_probe"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "extraction_probe"]
@@ -73,7 +73,7 @@ asyncio_default_test_loop_scope = "session"
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["src/bifrost"]
+include = ["src/orgbrain"]
 typeCheckingMode = "standard"
 venvPath = "."
 venv = ".venv"

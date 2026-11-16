@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.storage.backend import AgentStateBackend, WritePrecondition
-from bifrost.storage.state_backend import (
+from orgbrain.storage.backend import AgentStateBackend, WritePrecondition
+from orgbrain.storage.state_backend import (
     PostgresStateBackend,
     StateBackendConflictError,
     _hash,
@@ -108,7 +108,7 @@ async def test_sha_precondition_blocks_stale_overwrite(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_factory_builds_state_backend() -> None:
-    from bifrost.boot import create_agent_infrastructure
+    from orgbrain.boot import create_agent_infrastructure
 
     infra = create_agent_infrastructure()
     backend = infra.make_state_backend(session=None)  # type: ignore[arg-type]

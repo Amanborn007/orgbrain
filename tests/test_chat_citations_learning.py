@@ -8,7 +8,7 @@ so the dashboard fills with real signal and the operator can see
 what's being cited where.
 
 Tests use the live dev DB with a unique URN namespace
-(``urn:bifrost:repo/test-chat-citations-{run_id}/...``) and a
+(``urn:orgbrain:repo/test-chat-citations-{run_id}/...``) and a
 finally-block sweep so multiple runs don't accumulate fixture rows.
 """
 
@@ -19,10 +19,10 @@ import uuid as _uuid
 import pytest
 from sqlalchemy import delete, select, text
 
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
-from bifrost.research.coordinator import _record_chat_citations
-from bifrost.storage.models import Entity, Repo
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
+from orgbrain.research.coordinator import _record_chat_citations
+from orgbrain.storage.models import Entity, Repo
 
 
 def _factory():
@@ -35,7 +35,7 @@ async def _seed_entities(repo_id: _uuid.UUID, repo_name: str, n: int) -> list[st
     urns: list[str] = []
     async with f() as s:
         for i in range(n):
-            urn = f"urn:bifrost:repo/{repo_name}/component/T{i:03d}"
+            urn = f"urn:orgbrain:repo/{repo_name}/component/T{i:03d}"
             urns.append(urn)
             s.add(
                 Entity(
@@ -99,7 +99,7 @@ async def test_records_delta_per_resolved_urn() -> None:
         s.add(
             Repo(
                 id=repo_id,
-                urn=f"urn:bifrost:repo/{repo_name}",
+                urn=f"urn:orgbrain:repo/{repo_name}",
                 name=repo_name,
                 url=f"https://example.invalid/{repo_name}",
                 adapter_config={},
@@ -150,8 +150,8 @@ async def test_unresolved_urns_skip_cleanly() -> None:
     f = _factory()
     conv_id = _uuid.uuid4()
     fake_urns = [
-        "urn:bifrost:repo/never-existed/component/X",
-        "urn:bifrost:repo/never-existed/component/Y",
+        "urn:orgbrain:repo/never-existed/component/X",
+        "urn:orgbrain:repo/never-existed/component/Y",
     ]
     async with f() as s:
         before = (await s.execute(text("SELECT count(*) FROM confidence_deltas"))).scalar()
@@ -179,7 +179,7 @@ async def test_cap_limits_inserts_to_max_urns() -> None:
         s.add(
             Repo(
                 id=repo_id,
-                urn=f"urn:bifrost:repo/{repo_name}",
+                urn=f"urn:orgbrain:repo/{repo_name}",
                 name=repo_name,
                 url=f"https://example.invalid/{repo_name}",
                 adapter_config={},
@@ -231,7 +231,7 @@ async def test_chat_citations_dont_shift_confidence() -> None:
         s.add(
             Repo(
                 id=repo_id,
-                urn=f"urn:bifrost:repo/{repo_name}",
+                urn=f"urn:orgbrain:repo/{repo_name}",
                 name=repo_name,
                 url=f"https://example.invalid/{repo_name}",
                 adapter_config={},

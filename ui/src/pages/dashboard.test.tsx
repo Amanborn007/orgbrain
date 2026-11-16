@@ -17,7 +17,7 @@ vi.mock("@/lib/api", () => ({
   listRepos: vi.fn().mockResolvedValue([
     {
       id: "repo-1",
-      urn: "urn:bifrost:repo:test-repo",
+      urn: "urn:orgbrain:repo:test-repo",
       name: "test-repo",
       url: "https://github.com/org/test-repo",
       domain_id: null,
@@ -42,7 +42,7 @@ vi.mock("@/lib/api", () => ({
   listDomains: vi.fn().mockResolvedValue([]),
   registerRepo: vi.fn().mockResolvedValue({
     id: "repo-2",
-    urn: "urn:bifrost:repo:new-repo",
+    urn: "urn:orgbrain:repo:new-repo",
     status: "registered",
   }),
 }));
@@ -67,7 +67,7 @@ describe("DashboardPage", () => {
 
   it("renders the dashboard heading", () => {
     renderWithProviders(<DashboardPage />);
-    expect(screen.getByText("State of the bridge")).toBeInTheDocument();
+    expect(screen.getByText("State of the brain")).toBeInTheDocument();
   });
 
   it("renders health summary cards", () => {
@@ -104,7 +104,7 @@ describe("DashboardPage", () => {
     );
     renderWithProviders(<DashboardPage />);
     expect(
-      await screen.findByText("Couldn't reach the Bifrost API"),
+      await screen.findByText("Couldn't reach the OrgBrain API"),
     ).toBeInTheDocument();
   });
 

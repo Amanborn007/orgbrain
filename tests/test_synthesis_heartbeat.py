@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from bifrost.research.coordinator import _stream_with_heartbeat
+from orgbrain.research.coordinator import _stream_with_heartbeat
 
 
 async def _slow_stream(items: list[dict], gap_s: float = 0.0):

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.extraction.cli_client import CliCompletion, Usage
-from bifrost.research.deepening import select_repos_to_deepen, suggest_followups
+from orgbrain.extraction.cli_client import CliCompletion, Usage
+from orgbrain.research.deepening import select_repos_to_deepen, suggest_followups
 
 
 class _StubClient:
@@ -111,7 +111,7 @@ async def test_complete_answer_does_not_widen() -> None:
 
 @pytest.mark.asyncio
 async def test_llm_failure_is_graceful() -> None:
-    from bifrost.extraction.cli_client import ClaudeCliTransientError
+    from orgbrain.extraction.cli_client import ClaudeCliTransientError
 
     client = _StubClient(raise_exc=ClaudeCliTransientError("boom"))
     d = await select_repos_to_deepen(
@@ -171,7 +171,7 @@ async def test_suggest_followups_short_circuits_with_no_signals() -> None:
 
 @pytest.mark.asyncio
 async def test_suggest_followups_graceful_on_error() -> None:
-    from bifrost.extraction.cli_client import ClaudeCliTransientError
+    from orgbrain.extraction.cli_client import ClaudeCliTransientError
 
     client = _StubClient(raise_exc=ClaudeCliTransientError("boom"))
     out = await suggest_followups(

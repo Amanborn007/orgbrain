@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.cli.config_sections import ConventionsConfig, GenericYamlConfig
-from bifrost.manifest.conventions import apply_conventions
-from bifrost.manifest.files import InMemoryRepoFiles
-from bifrost.manifest.providers.generic_yaml import GenericYamlProvider, parse_generic_yaml
+from orgbrain.cli.config_sections import ConventionsConfig, GenericYamlConfig
+from orgbrain.manifest.conventions import apply_conventions
+from orgbrain.manifest.files import InMemoryRepoFiles
+from orgbrain.manifest.providers.generic_yaml import GenericYamlProvider, parse_generic_yaml
 
 MANIFEST = """
 name: orders-api

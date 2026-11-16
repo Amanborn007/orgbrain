@@ -9,11 +9,11 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-import bifrost
-from bifrost.cli.config import BifrostSettings
-from bifrost.core.http import http_timeout
+import orgbrain
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.core.http import http_timeout
 
-SRC = Path(bifrost.__file__).parent
+SRC = Path(orgbrain.__file__).parent
 
 _CLIENT_CTORS = {
     ("httpx", "Client"),
@@ -76,28 +76,28 @@ def test_every_outbound_client_has_a_setting_driven_timeout() -> None:
 
 class TestFactory:
     def test_default_is_30s_everywhere(self) -> None:
-        t = http_timeout(BifrostSettings())
+        t = http_timeout(OrgBrainSettings())
         assert isinstance(t, httpx.Timeout)
         assert t.connect == t.read == t.write == t.pool == 30.0
 
     def test_setting_drives_value(self) -> None:
-        t = http_timeout(BifrostSettings(http_timeout_seconds=7))
+        t = http_timeout(OrgBrainSettings(http_timeout_seconds=7))
         assert t.connect == t.read == 7.0
 
     def test_cap_lowers_but_never_raises(self) -> None:
-        assert http_timeout(BifrostSettings(http_timeout_seconds=30), cap=2.0).read == 2.0
-        assert http_timeout(BifrostSettings(http_timeout_seconds=1), cap=2.0).read == 1.0
+        assert http_timeout(OrgBrainSettings(http_timeout_seconds=30), cap=2.0).read == 2.0
+        assert http_timeout(OrgBrainSettings(http_timeout_seconds=1), cap=2.0).read == 1.0
 
     @pytest.mark.parametrize("bad", [0, -1])
     def test_non_positive_rejected(self, bad: float) -> None:
         with pytest.raises(ValidationError):
-            BifrostSettings(http_timeout_seconds=bad)
+            OrgBrainSettings(http_timeout_seconds=bad)
 
 
 def test_cli_client_uses_setting(monkeypatch: pytest.MonkeyPatch) -> None:
-    from bifrost.cli.commands import _http
+    from orgbrain.cli.commands import _http
 
-    monkeypatch.setattr(_http, "get_settings", lambda: BifrostSettings(http_timeout_seconds=9))
+    monkeypatch.setattr(_http, "get_settings", lambda: OrgBrainSettings(http_timeout_seconds=9))
     with _http.get_client() as client:
         assert client.timeout.read == 9.0
         assert client.timeout.connect == 9.0

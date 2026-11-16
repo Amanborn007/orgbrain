@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from bifrost.cli.config_sections import IdentityConfig, ManifestConfig
+from orgbrain.cli.config_sections import IdentityConfig, ManifestConfig
 
 
 def test_identity_defaults_to_none() -> None:

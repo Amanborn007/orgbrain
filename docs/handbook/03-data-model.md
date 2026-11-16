@@ -1,6 +1,6 @@
 # 03 — Data Model
 
-> **TL;DR.** One PostgreSQL 16 database with `pgvector` is the entire persistence story — no Redis, no S3, no separate metadata store. Tables come from two sources of truth: SQLAlchemy ORM models in `src/bifrost/storage/models.py` and Alembic migrations under `alembic/versions/`. The action-layer `task_*` family is alembic-only (raw SQL access through `src/bifrost/storage/repository.py`). Everything else is ORM-mapped. The schema breaks down into eight thematic groups (repos → extraction lifecycle → knowledge graph → external caches → chat → action layer → collaboration → cross-cutting), each with its own ER diagram below.
+> **TL;DR.** One PostgreSQL 16 database with `pgvector` is the entire persistence story — no Redis, no S3, no separate metadata store. Tables come from two sources of truth: SQLAlchemy ORM models in `src/orgbrain/storage/models.py` and Alembic migrations under `alembic/versions/`. The action-layer `task_*` family is alembic-only (raw SQL access through `src/orgbrain/storage/repository.py`). Everything else is ORM-mapped. The schema breaks down into eight thematic groups (repos → extraction lifecycle → knowledge graph → external caches → chat → action layer → collaboration → cross-cutting), each with its own ER diagram below.
 
 > **Read this when** you're: writing a query, debugging a constraint violation, planning a migration, or adding a new table and need to know where it slots in. **Skip if** you're tracing a *route* to its tables — chapter 04 has that map.
 
@@ -12,7 +12,7 @@ The data model is one PostgreSQL 16 database with the `pgvector` extension. Ever
 
 Tables come from two sources of truth:
 
-1. **`src/bifrost/storage/models.py`** — SQLAlchemy 2.0 ORM models for tables the application reads/writes via the ORM.
+1. **`src/orgbrain/storage/models.py`** — SQLAlchemy 2.0 ORM models for tables the application reads/writes via the ORM.
 
 2. **`alembic/versions/`** — the baseline migration. Some tables (notably the `task_*` family) are created in alembic but *not* mapped as ORM classes — repository functions access them via raw SQL.
 
@@ -43,7 +43,7 @@ Where a column name in the doc differs from the column name in the DB (e.g. `ent
 - **`(Verified: path)`** — the table's definition lives in that file. The file is canonical.
 - **`[inferred]`** — the claim is not directly cited from a single line; explain in the same paragraph why it's safe to assert.
 - **Sample rows** — always realistic but synthetic. `id` and `created_at` are abbreviated for readability.
-- **"Read by" / "Written by"** lists routes (relative to `/api/v1`) and services (relative to `src/bifrost/`). Lower-case names are services; upper-case `POST/GET/...` are HTTP verbs.
+- **"Read by" / "Written by"** lists routes (relative to `/api/v1`) and services (relative to `src/orgbrain/`). Lower-case names are services; upper-case `POST/GET/...` are HTTP verbs.
 
 ---
 
@@ -146,11 +146,11 @@ The registered list of source repositories. One row per repository the operator 
 ```sql
 -- example row
 id:                '0000...0001'
-urn:               'bifrost:repo:acmeco/dispatcher'
+urn:               'orgbrain:repo:acmeco/dispatcher'
 name:              'dispatcher'
 url:               'https://github.com/acmeco/dispatcher'
 domain_id:         '8a12...e0c2'    -- → domains.delivery
-local_clone_path:  '/var/bifrost/clones/acmeco__dispatcher'
+local_clone_path:  '/var/orgbrain/clones/acmeco__dispatcher'
 is_primary:        true             -- canonical answer for the domain
 adapter_config:    {"branch": "main", "shallow_depth": 50}
 ```
@@ -160,23 +160,23 @@ The `is_primary` flag designates the canonical answer for chat queries when a do
 **Read by:** every research agent, the extraction worker, the handover generator. This is the most-joined-against table in the schema.
 **Written by:** `POST /repos`, `POST /catalog/sync` (auto-registration path), `DELETE /repos/{id}` (soft-delete cascade).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `domains`
 
-A logical grouping of repos. Each repo belongs to at most one domain. URN is `bifrost:domain:<slug>`.
+A logical grouping of repos. Each repo belongs to at most one domain. URN is `orgbrain:domain:<slug>`.
 
 ```sql
 -- example row
 id:    '8a12...e0c2'
-urn:   'bifrost:domain:delivery'
+urn:   'orgbrain:domain:delivery'
 name:  'Delivery'
 ```
 
 **Read by:** the Knowledge browse page, the chat scope resolver, the handover generator (domain-scoped handovers pool entities across all repos with `domain_id` matching).
 **Written by:** `POST /domains`, the team-domain step of `POST /admin/index-services`.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `org_repos`
 
@@ -198,7 +198,7 @@ registered_repo_id:  '0000...0001'  -- non-NULL once registered into `repos`
 **Read by:** the chat skim-search (when the registered scope doesn't surface a candidate repo, this table is consulted), the auto-registration helper, team / region-scoped handover generators.
 **Written by:** `POST /catalog/sync` (re-fetch + upsert), the auto-registration helper (sets `registered_repo_id` after a successful `POST /repos`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `repo_freshness`
 
@@ -219,7 +219,7 @@ freshness_state:         'fresh'          -- one of: fresh|stale|unknown
 **Read by:** the dashboard (to render the freshness indicator per repo), the extraction worker (to resume from checkpoint on a partial run), the chat freshness check (to decide whether to pull before researching).
 **Written by:** `POST /repos/{id}/extract` (creates baseline row), the extraction worker (updates checkpoint cursors + final state).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `repo_ownership`
 
@@ -244,11 +244,11 @@ raw_manifest:          { ... merged parsed manifest ... }
 **Read by:** every per-source research agent (to know *which* Jira project, Slack channel, etc. to query), the handover generator (ownership section), the action layer (to know which team's PR template to use).
 **Written by:** `POST /repos/{id}/sync-ownership`, and `POST /repos` when a manifest is present at registration.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### Service graph (rows in `entities` and `entity_relationships`)
 
-`POST /admin/index-services` builds a service-level graph from the manifests. For each repo it upserts a service entity (`urn:bifrost:service:<repo>`) and a team domain (`urn:bifrost:domain:<team>`), then inserts edges. The call is idempotent. Edges carry a `confidence` and the `matched_on` value that produced them.
+`POST /admin/index-services` builds a service-level graph from the manifests. For each repo it upserts a service entity (`urn:orgbrain:service:<repo>`) and a team domain (`urn:orgbrain:domain:<team>`), then inserts edges. The call is idempotent. Edges carry a `confidence` and the `matched_on` value that produced them.
 
 | `rel_type` | Where it comes from | Confidence |
 |---|---|---|
@@ -337,7 +337,7 @@ The `requester_type` is `"human"` by default but can also be `"agent"` when an a
 **Read by:** the `ExtractionWorker` (polls for new rows), the Overview dashboard, the SSE streaming endpoint, the Spend page (joins on cost rows).
 **Written by:** `POST /repos/{id}/extract`, `POST /extract`, `POST /extraction-tasks` (worker self-submit), the action-layer ask-back path.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `task_consultation_log`
 
@@ -357,7 +357,7 @@ result_json:   { "relevance": "high", "summary": "..." }
 **Read by:** debug pages, audit, the SSE replay flow when a client reconnects mid-extraction.
 **Written by:** the research coordinator (one row per per-agent worker hand-off), the extraction worker.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `agent_session_events`
 
@@ -377,7 +377,7 @@ track:       'A'
 **Read by:** observability views, the Spend page (joins for per-agent aggregation), the debugger surface.
 **Written by:** any agent that emits a lifecycle event.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `extraction_triggers` (alembic-only)
 
@@ -402,7 +402,7 @@ mode:                 'shallow'         -- 'shallow' or 'deep'
 
 (Verified: `alembic/versions/001_baseline.py`.)
 
-> **If you remember nothing else about §5.** `extraction_tasks` is *Bifrost-driven indexing jobs*, NOT user tasks. The action-layer `tasks` table (chapter §9) is a different beast — they share none of the schema.
+> **If you remember nothing else about §5.** `extraction_tasks` is *OrgBrain-driven indexing jobs*, NOT user tasks. The action-layer `tasks` table (chapter §9) is a different beast — they share none of the schema.
 
 ---
 
@@ -474,7 +474,7 @@ The knowledge graph's polymorphic node table. Every kind of extracted entity (Co
 -- example row
 id:                '7f3a...0bf2'
 entity_type:       'COMPONENT'
-urn:               'bifrost:repo:acmeco/dispatcher:component:dispatcher/fanout.py::FanoutService'
+urn:               'orgbrain:repo:acmeco/dispatcher:component:dispatcher/fanout.py::FanoutService'
 name:              'FanoutService'
 qualified_name:    'dispatcher.fanout.FanoutService'
 scope_repo_id:     '0000...0001'
@@ -498,7 +498,7 @@ Key columns to flag:
 **Read by:** every research agent, every handover generator, the Knowledge browse page, the chat synthesiser via citations.
 **Written by:** the extraction pipeline (upserts entities at the end of each phase D, E, F, G, H, I); the cross-repo linker (updates `metadata`); the learning loop (updates `confidence` + `confidence_level`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `entity_relationships`
 
@@ -519,7 +519,7 @@ freshness_state:  'fresh'
 **Read by:** dependency-impact / blast-radius queries, graph retrieval helpers, the handover generator's flow and dependency sections.
 **Written by:** the extraction pipeline's Phase G (relationship synthesis); cross-repo linker (cross-repo edges).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `entity_communities`
 
@@ -539,7 +539,7 @@ centroid:                    [0.011, -0.030, 0.19, ...]   -- average of member e
 **Read by:** the chat coordinator's domain-scoped queries; the Knowledge browse page renders communities as a top-level grouping.
 **Written by:** the Stage-6 community-detection job (`POST /admin/rebuild-communities`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `knowledge_text_cache`
 
@@ -557,7 +557,7 @@ entity_type:   'summary'
 **Read by:** any agent that needs to retrieve previously-cached text.
 **Written by:** agents that persist intermediate text artefacts.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 > **If you remember nothing else about §6.** `entities` is the polymorphic node table; `entity_relationships` is its edge table; `entity_communities` is the cluster table that makes domain-scoped retrieval tractable. All three are touched by every research path.
 
@@ -637,7 +637,7 @@ embedding:           [0.022, ...]    -- 384-dim
 **Read by:** `confluence_agent`, the handover generator's docs section, full-text search through TSVECTOR + the embedding vector for semantic match.
 **Written by:** `external_indexer` running the Confluence sync (`POST /indexer/repos/{id}` or `/indexer/all`); admin re-embed (`POST /admin/embed/confluence`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `jira_issues`
 
@@ -664,7 +664,7 @@ embedding:             [0.045, ...]
 **Read by:** `jira_agent`, the action-layer `intent_router` (resolves a Jira issue key into the underlying request), the handover generator's "active work" section.
 **Written by:** `external_indexer` running the Jira sync; admin re-embed (`POST /admin/embed/jira`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `external_sync_log`
 
@@ -683,7 +683,7 @@ error:             NULL
 **Read by:** the dashboard freshness indicator, the indexer's scheduling logic, `GET /indexer/status`.
 **Written by:** any external-source sync completing (success or error).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 > **If you remember nothing else about §7.** External caches are *cache, not source-of-truth*. The Atlassian / GitHub / Slack systems own the data; we mirror it for fast embed-search and to reduce per-question MCP-call cost.
 
@@ -735,7 +735,7 @@ A persistent chat thread. Cookie-based ownership. Carries the chat title, the op
 ```sql
 -- example row
 id:                'conv-abc...'
-session_id:        'cookie-xyz...'   -- bifrost_session cookie value
+session_id:        'cookie-xyz...'   -- orgbrain_session cookie value
 title:             'Why did delivery fail for endpoint XYZ?'
 scope_repo_ids:    ["f47a...c479", "9a99...0011"]
 scope_domain_id:   NULL
@@ -745,7 +745,7 @@ archived:          false              -- bool, predates archived_at convention
 **Read by:** the Chat page (to populate the thread list), the query worker (to load history when continuing a thread).
 **Written by:** `POST /conversations`, `PATCH /conversations/{id}` (rename), `DELETE /conversations/{id}` (sets `archived=true`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `conversation_messages`
 
@@ -758,7 +758,7 @@ conversation_id:  'conv-abc...'
 turn_index:       3
 role:             'assistant'
 content:          'FanoutService dispatches events via EndpointRouter [^1]...'
-sources:          [{ "type": "entity", "urn": "bifrost:repo:.../component:FanoutService", "title": "FanoutService" }]
+sources:          [{ "type": "entity", "urn": "orgbrain:repo:.../component:FanoutService", "title": "FanoutService" }]
 confidence:       'confirmed'
 reasoning:        'Multiple research agents converged on FanoutService → EndpointRouter chain.'
 gaps:             ["Retry timing for 5xx responses unclear"]
@@ -771,7 +771,7 @@ Uniqueness is enforced on `(conversation_id, turn_index)` so turns are strictly 
 **Read by:** the Chat page, the follow-up planner (to load recent turns into context), the audit / debug surfaces.
 **Written by:** `POST /conversations/{id}/messages` (user turn); the SSE finaliser when an assistant turn completes.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `conversation_research_state`
 
@@ -787,7 +787,7 @@ last_question_embedding:   [0.022, -0.041, ...]
 **Read by:** the follow-up planner on the first turn after an API restart.
 **Written by:** the coordinator after each research turn completes.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 > **If you remember nothing else about §8.** `conversations.archived` is a bool — predates the `archived_at` convention. Don't use it as a template for new tables.
 
@@ -795,7 +795,7 @@ last_question_embedding:   [0.022, -0.041, ...]
 
 ## 9. Action layer
 
-The action layer was originally called "Briefs" and is now called "Tasks". Every table in this group is created by the baseline migration. **None of these tables have ORM model classes** — they are accessed via raw SQL through helpers in `src/bifrost/storage/repository.py` and the routes in `src/bifrost/api/routes/tasks.py`. (Inferred from the absence of `class Task*` in `models.py`.)
+The action layer was originally called "Briefs" and is now called "Tasks". Every table in this group is created by the baseline migration. **None of these tables have ORM model classes** — they are accessed via raw SQL through helpers in `src/orgbrain/storage/repository.py` and the routes in `src/orgbrain/api/routes/tasks.py`. (Inferred from the absence of `class Task*` in `models.py`.)
 
 ### 9.1 ER diagram
 
@@ -919,7 +919,7 @@ erDiagram
 
 #### `tasks`
 
-The action-layer top-level entity. State machine: `draft_intent → discussing → discuss_done → drafting_plan → plan_ready → executing → verifying → success / blocked / cancelled` (verified: `src/bifrost/actions/task_lifecycle.py`).
+The action-layer top-level entity. State machine: `draft_intent → discussing → discuss_done → drafting_plan → plan_ready → executing → verifying → success / blocked / cancelled` (verified: `src/orgbrain/actions/task_lifecycle.py`).
 
 ```sql
 -- example row
@@ -1043,7 +1043,7 @@ kind:                'need_user_input'  -- need_research|need_user_input|conflic
 question:            'Should retries be capped per endpoint or per event?'
 options:             ["per_endpoint", "per_event"]   -- empty = free-text
 answer:              'per_endpoint'
-answered_by:         'user'           -- user|bifrost_research|bifrost_extraction|system
+answered_by:         'user'           -- user|orgbrain_research|orgbrain_extraction|system
 state:               'answered'       -- open|answered|skipped|superseded
 ```
 
@@ -1065,7 +1065,7 @@ order_index:                 0
 plan_key:                    'P1-T1'
 name:                        'Add backoff setting to retry policy'
 files:                       ["dispatcher/fanout.py"]
-urns:                        ["bifrost:repo:.../component:RetryPolicy"]
+urns:                        ["orgbrain:repo:.../component:RetryPolicy"]
 action_body:                 'Add a backoff_seconds field to RetryPolicy and ensure it...'
 verify_cmd:                  'pytest tests/test_retry.py'
 done_criterion:              'test_retry passes including the new backoff case'
@@ -1153,7 +1153,7 @@ Quality-tracking for individual agent claims.
 id:           'aj-800...'
 claim:        'EndpointRouter routes by country code from the request'
 cited_tiers:  [1, 2]
-cited_urns:   ["bifrost:repo:.../component:EndpointRouter"]
+cited_urns:   ["orgbrain:repo:.../component:EndpointRouter"]
 outcome:      'confirmed'          -- 'confirmed' | 'contradicted' | NULL
 ```
 
@@ -1279,7 +1279,7 @@ id:                    'hd-xyz...'
 scope_kind:            'repo'                -- feature|repo|domain|region|team|session
 scope_value:           'dispatcher'
 parent_id:             NULL                   -- non-NULL for tree-decomposed children
-fs_path:               '/var/bifrost/docs/handovers/repos/dispatcher/index.md'
+fs_path:               '/var/orgbrain/docs/handovers/repos/dispatcher/index.md'
 manifest_hash:         'sha256:1a2b3c...'    -- sha256(sorted source URNs + extraction timestamps)
 freshness_state:       'fresh'                -- fresh|stale|very_stale|enriched_by_children|stale_due_to_children
 last_generated_at:     '2025-01-15 13:00:00'
@@ -1293,7 +1293,7 @@ search_tsv:            -- Postgres-generated TSVECTOR; GIN-indexed
 **Read by:** the Collaboration handovers page (list + detail views), the matcher when starting a session, the generator when re-generating (loads prior body for diff).
 **Written by:** the handover generator (insert on generation, update on regenerate); `DELETE /handover-docs/{id}` (sets `archived_at`); `POST /handover-docs/{id}/restore` (clears it).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `handover_audits`
 
@@ -1315,7 +1315,7 @@ metadata:    { "version_before": 3, "version_after": 4, "diff_lines": 12 }
 **Read by:** `GET /handover-docs/{id}/audit` (Activity Timeline disclosure on the handover detail page), audit / forensics.
 **Written by:** `POST /handover-docs/{id}/body` (PATCH), `POST /handover-docs/{id}/promote-candidate`, `DELETE /handover-docs/{id}` (archive), `POST /handover-docs/{id}/restore`, the generator on completion.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `handover_body_history`
 
@@ -1333,7 +1333,7 @@ created_at:  '2025-01-15 14:35:00'
 **Read by:** `GET /handover-docs/{id}/history` (the diff viewer).
 **Written by:** the registry helper before any body overwrite.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `collaboration_sessions`
 
@@ -1342,7 +1342,7 @@ The collaboration session top-level entity. State machine: `open` → `clarifyin
 ```sql
 -- example row
 id:                'cs-abc...'
-requester:         'cookie-xyz...'   -- bifrost_session cookie
+requester:         'cookie-xyz...'   -- orgbrain_session cookie
 state:             'briefed'
 requirement_text:  'We need to add retry backoff to the dispatcher.'
 matched_doc_ids:   ["hd-xyz...", "hd-abc..."]   -- handover docs this session is grounded in
@@ -1352,7 +1352,7 @@ resolved_at:       '2025-01-15 15:10:00'
 **Read by:** the Collaboration landing page (open sessions list), the session detail page, the loop-back analyser (recurring doubts → candidate updates).
 **Written by:** `POST /collab-sessions` (create), `POST /collab-sessions/{id}/messages` (state transitions), `POST /collab-sessions/{id}/close`, `POST /collab-sessions/{id}/reopen`.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `collab_messages`
 
@@ -1365,14 +1365,14 @@ session_id:         'cs-abc...'
 ord:                3
 role:               'clarifier_agent'   -- requester|system|clarifier_agent|synthesizer_agent
 content_md:         'Could you clarify whether retries are capped per endpoint or per event?'
-source_citations:   ["bifrost:repo:.../doc:dispatcher-runbook#retries"]   -- text[] of URNs
+source_citations:   ["orgbrain:repo:.../doc:dispatcher-runbook#retries"]   -- text[] of URNs
 doubt_id:           'cd-ddd...'         -- non-NULL when this message asks/answers a specific doubt
 ```
 
 **Read by:** the session detail page (chat history pane).
 **Written by:** `POST /collab-sessions/{id}/messages` (user turn + agent turn appended atomically).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `collab_doubts`
 
@@ -1385,14 +1385,14 @@ session_id:   'cs-abc...'
 question:     'Are retries capped per endpoint or per event?'
 status:       'answered_by_doc'   -- open|answered_by_doc|answered_by_human|unresolved|escalated
 resolved_md:  'Per the dispatcher runbook, retries are capped per endpoint.'
-source_ref:   'bifrost:repo:.../doc:dispatcher-runbook#retries'
+source_ref:   'orgbrain:repo:.../doc:dispatcher-runbook#retries'
 resolved_at:  '2025-01-15 15:08:00'
 ```
 
 **Read by:** the session detail page (doubt log pane), the loop-back analyser (recurring questions → candidate updates), the synthesiser (resolved + unresolved doubts go into the brief).
 **Written by:** the clarifier on each turn (emits `new_doubts`); `POST /collab-sessions/{id}/doubts/{did}/resolve` (manual resolution).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 #### `collab_artifacts`
 
@@ -1403,13 +1403,13 @@ Produced artefacts attached to a session.
 id:          'ca-eee...'
 session_id:  'cs-abc...'
 kind:        'final_brief'    -- final_brief|estimate|risk_log|draft_ask_message
-fs_path:     '/var/bifrost/docs/handovers/sessions/cs-abc/brief.md'
+fs_path:     '/var/orgbrain/docs/handovers/sessions/cs-abc/brief.md'
 ```
 
 **Read by:** the session detail page (artefacts pane), the filesystem reader when an operator opens the brief.
 **Written by:** `POST /collab-sessions/{id}/close` (synthesiser writes `final_brief`); user-triggered derived artefacts (e.g. `draft_ask_message`).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 > **If you remember nothing else about §10.** The handover doc on disk is source-of-truth; the row is the index. `handover_audits` and `handover_body_history` are *intentionally* FK-less so they survive a hard delete of the parent doc.
 
@@ -1434,7 +1434,7 @@ track_b_config:   { "model": "managed-agents:default" }
 **Read by:** every agent at startup of its session.
 **Written by:** admin sets a config override (no UI yet — direct DB or admin route).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 ### 11.2 `llm_cost_log`
 
@@ -1461,7 +1461,7 @@ created_at:         '2025-01-15 14:35:01'
 **Read by:** the Spend page (`GET /costs/summary`), the budget enforcer, daily-cost alerts.
 **Written by:** every `claude -p` invocation completes (success or error) — written by `extraction/cost.py::CostTracker.record()`.
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 ### 11.3 `global_rules`
 
@@ -1480,7 +1480,7 @@ active:       true
 **Read by:** every agent at prompt-construction time.
 **Written by:** admin curates rules (no UI yet — direct DB or admin route).
 
-(Verified: `src/bifrost/storage/models.py`.)
+(Verified: `src/orgbrain/storage/models.py`.)
 
 > **If you remember nothing else about §11.** `llm_cost_log` is THE source of cost truth — `cost.py::CostTracker.record()` is the only writer; the Spend page is the only reader. Everything else is plumbing.
 
@@ -1490,13 +1490,13 @@ active:       true
 
 Two intentional omissions:
 
-1. **Indexes other than the `pgvector` HNSW and the partial indexes called out in the model.** Read `src/bifrost/storage/models.py` `__table_args__` directly when planning a query — every non-trivial query in the codebase is expected to map to an index named there.
+1. **Indexes other than the `pgvector` HNSW and the partial indexes called out in the model.** Read `src/orgbrain/storage/models.py` `__table_args__` directly when planning a query — every non-trivial query in the codebase is expected to map to an index named there.
 
 2. **Constraint names.** Every check / unique / foreign-key constraint is deterministically named via the convention in `models.py:33-43`. When debugging a constraint-violation error from Postgres, that section is the decoder ring.
 
 For row-by-row detail beyond what's here, the canonical sources are:
 
-- ORM-mapped tables: `src/bifrost/storage/models.py`.
+- ORM-mapped tables: `src/orgbrain/storage/models.py`.
 - Alembic-only tables (action layer): created by `alembic/versions/001_baseline.py` along with every other table.
 - Schema history: `alembic/versions/` (a single baseline migration, `001_baseline.py`).
 

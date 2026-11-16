@@ -26,15 +26,15 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from bifrost.research.agent_cache import (
+from orgbrain.research.agent_cache import (
     _KIND_TTL,
     _settings_threshold,
     cached_agent,
     cost_from_usage,
 )
-from bifrost.research.runs import start_run
-from bifrost.storage.models import AgentResult
-from bifrost.storage.repository import EntityRepository
+from orgbrain.research.runs import start_run
+from orgbrain.storage.models import AgentResult
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture
@@ -395,7 +395,7 @@ async def test_successful_report_cached_and_hits(session_factory_for) -> None:
 async def test_old_rows_still_returned_with_freshness_metadata(
     session_factory_for,
 ) -> None:
-    """Bifrost is a knowledge BASE, not a TTL cache.
+    """OrgBrain is a knowledge BASE, not a TTL cache.
     A 2-month-old jira row is still returned by semantic lookup.
     Stale data is information; the agent decides whether to re-verify.
     The runner is NOT called when a semantically-matching old row
@@ -536,26 +536,26 @@ async def test_threshold_setting() -> None:
     """The threshold comes from the validated cache_sim_threshold field.
 
     The helper reads the cached settings singleton, so a change to
-    BIFROST_CACHE_SIM_THRESHOLD only takes effect after reset_settings()
+    ORGBRAIN_CACHE_SIM_THRESHOLD only takes effect after reset_settings()
     (the established test pattern). A non-numeric / out-of-range value no
     longer silently falls back to 0.85 — it fails fast at validate_startup;
     that contract is covered in tests/test_config_validation.py.
     """
-    from bifrost.cli.config import reset_settings
+    from orgbrain.cli.config import reset_settings
 
-    prior = os.environ.get("BIFROST_CACHE_SIM_THRESHOLD")
+    prior = os.environ.get("ORGBRAIN_CACHE_SIM_THRESHOLD")
     try:
-        os.environ["BIFROST_CACHE_SIM_THRESHOLD"] = "0.9"
+        os.environ["ORGBRAIN_CACHE_SIM_THRESHOLD"] = "0.9"
         reset_settings()
         assert _settings_threshold() == 0.9
-        os.environ.pop("BIFROST_CACHE_SIM_THRESHOLD", None)
+        os.environ.pop("ORGBRAIN_CACHE_SIM_THRESHOLD", None)
         reset_settings()
         assert _settings_threshold() == 0.85  # field default
     finally:
         if prior is None:
-            os.environ.pop("BIFROST_CACHE_SIM_THRESHOLD", None)
+            os.environ.pop("ORGBRAIN_CACHE_SIM_THRESHOLD", None)
         else:
-            os.environ["BIFROST_CACHE_SIM_THRESHOLD"] = prior
+            os.environ["ORGBRAIN_CACHE_SIM_THRESHOLD"] = prior
         reset_settings()
 
 

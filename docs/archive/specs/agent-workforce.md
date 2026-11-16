@@ -7,9 +7,9 @@
 
 ## 1. Purpose and Scope
 
-This spec defines Bifrost's agent workforce: taxonomy, capabilities, lifecycle, and implementation across two execution tracks. Track A (V1, available now): agents run as Python classes with in-process Anthropic Messages API calls. Track B (future, requires Managed Agents Research Preview access): agents run as Anthropic Managed Agent Sessions in cloud containers. All agent interfaces are defined as Python abstractions — both tracks implement the same interface. Switching tracks requires no business logic changes.
+This spec defines OrgBrain's agent workforce: taxonomy, capabilities, lifecycle, and implementation across two execution tracks. Track A (V1, available now): agents run as Python classes with in-process Anthropic Messages API calls. Track B (future, requires Managed Agents Research Preview access): agents run as Anthropic Managed Agent Sessions in cloud containers. All agent interfaces are defined as Python abstractions — both tracks implement the same interface. Switching tracks requires no business logic changes.
 
-Agents exist to make the workforce model concrete: instead of one monolithic LLM answering every question, Bifrost decomposes engineering understanding into scope-bounded specialists that can be consulted individually or composed through orchestration (see S9).
+Agents exist to make the workforce model concrete: instead of one monolithic LLM answering every question, OrgBrain decomposes engineering understanding into scope-bounded specialists that can be consulted individually or composed through orchestration (see S9).
 
 This spec covers:
 - The taxonomy of agent types and their knowledge boundaries
@@ -33,11 +33,11 @@ This spec does NOT cover:
 
 | Term | Definition |
 |---|---|
-| **Specialist / Agent** | A stateless, LLM-backed entity that owns a bounded slice of Bifrost knowledge and can answer queries within that scope. |
+| **Specialist / Agent** | A stateless, LLM-backed entity that owns a bounded slice of OrgBrain knowledge and can answer queries within that scope. |
 | **Task** | A user or system request that requires one or more agents to produce findings, evidence, and synthesis. |
-| **Repo** | A single source code repository registered in Bifrost. |
+| **Repo** | A single source code repository registered in OrgBrain. |
 | **Domain** | A logical grouping of repos that together serve a coherent business or engineering purpose. |
-| **Source** | An external system connected to Bifrost via a source adapter (e.g., Git, Jira, Slack, runtime traces). |
+| **Source** | An external system connected to OrgBrain via a source adapter (e.g., Git, Jira, Slack, runtime traces). |
 | **KnowledgeArtifact** | A discrete unit of extracted, derived, or learned knowledge stored in the Knowledge Store. Includes T1 (broad mappings) and T2 (extracted/learned knowledge). |
 | **T1 Artifact** | Broad mapping: where truth lives, which source objects matter, relevance links. |
 | **T2 Artifact** | Extracted knowledge: entities, relationships, flow hints, dependency hints, patterns, conventions. |
@@ -50,7 +50,7 @@ This spec does NOT cover:
 
 ## 3. Requirements Traceability
 
-This spec addresses requirements from Section 14 of the Bifrost requirements document.
+This spec addresses requirements from Section 14 of the OrgBrain requirements document.
 
 | Requirement | Section | How addressed |
 |---|---|---|
@@ -87,7 +87,7 @@ Additional traceability:
 
 1. **Fine-tuned models per agent.** V1 agents share the same base LLM. Specialization comes from scoped context, not model weights.
 2. **Autonomous agent-to-agent communication.** Agents do not directly invoke other agents. All composition goes through orchestration (S9).
-3. **Long-running agent processes.** Track A: agents are async Python functions — no separate long-running process, runs within the Bifrost API server process. Track B: sessions may run for extended periods in Anthropic containers but terminate on completion. Both tracks: extraction must checkpoint state regularly so it can be resumed.
+3. **Long-running agent processes.** Track A: agents are async Python functions — no separate long-running process, runs within the OrgBrain API server process. Track B: sessions may run for extended periods in Anthropic containers but terminate on completion. Both tracks: extraction must checkpoint state regularly so it can be resumed.
 4. **Code execution.** Track A agents analyze code as text (no code execution). Track B agents may execute code within Anthropic-managed sandboxed containers via the Bash tool.
 5. **User-facing conversational memory.** Agents do not maintain multi-turn conversational state. Task context is managed by the TaskCoordinator.
 
@@ -396,7 +396,7 @@ class TrackBSessionConfig(BaseModel):
 
 
 class MCPToolConfig(BaseModel):
-    server_name: str         # e.g., "bifrost-git-mcp", "bifrost-storage"
+    server_name: str         # e.g., "orgbrain-git-mcp", "orgbrain-storage"
     tool_names: list[str]    # tools available from this server
     endpoint: str            # MCP server endpoint URL
 
@@ -508,7 +508,7 @@ Refresh behavior:
 
 ### 8.2 Track A Lifecycle
 
-**1. Initialization (at Bifrost startup):**
+**1. Initialization (at OrgBrain startup):**
 - Load agent configs from PostgreSQL (`agent_configs` table)
 - Instantiate `AgentStateBackend` (PostgreSQL implementation)
 - Register agent types in in-memory registry (type -> class mapping)
@@ -531,7 +531,7 @@ Refresh behavior:
 **1. One-time Setup:**
 - Create Agent Definitions via `POST /v1/agents` (one per agent type: RepoAgent, TaskCoordinator, ExtractionAgent)
 - Create Environment via `POST /v1/environments` (Python + git container spec)
-- Store Definition IDs and Environment ID in Bifrost config
+- Store Definition IDs and Environment ID in OrgBrain config
 - Create Memory Stores via `POST /v1/memory_stores` (one per repo, one global)
 
 **2. Per-Task Execution:**
@@ -576,7 +576,7 @@ Each Track B session (RepoAgent, ExtractionAgent, or TaskCoordinator sub-thread)
 
 ### 8.4 Lifecycle Phase Definitions
 
-**Provisioning:** Triggered when a repo is registered in Bifrost. Creates the agent entry in the Agent Registry with status `provisioning`. Assigns scope, determines which source adapters are relevant.
+**Provisioning:** Triggered when a repo is registered in OrgBrain. Creates the agent entry in the Agent Registry with status `provisioning`. Assigns scope, determines which source adapters are relevant.
 
 **Extracting:** ExtractionAgent runs in the background to build initial knowledge. In Track A: background job writing to PostgreSQL. In Track B: managed session writing to memory store. Transitions to `steady_state` on completion; retries on transient failure.
 
@@ -584,11 +584,11 @@ Each Track B session (RepoAgent, ExtractionAgent, or TaskCoordinator sub-thread)
 
 **Degraded:** Entered when underlying sources become unavailable. Agent continues to respond using cached/stale knowledge. All responses flagged with `is_stale: True`. Periodically checks source availability for recovery.
 
-**Decommission:** Triggered when a repo is removed from Bifrost. Agent marked as `decommissioning`. Scoped knowledge artifacts cleaned up. Agent entry removed from registry (or archived for audit).
+**Decommission:** Triggered when a repo is removed from OrgBrain. Agent marked as `decommissioning`. Scoped knowledge artifacts cleaned up. Agent entry removed from registry (or archived for audit).
 
 ### 8.5 Track B Session Pool
 
-Track B sessions are subject to a platform concurrency limit (L7). Bifrost manages a session pool to stay within that limit.
+Track B sessions are subject to a platform concurrency limit (L7). OrgBrain manages a session pool to stay within that limit.
 
 ```python
 from pydantic import BaseModel
@@ -607,7 +607,7 @@ class SessionPoolConfig(BaseModel):
 2. Slot released when session reaches `completed`, `timed_out`, or `failed`
 3. TaskCoordinator sub-threads (RepoAgent session threads) each consume a slot — parallel fan-out is bounded by pool size
 
-**Operator configuration:** `SessionPoolConfig` is set in Bifrost config and can be adjusted as Managed Agents platform limits evolve. The Research Preview default of 3 concurrent sessions means a TaskCoordinator consulting 3+ repos will either serialize some consultations or degrade to partial coverage.
+**Operator configuration:** `SessionPoolConfig` is set in OrgBrain config and can be adjusted as Managed Agents platform limits evolve. The Research Preview default of 3 concurrent sessions means a TaskCoordinator consulting 3+ repos will either serialize some consultations or degrade to partial coverage.
 
 ---
 
@@ -665,7 +665,7 @@ Session executes in Anthropic container:
   - Agent calls callable_agents for sub-consultation (RepoAgent threads)
     |
     v
-Session SSE stream delivers events to Bifrost
+Session SSE stream delivers events to OrgBrain
     |
     v
 Final thread message = AgentResponse
@@ -833,7 +833,7 @@ class FlowIndexEntry(BaseModel):
 class RepoKnowledgeIndex(BaseModel):
     """T2 entity: per-repo compressed knowledge index."""
 
-    id: str                    # bifrost:knowledge-index:{repo-id}
+    id: str                    # orgbrain:knowledge-index:{repo-id}
     entity_type: str = "knowledge_index"
 
     repo_id: str
@@ -1080,7 +1080,7 @@ async def list(self, prefix: str) -> list[str]:
     ...
 ```
 
-Cross-machine sharing: requires shared PostgreSQL instance (same DB accessible to all Bifrost instances).
+Cross-machine sharing: requires shared PostgreSQL instance (same DB accessible to all OrgBrain instances).
 
 ### Track B: Memory Store-Backed State
 
@@ -1126,7 +1126,7 @@ Source content (code, commits, PR descriptions, Jira tickets) is loaded into age
 1. **Content sandboxing**: system prompt in `system` message role; source content in `user` message role. Instructions in user-role content cannot override system-role constraints.
 2. **Structured extraction**: agents are instructed to analyze specific properties (exports, function signatures, dependency declarations) rather than quoting raw text verbatim.
 3. **Input length limits**: max 50KB source content per agent call; max 200KB total per session. Content exceeding limits is truncated with a boundary marker.
-4. **Canary tokens**: system prompt includes a known marker string; Bifrost validates agent responses do not echo the marker (indicating context hijacking). Responses that echo the marker are rejected and logged.
+4. **Canary tokens**: system prompt includes a known marker string; OrgBrain validates agent responses do not echo the marker (indicating context hijacking). Responses that echo the marker are rejected and logged.
 5. **Response schema validation**: agent responses validated against `AgentResponse` schema before storage or forwarding. Responses failing validation are flagged as `uncertain` confidence and surfaced to the operator log.
 
 ---
@@ -1137,7 +1137,7 @@ Source content (code, commits, PR descriptions, Jira tickets) is loaded into age
 
 **Track B:** Source code is cloned into Anthropic-hosted containers. Extracted knowledge is stored in Anthropic Memory Stores. This requires:
 1. Organization reviews and accepts Anthropic's Data Processing Agreement (DPA)
-2. Admin enables Track B only after DPA completion (feature flag in Bifrost config)
+2. Admin enables Track B only after DPA completion (feature flag in OrgBrain config)
 3. Secret scanning runs before any session is created (pre-clone validation)
 4. Repos classified as `RESTRICTED` are excluded from Track B (manual override only)
 
@@ -1590,7 +1590,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Caller
-    participant BF as Bifrost API
+    participant BF as OrgBrain API
     participant MA as Managed Agents API
     participant TCS as TaskCoordinator Session
     participant RAS_A as RepoAgent Session A (thread)

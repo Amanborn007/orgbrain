@@ -10,11 +10,11 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-import bifrost.api.audit as audit_mod
-from bifrost.api.auth.providers import IdentityConfigError, build_identity_provider
-from bifrost.api.deps import get_repository
-from bifrost.cli.config import BifrostSettings, reset_settings
-from bifrost.errors import ConfigError
+import orgbrain.api.audit as audit_mod
+from orgbrain.api.auth.providers import IdentityConfigError, build_identity_provider
+from orgbrain.api.deps import get_repository
+from orgbrain.cli.config import OrgBrainSettings, reset_settings
+from orgbrain.errors import ConfigError
 from tests.auth_helpers import AUDIENCE, ISSUER, JWKS_URL, boot, client, header_identity
 
 ADMIN_MAP = {"admin": ["eng-admins"]}
@@ -47,16 +47,16 @@ async def test_unmapped_user_is_member(monkeypatch) -> None:
     assert body["roles"] == ["member"]
 
 
-async def test_raw_bifrost_admin_group_is_not_admin(monkeypatch) -> None:
+async def test_raw_orgbrain_admin_group_is_not_admin(monkeypatch) -> None:
     app = boot(monkeypatch, provider="header", roles=ADMIN_MAP)
-    body = await _me(app, header_identity("m@example.com", "bifrost-admin"))
+    body = await _me(app, header_identity("m@example.com", "orgbrain-admin"))
     assert body["roles"] == ["member"]
-    assert "bifrost-admin" in body["groups"]
+    assert "orgbrain-admin" in body["groups"]
 
 
 async def test_empty_admin_mapping_boots_and_everyone_is_member(monkeypatch) -> None:
     app = boot(monkeypatch, provider="header", roles={"admin": []})
-    body = await _me(app, header_identity("m@example.com", "eng-admins,bifrost-admin"))
+    body = await _me(app, header_identity("m@example.com", "eng-admins,orgbrain-admin"))
     assert body["roles"] == ["member"]
 
 
@@ -77,7 +77,7 @@ async def test_demo_principal_is_admin_and_has_no_hardcoded_admin_group(monkeypa
     app = boot(monkeypatch, provider="none", demo=True)
     body = await _me(app, {})
     assert "admin" in body["roles"]
-    assert "bifrost-admin" not in body["groups"]
+    assert "orgbrain-admin" not in body["groups"]
 
 
 @pytest.mark.parametrize("provider", ["header", "oidc_jwt"])
@@ -85,7 +85,7 @@ def test_roles_unset_fails_build(provider: str) -> None:
     identity: dict[str, Any] = {"provider": provider, "trusted_proxy": True}
     if provider == "oidc_jwt":
         identity["oidc"] = {"jwks_url": JWKS_URL, "issuer": ISSUER, "audience": AUDIENCE}
-    settings = BifrostSettings(  # type: ignore[call-arg]
+    settings = OrgBrainSettings(  # type: ignore[call-arg]
         _env_file=None, demo_mode=False, identity=identity
     )
     with pytest.raises(IdentityConfigError, match="identity.roles"):
@@ -129,7 +129,7 @@ async def test_oidc_groups_claim_maps_to_roles(monkeypatch, jwks, signing_key) -
         monkeypatch,
         provider="oidc_jwt",
         roles=ADMIN_MAP,
-        extra_env={"BIFROST_IDENTITY__OIDC__GROUPS_CLAIM": "idp:groups"},
+        extra_env={"ORGBRAIN_IDENTITY__OIDC__GROUPS_CLAIM": "idp:groups"},
     )
     admin = {"Authorization": f"Bearer {_jwt(signing_key, **{'idp:groups': ['eng-admins']})}"}
     other = {"Authorization": f"Bearer {_jwt(signing_key, **{'idp:groups': ['eng']})}"}

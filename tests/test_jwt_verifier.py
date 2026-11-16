@@ -18,7 +18,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from bifrost.api.auth.jwt_verifier import JWKSVerificationError, JWKSVerifier
+from orgbrain.api.auth.jwt_verifier import JWKSVerificationError, JWKSVerifier
 
 # ── shared key pair fixture ─────────────────────────────────────────
 
@@ -85,14 +85,14 @@ class TestHappyPath:
                 "exp": now + 300,
                 "sub": "user@example.com",
                 "email": "user@example.com",
-                "groups": ["bifrost-admins"],
+                "groups": ["orgbrain-admins"],
             },
         )
         v = JWKSVerifier(jwk_url="https://stub/keys")
         monkeypatch.setattr(v, "_get_client", lambda: _StubPyJWKClient(public_pem))
         claims = v.verify_and_decode(token)
         assert claims["email"] == "user@example.com"
-        assert claims["groups"] == ["bifrost-admins"]
+        assert claims["groups"] == ["orgbrain-admins"]
 
     def test_verifies_with_issuer_and_audience(
         self,
@@ -108,13 +108,13 @@ class TestHappyPath:
                 "exp": now + 300,
                 "sub": "user@example.com",
                 "iss": "https://idp.example.com/oauth2/default",
-                "aud": "bifrost",
+                "aud": "orgbrain",
             },
         )
         v = JWKSVerifier(
             jwk_url="https://stub/keys",
             issuer="https://idp.example.com/oauth2/default",
-            audience="bifrost",
+            audience="orgbrain",
         )
         monkeypatch.setattr(v, "_get_client", lambda: _StubPyJWKClient(public_pem))
         assert v.verify_and_decode(token)["sub"] == "user@example.com"
@@ -184,9 +184,9 @@ class TestFailures:
         now = int(time.time())
         token = _sign(
             private,
-            {"iat": now, "exp": now + 300, "sub": "x@y", "aud": "not-bifrost"},
+            {"iat": now, "exp": now + 300, "sub": "x@y", "aud": "not-orgbrain"},
         )
-        v = JWKSVerifier(jwk_url="https://stub/keys", audience="bifrost")
+        v = JWKSVerifier(jwk_url="https://stub/keys", audience="orgbrain")
         monkeypatch.setattr(v, "_get_client", lambda: _StubPyJWKClient(public_pem))
         with pytest.raises(JWKSVerificationError, match="audience"):
             v.verify_and_decode(token)

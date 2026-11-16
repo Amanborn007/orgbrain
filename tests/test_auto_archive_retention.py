@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.actions.auto_archive import (
+from orgbrain.actions.auto_archive import (
     RetentionResult,
     sweep_expired_caches,
     sweep_old_worktrees,
@@ -160,11 +160,11 @@ class TestSweepRetention:
             return ["/tmp/wt1"]
 
         monkeypatch.setattr(
-            "bifrost.actions.auto_archive.sweep_expired_caches",
+            "orgbrain.actions.auto_archive.sweep_expired_caches",
             _fake_cache,
         )
         monkeypatch.setattr(
-            "bifrost.actions.auto_archive.sweep_old_worktrees",
+            "orgbrain.actions.auto_archive.sweep_old_worktrees",
             _fake_wt,
         )
 
@@ -191,11 +191,11 @@ class TestSweepRetention:
             return ["/tmp/wt-survived"]
 
         monkeypatch.setattr(
-            "bifrost.actions.auto_archive.sweep_expired_caches",
+            "orgbrain.actions.auto_archive.sweep_expired_caches",
             _broken_cache,
         )
         monkeypatch.setattr(
-            "bifrost.actions.auto_archive.sweep_old_worktrees",
+            "orgbrain.actions.auto_archive.sweep_old_worktrees",
             _fake_wt,
         )
 

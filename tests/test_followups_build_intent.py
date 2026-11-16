@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from bifrost.research.coordinator import _generate_followups
+from orgbrain.research.coordinator import _generate_followups
 from tests import leak_terms
 
 CHIP = "What tests do I need to write for orders-api?"

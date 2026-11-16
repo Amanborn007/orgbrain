@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.api.schemas.conversations import MessageData
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api.schemas.conversations import MessageData
+from orgbrain.storage.repository import EntityRepository
 
 pytestmark = pytest.mark.asyncio
 

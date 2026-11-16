@@ -22,12 +22,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bifrost.api._cookie_signing import mint_signed_cookie, parse_signed_cookie
-from bifrost.api.app import create_app
-from bifrost.cli.config import reset_settings
-from bifrost.research.runs import mark_done, start_run
-from bifrost.storage.models import Base
-from bifrost.storage.repository import EntityRepository
+from orgbrain.api._cookie_signing import mint_signed_cookie, parse_signed_cookie
+from orgbrain.api.app import create_app
+from orgbrain.cli.config import reset_settings
+from orgbrain.research.runs import mark_done, start_run
+from orgbrain.storage.models import Base
+from orgbrain.storage.repository import EntityRepository
 
 
 def _signed_session_pair() -> tuple[str, str]:
@@ -42,7 +42,7 @@ def _signed_session_pair() -> tuple[str, str]:
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test",
+    "postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test",
 )
 
 
@@ -50,7 +50,7 @@ def _patch_session_factory(monkeypatch, factory) -> None:
     """Make every API code path that calls ``get_session_factory(settings)``
     return our test session_factory.
     """
-    import bifrost.api.deps as deps
+    import orgbrain.api.deps as deps
 
     monkeypatch.setattr(
         deps,
@@ -115,7 +115,7 @@ async def test_research_status_endpoint_returns_null_for_fresh_conv(
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
-        cookies={"bifrost_session": cookie},
+        cookies={"orgbrain_session": cookie},
     ) as client:
         resp = await client.get(
             f"/api/v1/conversations/{cid}/research-status",
@@ -154,7 +154,7 @@ async def test_research_status_returns_latest_done_run(
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
-        cookies={"bifrost_session": cookie},
+        cookies={"orgbrain_session": cookie},
     ) as client:
         resp = await client.get(
             f"/api/v1/conversations/{cid}/research-status",
@@ -184,7 +184,7 @@ async def test_research_status_404_for_unknown_conversation(
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
-        cookies={"bifrost_session": cookie},
+        cookies={"orgbrain_session": cookie},
     ) as client:
         resp = await client.get(
             f"/api/v1/conversations/{bogus}/research-status",
@@ -202,7 +202,7 @@ async def test_research_status_400_for_malformed_id(_api_factory, monkeypatch) -
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
-        cookies={"bifrost_session": cookie},
+        cookies={"orgbrain_session": cookie},
     ) as client:
         resp = await client.get(
             "/api/v1/conversations/not-a-uuid/research-status",

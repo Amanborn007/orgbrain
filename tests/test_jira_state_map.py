@@ -1,14 +1,14 @@
-"""Unit tests for the Bifrost-task-state → Jira-workflow-state map."""
+"""Unit tests for the OrgBrain-task-state → Jira-workflow-state map."""
 
 from __future__ import annotations
 
-from bifrost.actions.jira_state_map import (
+from orgbrain.actions.jira_state_map import (
     TASK_STATE_TO_JIRA,
     WORKFLOW_OVERRIDES,
     JiraTargetState,
     jira_state_for,
 )
-from bifrost.actions.task_lifecycle import TaskState
+from orgbrain.actions.task_lifecycle import TaskState
 
 
 def test_canonical_mapping_covers_lifecycle_states() -> None:

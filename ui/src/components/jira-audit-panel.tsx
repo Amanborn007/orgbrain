@@ -1,6 +1,6 @@
 /**
  * JiraAuditPanel — collapsible audit trail of every Jira write
- * Bifrost has performed for a task, with per-row retract buttons.
+ * OrgBrain has performed for a task, with per-row retract buttons.
  *
  * The spawn modal banner promises retract is available; this panel
  * is the UI affordance that calls the endpoint. It lives on the task
@@ -13,7 +13,7 @@
  *   │ comment  PROJ-1234   ✓   2025-01-01 10:20 [⤺] │
  *   └────────────────────────────────────────────────┘
  *
- * Retract posts a [bifrost-retracted] comment to Atlassian + marks
+ * Retract posts a [orgbrain-retracted] comment to Atlassian + marks
  * the audit row. The route layer also unlinks tasks.jira_key on
  * retracted creates so the operator can re-spawn into the right
  * project.
@@ -117,7 +117,7 @@ function AuditRow({
   const onRetract = () => {
     const reason = window.prompt(
       "Reason for retracting this Jira write?\n\n" +
-      "(Posted as a [bifrost-retracted] comment on the issue.)",
+      "(Posted as a [orgbrain-retracted] comment on the issue.)",
       "",
     );
     if (reason === null) return;            // cancelled

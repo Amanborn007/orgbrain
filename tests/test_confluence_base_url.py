@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.actions.jira_enrich import extract_confluence_links
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import ConfluenceSourceConfig
-from bifrost.errors import ConfigError
+from orgbrain.actions.jira_enrich import extract_confluence_links
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import ConfluenceSourceConfig
+from orgbrain.errors import ConfigError
 
 SELF_HOSTED = ConfluenceSourceConfig(base_url="https://wiki.acme.com")
 PAGE = "https://wiki.acme.com/display/ENG/Design"
@@ -47,8 +47,8 @@ def test_other_host_with_same_prefix_is_not_matched() -> None:
 
 
 def test_default_reads_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    s = BifrostSettings(sources={"confluence": {"base_url": "https://wiki.acme.com"}})
-    monkeypatch.setattr("bifrost.actions.jira_enrich.get_settings", lambda: s)
+    s = OrgBrainSettings(sources={"confluence": {"base_url": "https://wiki.acme.com"}})
+    monkeypatch.setattr("orgbrain.actions.jira_enrich.get_settings", lambda: s)
     assert extract_confluence_links(f"See {PAGE}") == [PAGE]
 
 

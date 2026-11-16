@@ -18,7 +18,7 @@ for arg in "$@"; do
     --ui|-u)   RESTART_UI=1 ;;
     --help|-h)
       echo "Usage: scripts/restart.sh [--tail] [--ui]"
-      echo "  --tail   tail /tmp/bifrost_server.log after start"
+      echo "  --tail   tail /tmp/orgbrain_server.log after start"
       echo "  --ui     also restart vite dev server on :5173"
       exit 0 ;;
     *) echo "unknown arg: $arg (try --help)"; exit 1 ;;
@@ -29,7 +29,7 @@ done
 echo "→ stopping API on :8000"
 PIDS=$(lsof -ti :8000 -sTCP:LISTEN 2>/dev/null || true)
 if [ -n "$PIDS" ]; then kill $PIDS 2>/dev/null || true; sleep 2; fi
-pkill -f "uvicorn bifrost.api.app" 2>/dev/null || true
+pkill -f "uvicorn orgbrain.api.app" 2>/dev/null || true
 sleep 1
 
 if [ "$RESTART_UI" = "1" ]; then
@@ -40,7 +40,7 @@ if [ "$RESTART_UI" = "1" ]; then
 fi
 
 # Clean stale env vars — force .env values through
-unset BIFROST_EXTRACTION_DRY_RUN
+unset ORGBRAIN_EXTRACTION_DRY_RUN
 
 cd "$REPO_ROOT"
 
@@ -56,12 +56,12 @@ if os.fork() > 0: sys.exit(0)
 # In the grandchild: redirect stdin/out/err and exec uvicorn
 with open("/dev/null") as devnull:
     os.dup2(devnull.fileno(), 0)
-with open("/tmp/bifrost_server.log", "ab") as logf:
+with open("/tmp/orgbrain_server.log", "ab") as logf:
     os.dup2(logf.fileno(), 1)
     os.dup2(logf.fileno(), 2)
 os.chdir(os.environ["REPO_ROOT"])
 os.execvp("uv", ["uv", "run", "uvicorn",
-                  "bifrost.api.app:create_app", "--factory", "--port", "8000"])
+                  "orgbrain.api.app:create_app", "--factory", "--port", "8000"])
 PYEOF
 wait  # let the outer fork finish (it exits immediately)
 
@@ -73,8 +73,8 @@ for i in $(seq 1 30); do
   fi
   sleep 1
   if [ "$i" = "30" ]; then
-    echo "FAILED — check /tmp/bifrost_server.log"
-    tail -20 /tmp/bifrost_server.log
+    echo "FAILED — check /tmp/orgbrain_server.log"
+    tail -20 /tmp/orgbrain_server.log
     exit 1
   fi
 done
@@ -84,13 +84,13 @@ echo "--- health ---"
 curl -s http://localhost:8000/api/v1/health/claude-cli | python3 -m json.tool 2>/dev/null | head -10
 echo ""
 echo "--- env sanity (should say dry_run=False) ---"
-grep -E "dry_run|worker_started" /tmp/bifrost_server.log | tail -3
+grep -E "dry_run|worker_started" /tmp/orgbrain_server.log | tail -3
 
 if [ "$RESTART_UI" = "1" ]; then
   echo ""
   echo "→ starting UI dev server on :5173"
   cd "$REPO_ROOT/ui"
-  nohup npm run dev > /tmp/bifrost_ui.log 2>&1 &
+  nohup npm run dev > /tmp/orgbrain_ui.log 2>&1 &
   cd "$REPO_ROOT"
   for i in $(seq 1 20); do
     if lsof -i :5173 -sTCP:LISTEN >/dev/null 2>&1; then
@@ -103,6 +103,6 @@ fi
 
 if [ "$TAIL_AFTER" = "1" ]; then
   echo ""
-  echo "--- tailing /tmp/bifrost_server.log (Ctrl-C to stop) ---"
-  tail -F /tmp/bifrost_server.log
+  echo "--- tailing /tmp/orgbrain_server.log (Ctrl-C to stop) ---"
+  tail -F /tmp/orgbrain_server.log
 fi

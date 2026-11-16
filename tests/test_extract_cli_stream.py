@@ -1,4 +1,4 @@
-"""`bifrost extract run` must surface task failure and the worker's real count keys."""
+"""`orgbrain extract run` must surface task failure and the worker's real count keys."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from rich.console import Console
 from rich.progress import Progress
 from typer.testing import CliRunner
 
-from bifrost.cli.app import app
-from bifrost.cli.commands import extract as extract_cmd
+from orgbrain.cli.app import app
+from orgbrain.cli.commands import extract as extract_cmd
 
 runner = CliRunner()
 
@@ -34,9 +34,9 @@ def _run_with_events(events: list[tuple[str, dict[str, Any]]]):
         yield from events
 
     with (
-        patch("bifrost.cli.commands.extract.get_client") as mock_client,
-        patch("bifrost.cli.commands.extract.httpx.Client", MagicMock()),
-        patch("bifrost.cli.commands.extract._parse_sse", fake_parse),
+        patch("orgbrain.cli.commands.extract.get_client") as mock_client,
+        patch("orgbrain.cli.commands.extract.httpx.Client", MagicMock()),
+        patch("orgbrain.cli.commands.extract._parse_sse", fake_parse),
     ):
         mock_client.return_value.__enter__.return_value.post.return_value = _post_response()
         return runner.invoke(app, ["extract", "run", "repo-1"])

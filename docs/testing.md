@@ -8,7 +8,7 @@ uv run python -m pytest -q -p no:cacheprovider --noconftest tests/test_leak_gate
 cd ui && npx vitest run                     # UI
 ```
 
-Most backend tests need Postgres, because the session fixture in `tests/conftest.py` migrates a test database and creates `bifrost_test` when it is missing. `BIFROST_SKIP_DB_MIGRATIONS=1` skips that step for pure-logic tests, and the leak-gate workflow sets it. With `--noconftest`, `tests/test_ownership_sources.py` also runs without a database. [CONTRIBUTING.md](../CONTRIBUTING.md#run-the-checks-only) has the setup. `tests/e2e/` starts its own Postgres container through testcontainers, so it needs Docker, and `make test` leaves it out with `--ignore=tests/e2e`.
+Most backend tests need Postgres, because the session fixture in `tests/conftest.py` migrates a test database and creates `orgbrain_test` when it is missing. `ORGBRAIN_SKIP_DB_MIGRATIONS=1` skips that step for pure-logic tests, and the leak-gate workflow sets it. With `--noconftest`, `tests/test_ownership_sources.py` also runs without a database. [CONTRIBUTING.md](../CONTRIBUTING.md#run-the-checks-only) has the setup. `tests/e2e/` starts its own Postgres container through testcontainers, so it needs Docker, and `make test` leaves it out with `--ignore=tests/e2e`.
 
 ## Counts on 2026-11-10
 
@@ -25,10 +25,10 @@ Each id is a full pytest node id, so it can be pasted into `uv run pytest`.
 |---|---|
 | The private-address opt-in for git URLs is refused in production mode. | `tests/test_git_ssrf.py::TestProductionOptOut::test_opt_in_refused_in_production` |
 | A literal `</user_intent>` in user text is escaped, so only the wrapper's own closing tag survives. | `tests/security/test_prompt_injection.py::TestWrapUntrusted::test_attacker_cannot_close_boundary_via_literal_close_tag` |
-| A cookie-authenticated mutation without `X-Requested-With: bifrost-ui` gets 403, and with it gets 200. | `tests/test_csrf.py::test_cookie_auth_without_header_rejected` |
+| A cookie-authenticated mutation without `X-Requested-With: orgbrain-ui` gets 403, and with it gets 200. | `tests/test_csrf.py::test_cookie_auth_without_header_rejected` |
 | A verify command with shell metacharacters is rejected with a reason. | `tests/test_shell_safe.py::TestRejects::test_metacharacter_injection_rejected` |
 | A PEM private key body does not survive in the output text. | `tests/test_secret_scrubbing.py::TestScrubSecretsHelper::test_private_key_redacted` |
-| A mistyped `BIFROST_` variable fails startup with "did you mean" and the nearest valid name. | `tests/test_unknown_settings.py::test_error_suggests_the_closest_name` |
+| A mistyped `ORGBRAIN_` variable fails startup with "did you mean" and the nearest valid name. | `tests/test_unknown_settings.py::test_error_suggests_the_closest_name` |
 | A new mutating route fails the test until it is admin-gated or listed as a member action. | `tests/test_route_role_inventory.py::test_every_mutating_route_is_admin_or_a_declared_member_action` |
 | The extraction task is committed before it is submitted to the worker. | `tests/test_extract_commit_order.py::test_task_is_committed_before_submit` |
 

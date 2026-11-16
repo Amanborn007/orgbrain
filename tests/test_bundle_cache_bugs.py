@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from bifrost.research.bundle_cache import (
+from orgbrain.research.bundle_cache import (
     BundleCache,
     ResearchBundle,
 )

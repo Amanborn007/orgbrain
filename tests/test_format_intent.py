@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.research.coordinator import (
+from orgbrain.research.coordinator import (
     _FORMAT_DIRECTIVE_BLOCKS,
     _build_synthesis_user_message,
     detect_format_intent,

@@ -18,17 +18,17 @@ import asyncio
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.extraction import cli_client
-from bifrost.extraction.cli_client import (
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.extraction import cli_client
+from orgbrain.extraction.cli_client import (
     ClaudeCliTransientError,
     ClaudeLlmClient,
 )
 
 
-def _settings(limit: int) -> BifrostSettings:
+def _settings(limit: int) -> OrgBrainSettings:
     # Cache off so calls always proceed to the (mocked) spawn path.
-    return BifrostSettings(
+    return OrgBrainSettings(
         llm_cache_enabled=False,
         max_concurrent_cli_calls=limit,
     )

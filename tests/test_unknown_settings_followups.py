@@ -8,20 +8,20 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings, reset_settings, validate_startup
-from bifrost.errors import ConfigError
+from orgbrain.cli.config import OrgBrainSettings, reset_settings, validate_startup
+from orgbrain.errors import ConfigError
 
 
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    monkeypatch.setitem(BifrostSettings.model_config, "env_file", None)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
+    monkeypatch.setitem(OrgBrainSettings.model_config, "env_file", None)
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
     reset_settings()
     yield
     reset_settings()
 
 
-@pytest.mark.parametrize("name", ["bifrost_config", "Bifrost_Handovers_Dir"])
+@pytest.mark.parametrize("name", ["orgbrain_config", "OrgBrain_Handovers_Dir"])
 def test_process_env_only_names_are_matched_in_exact_case(
     monkeypatch: pytest.MonkeyPatch, name: str
 ) -> None:
@@ -31,9 +31,9 @@ def test_process_env_only_names_are_matched_in_exact_case(
 
 
 REMOVED = [
-    ("BIFROST_API_TOKEN", "api_token"),
-    ("BIFROST_ADMIN_TOKEN", "admin_token"),
-    ("BIFROST_ALLOW_OPEN_ADMIN", "allow_open_admin"),
+    ("ORGBRAIN_API_TOKEN", "api_token"),
+    ("ORGBRAIN_ADMIN_TOKEN", "admin_token"),
+    ("ORGBRAIN_ALLOW_OPEN_ADMIN", "allow_open_admin"),
 ]
 VALUES = ["true", "false", ""]
 
@@ -55,7 +55,7 @@ def test_removed_name_in_dotenv_fails_whatever_its_value(
 ) -> None:
     path = tmp_path / ".env"
     path.write_text(f"{env_name}={value}\n", encoding="utf-8")
-    monkeypatch.setitem(BifrostSettings.model_config, "env_file", str(path))
+    monkeypatch.setitem(OrgBrainSettings.model_config, "env_file", str(path))
     with pytest.raises(ConfigError, match=env_name):
         validate_startup()
 
@@ -65,9 +65,9 @@ def test_removed_name_in_dotenv_fails_whatever_its_value(
 def test_removed_name_in_yaml_fails_whatever_its_value(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, _env: str, key: str, value: str
 ) -> None:
-    path = tmp_path / "bifrost.yaml"
+    path = tmp_path / "orgbrain.yaml"
     path.write_text(f'{key}: "{value}"\n', encoding="utf-8")
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
     with pytest.raises(ConfigError, match=key):
         validate_startup()
 
@@ -75,8 +75,8 @@ def test_removed_name_in_yaml_fails_whatever_its_value(
 def test_unparseable_yaml_is_a_config_error_naming_the_file(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    path = tmp_path / "bifrost.yaml"
+    path = tmp_path / "orgbrain.yaml"
     path.write_text("identity: [unclosed\n", encoding="utf-8")
-    monkeypatch.setenv("BIFROST_CONFIG", str(path))
+    monkeypatch.setenv("ORGBRAIN_CONFIG", str(path))
     with pytest.raises(ConfigError, match=str(path)):
         validate_startup()

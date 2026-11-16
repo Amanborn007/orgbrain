@@ -13,19 +13,19 @@ import httpx
 import pytest
 from typer.testing import CliRunner
 
-from bifrost.cli.app import app
+from orgbrain.cli.app import app
 
 runner = CliRunner()
 
 # Patch paths — must match where get_client is referenced, not where defined
-_REPO_CLIENT = "bifrost.cli.commands.repo.get_client"
-_DOMAIN_CLIENT = "bifrost.cli.commands.domain.get_client"
-_QUERY_CLIENT = "bifrost.cli.commands.query.get_client"
-_EXTRACT_CLIENT = "bifrost.cli.commands.extract.get_client"
+_REPO_CLIENT = "orgbrain.cli.commands.repo.get_client"
+_DOMAIN_CLIENT = "orgbrain.cli.commands.domain.get_client"
+_QUERY_CLIENT = "orgbrain.cli.commands.query.get_client"
+_EXTRACT_CLIENT = "orgbrain.cli.commands.extract.get_client"
 
 
 def _envelope(data: Any) -> dict[str, Any]:
-    """Wrap data in BifrostEnvelope shape."""
+    """Wrap data in OrgBrainEnvelope shape."""
     return {
         "data": data,
         "meta": {"request_id": "test-req", "timestamp": "2026-04-14T00:00:00Z", "track": "A"},
@@ -65,7 +65,7 @@ class TestRepoList:
         repos = [
             {
                 "id": "aaaaaaaa-1111-2222-3333-444444444444",
-                "urn": "urn:bifrost:repo:test",
+                "urn": "urn:orgbrain:repo:test",
                 "name": "test-repo",
                 "url": "https://github.com/org/test",
                 "domain_id": None,
@@ -88,13 +88,13 @@ class TestRepoAdd:
         with patch(_REPO_CLIENT) as mock_client:
             client = mock_client.return_value.__enter__.return_value
             client.post.return_value = _mock_response(
-                {"id": "abc123", "urn": "urn:bifrost:repo:my-app", "status": "registered"},
+                {"id": "abc123", "urn": "urn:orgbrain:repo:my-app", "status": "registered"},
                 status_code=201,
             )
             result = runner.invoke(app, ["repo", "add", "https://github.com/org/my-app"])
         assert result.exit_code == 0
         assert "Registered" in result.output
-        assert "urn:bifrost:repo:my-app" in result.output
+        assert "urn:orgbrain:repo:my-app" in result.output
 
 
 class TestRepoRemove:
@@ -111,7 +111,7 @@ class TestRepoStatus:
     def test_status_detail(self) -> None:
         detail = {
             "id": "abc123",
-            "urn": "urn:bifrost:repo:test",
+            "urn": "urn:orgbrain:repo:test",
             "name": "test-repo",
             "url": "https://github.com/org/test",
             "domain_id": None,
@@ -140,7 +140,7 @@ class TestDomainCreate:
         with patch(_DOMAIN_CLIENT) as mock_client:
             client = mock_client.return_value.__enter__.return_value
             client.post.return_value = _mock_response(
-                {"id": "dom-1", "urn": "urn:bifrost:domain:orders"},
+                {"id": "dom-1", "urn": "urn:orgbrain:domain:orders"},
                 status_code=201,
             )
             result = runner.invoke(app, ["domain", "create", "orders"])
@@ -203,7 +203,7 @@ class TestQueryAsk:
             "confidence": "high",
             "sources": [
                 {
-                    "urn": "urn:bifrost:component:auth-service",
+                    "urn": "urn:orgbrain:component:auth-service",
                     "name": "AuthService",
                     "entity_type": "component",
                     "relevance": 0.95,
@@ -271,7 +271,7 @@ class TestExtractRun:
                 status_code=202,
             )
             # Patch _stream_progress to avoid actually connecting SSE
-            with patch("bifrost.cli.commands.extract._stream_progress"):
+            with patch("orgbrain.cli.commands.extract._stream_progress"):
                 result = runner.invoke(app, ["extract", "run", "repo-123"])
         assert result.exit_code == 0
         assert "task-ext-1" in result.output

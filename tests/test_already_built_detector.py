@@ -1,4 +1,4 @@
-"""Unit tests for the already-built detector in bifrost.research.fast_path.
+"""Unit tests for the already-built detector in orgbrain.research.fast_path.
 
 Pure unit tests — no database, no network. We test:
 1. Intent detection regex (positive + negative cases).
@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.research.fast_path import _BUILD_REQUEST_PATTERNS, check_already_built
+from orgbrain.research.fast_path import _BUILD_REQUEST_PATTERNS, check_already_built
 
 # ── Intent detection tests ────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ class TestCheckAlreadyBuilt:
         entity_rows = [
             _make_entity_row(
                 name="RetryQueue",
-                urn="urn:bifrost:orders-service:component:RetryQueue",
+                urn="urn:orgbrain:orders-service:component:RetryQueue",
                 entity_type="component",
                 repo_id=repo_id,
                 confidence=0.9,

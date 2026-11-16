@@ -10,7 +10,7 @@ import uuid
 
 import pytest
 
-from bifrost.storage.repository import EntityRepository
+from orgbrain.storage.repository import EntityRepository
 
 
 @pytest.fixture
@@ -22,40 +22,40 @@ class TestRepoCRUD:
     async def test_upsert_and_get_repo(self, repo: EntityRepository) -> None:
         rid = uuid.uuid4()
         created = await repo.upsert_repo(
-            id=rid, urn="urn:bifrost:repo:test-1", name="test-repo", url="https://github.com/test"
+            id=rid, urn="urn:orgbrain:repo:test-1", name="test-repo", url="https://github.com/test"
         )
         assert created.id == rid
         assert created.name == "test-repo"
 
         fetched = await repo.get_repo(rid)
         assert fetched is not None
-        assert fetched.urn == "urn:bifrost:repo:test-1"
+        assert fetched.urn == "urn:orgbrain:repo:test-1"
 
     async def test_get_repo_by_urn(self, repo: EntityRepository) -> None:
         await repo.upsert_repo(
-            id=uuid.uuid4(), urn="urn:bifrost:repo:by-urn", name="by-urn", url="https://x.com"
+            id=uuid.uuid4(), urn="urn:orgbrain:repo:by-urn", name="by-urn", url="https://x.com"
         )
-        fetched = await repo.get_repo_by_urn("urn:bifrost:repo:by-urn")
+        fetched = await repo.get_repo_by_urn("urn:orgbrain:repo:by-urn")
         assert fetched is not None
         assert fetched.name == "by-urn"
 
     async def test_upsert_updates_existing_repo(self, repo: EntityRepository) -> None:
         rid = uuid.uuid4()
         await repo.upsert_repo(
-            id=rid, urn="urn:bifrost:repo:update", name="old-name", url="https://old.com"
+            id=rid, urn="urn:orgbrain:repo:update", name="old-name", url="https://old.com"
         )
         updated = await repo.upsert_repo(
-            id=uuid.uuid4(), urn="urn:bifrost:repo:update", name="new-name", url="https://new.com"
+            id=uuid.uuid4(), urn="urn:orgbrain:repo:update", name="new-name", url="https://new.com"
         )
         assert updated.name == "new-name"
         assert updated.url == "https://new.com"
 
     async def test_list_repos(self, repo: EntityRepository) -> None:
         await repo.upsert_repo(
-            id=uuid.uuid4(), urn="urn:bifrost:repo:a", name="alpha", url="https://a.com"
+            id=uuid.uuid4(), urn="urn:orgbrain:repo:a", name="alpha", url="https://a.com"
         )
         await repo.upsert_repo(
-            id=uuid.uuid4(), urn="urn:bifrost:repo:b", name="beta", url="https://b.com"
+            id=uuid.uuid4(), urn="urn:orgbrain:repo:b", name="beta", url="https://b.com"
         )
         repos = await repo.list_repos()
         assert len(repos) >= 2
@@ -67,7 +67,7 @@ class TestEntityCRUD:
         created = await repo.upsert_entity(
             id=eid,
             entity_type="component",
-            urn="urn:bifrost:component:test-1",
+            urn="urn:orgbrain:component:test-1",
             name="TestComponent",
             knowledge_tier=1,
             confidence=0.8,
@@ -83,10 +83,10 @@ class TestEntityCRUD:
         await repo.upsert_entity(
             id=uuid.uuid4(),
             entity_type="interface",
-            urn="urn:bifrost:interface:by-urn",
+            urn="urn:orgbrain:interface:by-urn",
             name="ByUrn",
         )
-        fetched = await repo.get_entity_by_urn("urn:bifrost:interface:by-urn")
+        fetched = await repo.get_entity_by_urn("urn:orgbrain:interface:by-urn")
         assert fetched is not None
         assert fetched.name == "ByUrn"
 
@@ -95,13 +95,13 @@ class TestEntityCRUD:
             await repo.upsert_entity(
                 id=uuid.uuid4(),
                 entity_type="component",
-                urn=f"urn:bifrost:component:list-{i}",
+                urn=f"urn:orgbrain:component:list-{i}",
                 name=f"Comp-{i}",
             )
         await repo.upsert_entity(
             id=uuid.uuid4(),
             entity_type="flow",
-            urn="urn:bifrost:flow:list-0",
+            urn="urn:orgbrain:flow:list-0",
             name="Flow-0",
         )
         components = await repo.list_entities(entity_type="component")
@@ -114,7 +114,7 @@ class TestEntityCRUD:
             {
                 "id": uuid.uuid4(),
                 "entity_type": "component",
-                "urn": f"urn:bifrost:component:batch-{i}",
+                "urn": f"urn:orgbrain:component:batch-{i}",
                 "name": f"Batch-{i}",
                 "knowledge_tier": 1,
                 "confidence": 0.7,
@@ -140,10 +140,10 @@ class TestRelationshipCRUD:
         src_id = uuid.uuid4()
         tgt_id = uuid.uuid4()
         await repo.upsert_entity(
-            id=src_id, entity_type="component", urn="urn:bifrost:c:rel-src", name="Source"
+            id=src_id, entity_type="component", urn="urn:orgbrain:c:rel-src", name="Source"
         )
         await repo.upsert_entity(
-            id=tgt_id, entity_type="component", urn="urn:bifrost:c:rel-tgt", name="Target"
+            id=tgt_id, entity_type="component", urn="urn:orgbrain:c:rel-tgt", name="Target"
         )
 
         rel = await repo.upsert_relationship(
@@ -169,7 +169,7 @@ class TestRelationshipCRUD:
         c_id = uuid.uuid4()
         for eid, name in [(a_id, "A"), (b_id, "B"), (c_id, "C")]:
             await repo.upsert_entity(
-                id=eid, entity_type="component", urn=f"urn:bifrost:c:dir-{name}", name=name
+                id=eid, entity_type="component", urn=f"urn:orgbrain:c:dir-{name}", name=name
             )
 
         await repo.upsert_relationship(
@@ -190,7 +190,7 @@ class TestSearchEntities:
         await repo.upsert_entity(
             id=eid,
             entity_type="component",
-            urn="urn:bifrost:c:embed-1",
+            urn="urn:orgbrain:c:embed-1",
             name="EmbedComp",
             embedding=embedding,
         )
@@ -205,11 +205,11 @@ class TestSearchEntities:
         await repo.upsert_entity(
             id=uuid.uuid4(),
             entity_type="component",
-            urn="urn:bifrost:c:no-embed",
+            urn="urn:orgbrain:c:no-embed",
             name="NoEmbed",
             # No embedding set
         )
 
         results = await repo.search_entities_by_embedding([0.1] * 1536, limit=10)
         urns = [e.urn for e, _ in results]
-        assert "urn:bifrost:c:no-embed" not in urns
+        assert "urn:orgbrain:c:no-embed" not in urns

@@ -7,8 +7,8 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.api.routes.admin import benchmarks_list_domains
-from bifrost.storage.models import BenchmarkQuestion
+from orgbrain.api.routes.admin import benchmarks_list_domains
+from orgbrain.storage.models import BenchmarkQuestion
 
 TAG = uuid.uuid4().hex[:8]
 
@@ -22,7 +22,7 @@ async def test_domains_expose_sequenced_flag(
             BenchmarkQuestion(domain=domain, question_key="q1", question_text="What owns X?")
         )
     await db_session.flush()
-    monkeypatch.setattr("bifrost.api.routes.admin.is_sequenced", lambda d: d == seq)
+    monkeypatch.setattr("orgbrain.api.routes.admin.is_sequenced", lambda d: d == seq)
 
     env = await benchmarks_list_domains(db_session)
 

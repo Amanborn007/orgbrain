@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import delete, select, text, update
 
-from bifrost.storage.models import AuditLog
+from orgbrain.storage.models import AuditLog
 
 # Same DDL the baseline migration installs.
 _TRIGGER_DDL = (

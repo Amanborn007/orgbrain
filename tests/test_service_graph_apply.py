@@ -12,24 +12,24 @@ import pytest
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import ConventionsConfig, ManifestConfig
-from bifrost.manifest.files import LocalRepoFiles
-from bifrost.manifest.graph_apply import apply_graph_plan, build_service_graph
-from bifrost.manifest.graph_plan import GraphPlan, plan_service_graph
-from bifrost.manifest.loader import load_manifest
-from bifrost.storage.models import Domain, Entity, EntityRelationship, Repo
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import ConventionsConfig, ManifestConfig
+from orgbrain.manifest.files import LocalRepoFiles
+from orgbrain.manifest.graph_apply import apply_graph_plan, build_service_graph
+from orgbrain.manifest.graph_plan import GraphPlan, plan_service_graph
+from orgbrain.manifest.loader import load_manifest
+from orgbrain.storage.models import Domain, Entity, EntityRelationship, Repo
 
 pytestmark = pytest.mark.skipif(
-    bool(os.environ.get("BIFROST_SKIP_DB_MIGRATIONS")),
-    reason="needs a real Postgres (BIFROST_SKIP_DB_MIGRATIONS is set)",
+    bool(os.environ.get("ORGBRAIN_SKIP_DB_MIGRATIONS")),
+    reason="needs a real Postgres (ORGBRAIN_SKIP_DB_MIGRATIONS is set)",
 )
 
 ACME = Path(__file__).resolve().parents[1] / "examples" / "acmeco"
 REPOS = ["delivery-gateway", "dispatcher", "signing-keys", "usage-metering", "webhook-api"]
-SERVICE_URNS = [f"urn:bifrost:service:{r}" for r in REPOS]
-DOMAIN_URNS = ["urn:bifrost:domain:dlvr", "urn:bifrost:domain:plat"]
-OTHER_DOMAIN_URN = "urn:bifrost:domain:apply-test-other"
+SERVICE_URNS = [f"urn:orgbrain:service:{r}" for r in REPOS]
+DOMAIN_URNS = ["urn:orgbrain:domain:dlvr", "urn:orgbrain:domain:plat"]
+OTHER_DOMAIN_URN = "urn:orgbrain:domain:apply-test-other"
 # depends_on 4 + calls_service 2 + shares_topic 2 + publishes_to 0 (tests/test_service_graph_plan.py)
 GOLDEN_EDGES = 8
 
@@ -72,7 +72,7 @@ async def _register(
             s.add(
                 Repo(
                     id=uuid.uuid4(),
-                    urn=f"urn:bifrost:repo:{repo}",
+                    urn=f"urn:orgbrain:repo:{repo}",
                     name=repo,
                     url=str(ACME / repo),
                     local_clone_path=str(ACME / repo) if local else None,
@@ -126,7 +126,7 @@ async def test_domain_id_is_only_set_where_null(sf: async_sessionmaker[AsyncSess
     async with sf() as s:
         by_name = {r.name: r.domain_id for r in (await s.execute(select(Repo))).scalars()}
         dlvr = (
-            await s.execute(select(Domain.id).where(Domain.urn == "urn:bifrost:domain:dlvr"))
+            await s.execute(select(Domain.id).where(Domain.urn == "urn:orgbrain:domain:dlvr"))
         ).scalar_one()
     assert by_name["webhook-api"] == other.id
     assert by_name["dispatcher"] == dlvr
@@ -136,7 +136,7 @@ async def test_end_to_end_from_registered_local_repos(
     sf: async_sessionmaker[AsyncSession],
 ) -> None:
     await _register(sf, local=True)
-    settings = BifrostSettings(manifest=ManifestConfig(providers=["backstage", "codeowners"]))
+    settings = OrgBrainSettings(manifest=ManifestConfig(providers=["backstage", "codeowners"]))
     plan = await build_service_graph(sf, include_catalog=False, settings=settings)
     assert sorted(s.urn for s in plan.services) == SERVICE_URNS
     await apply_graph_plan(sf, plan)

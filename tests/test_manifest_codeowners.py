@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from bifrost.cli.config_sections import CodeownersConfig
-from bifrost.manifest.files import InMemoryRepoFiles
-from bifrost.manifest.providers.codeowners import CodeownersProvider, parse_codeowners
+from orgbrain.cli.config_sections import CodeownersConfig
+from orgbrain.manifest.files import InMemoryRepoFiles
+from orgbrain.manifest.providers.codeowners import CodeownersProvider, parse_codeowners
 
 
 def test_team_is_first_owner_of_last_star_rule() -> None:

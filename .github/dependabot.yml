@@ -1,6 +1,6 @@
 # Dependabot — automatic dependency updates.
 #
-# Tracks the three ecosystems used by Bifrost (uv, npm, GitHub Actions).
+# Tracks the three ecosystems used by OrgBrain (uv, npm, GitHub Actions).
 # The uv ecosystem updates pyproject.toml and uv.lock together, so CI's
 # `uv sync --locked` stays green on Dependabot PRs.
 # Limits are intentionally low so review queues stay manageable.

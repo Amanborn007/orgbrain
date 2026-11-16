@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.errors import ConfigError, UpstreamError, ValidationError
-from bifrost.manifest.files import GhError, InMemoryRepoFiles
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.errors import ConfigError, UpstreamError, ValidationError
+from orgbrain.manifest.files import GhError, InMemoryRepoFiles
 
 BACKSTAGE_ORDERS = """\
 apiVersion: backstage.io/v1alpha1
@@ -32,7 +32,7 @@ SEARCH_JQ = ".items[].repository.full_name"
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BIFROST_CONFIG", "")
+    monkeypatch.setenv("ORGBRAIN_CONFIG", "")
 
 
 def _settings(
@@ -40,11 +40,11 @@ def _settings(
     orgs: tuple[str, ...] = ("acme",),
     host: str = "github.com",
     manifest: dict[str, Any] | None = None,
-) -> BifrostSettings:
+) -> OrgBrainSettings:
     kw: dict[str, Any] = {"sources": {"github": {"host": host, "orgs": list(orgs)}}}
     if manifest is not None:
         kw["manifest"] = manifest
-    return BifrostSettings(**kw)
+    return OrgBrainSettings(**kw)
 
 
 class FakeGh:
@@ -99,7 +99,7 @@ def _factory(files: dict[str, dict[str, str]], seen_hosts: list[str] | None = No
 
 
 async def _discover(team: str, gh: FakeGh, files: dict[str, dict[str, str]], settings=None, **kw):
-    from bifrost.manifest.team_repos import discover_team_repos
+    from orgbrain.manifest.team_repos import discover_team_repos
 
     return await discover_team_repos(
         team,

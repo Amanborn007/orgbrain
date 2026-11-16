@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bifrost dev-server helper.
+# OrgBrain dev-server helper.
 #
 # Solves the recurring "nohup got suspended" / "zsh wrapped my
 # command" / "setsid doesn't exist on macOS" pain by centralizing
@@ -23,10 +23,10 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKEND_LOG=/tmp/bifrost-backend.log
-UI_LOG=/tmp/bifrost-ui.log
-BACKEND_PID=/tmp/bifrost-backend.pid
-UI_PID=/tmp/bifrost-ui.pid
+BACKEND_LOG=/tmp/orgbrain-backend.log
+UI_LOG=/tmp/orgbrain-ui.log
+BACKEND_PID=/tmp/orgbrain-backend.pid
+UI_PID=/tmp/orgbrain-ui.pid
 BACKEND_PORT=8000
 UI_PORT=5173
 
@@ -110,7 +110,7 @@ start_backend() {
     fi
     echo "starting backend on :$BACKEND_PORT (log: $BACKEND_LOG)"
     spawn_detached "$REPO_DIR" "$BACKEND_LOG" "$BACKEND_PID" \
-        uv run uvicorn bifrost.api.app:create_app \
+        uv run uvicorn orgbrain.api.app:create_app \
             --factory --host 127.0.0.1 --port "$BACKEND_PORT"
     dim "  pid $(cat $BACKEND_PID)"
     wait_for_health "http://127.0.0.1:$BACKEND_PORT/api/v1/repos" backend || {
@@ -155,7 +155,7 @@ stop_backend() {
         kill_tree "$pid"
     fi
     # Sweep stragglers matching the exact cmdline
-    pkill -9 -f "uvicorn bifrost.api.app" 2>/dev/null || true
+    pkill -9 -f "uvicorn orgbrain.api.app" 2>/dev/null || true
     rm -f "$BACKEND_PID"
     ok "backend stopped"
 }
@@ -221,7 +221,7 @@ cmd_health() {
 
 cmd_help() {
     cat <<EOF
-${c_bold}Bifrost dev helper${c_reset}
+${c_bold}OrgBrain dev helper${c_reset}
 
 ${c_bold}Commands${c_reset}
   up          start backend + ui
@@ -246,7 +246,7 @@ ${c_bold}Files${c_reset}
 ${c_bold}Tips${c_reset}
   Wrapper: ${c_dim}make restart${c_reset} (or any subcommand)
   Quick log watch: ${c_dim}./scripts/dev.sh logs backend${c_reset}
-  Alias for zsh:  ${c_dim}alias bd='/path/to/bifrost/scripts/dev.sh'${c_reset}
+  Alias for zsh:  ${c_dim}alias bd='/path/to/orgbrain/scripts/dev.sh'${c_reset}
 EOF
 }
 

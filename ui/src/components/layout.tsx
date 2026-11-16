@@ -134,7 +134,7 @@ export function Layout() {
           </div>
           {!collapsed && (
             <span className="text-[15px] font-semibold tracking-tight text-fg-0">
-              Bifrost
+              OrgBrain
             </span>
           )}
         </Link>
@@ -248,7 +248,7 @@ export function Layout() {
           <button
             type="button"
             onClick={() =>
-              window.dispatchEvent(new Event("bifrost:palette:open"))
+              window.dispatchEvent(new Event("orgbrain:palette:open"))
             }
             className="hidden items-center gap-2 rounded-md border border-border bg-bg-2 px-2.5 py-1 text-[12px] text-fg-2 hover:bg-bg-3 hover:text-fg-0 md:inline-flex"
             title="Open command palette"

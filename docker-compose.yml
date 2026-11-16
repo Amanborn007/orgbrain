@@ -1,4 +1,4 @@
-# Bifrost development stack — PostgreSQL 16 with pgvector
+# OrgBrain development stack — PostgreSQL 16 with pgvector
 # Usage: docker compose up -d && alembic upgrade head
 
 services:
@@ -7,11 +7,11 @@ services:
     # tag move under us. Bump intentionally when adopting a new
     # pgvector release; keep CI (pr-check.yml) in sync.
     image: pgvector/pgvector:0.8.0-pg16
-    container_name: bifrost-postgres
+    container_name: orgbrain-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-bifrost}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bifrost_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-bifrost}
+      POSTGRES_USER: ${POSTGRES_USER:-orgbrain}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orgbrain_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-orgbrain}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:

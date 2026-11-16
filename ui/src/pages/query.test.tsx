@@ -135,7 +135,7 @@ describe("QueryPage", () => {
 
   it("renders the empty chat starter heading when no conversation exists", () => {
     renderWithProviders(<QueryPage />);
-    expect(screen.getByText("Bifrost Chat")).toBeInTheDocument();
+    expect(screen.getByText("OrgBrain Chat")).toBeInTheDocument();
   });
 
   it("renders the chat composer placeholder", () => {

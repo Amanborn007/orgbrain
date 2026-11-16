@@ -10,11 +10,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from bifrost.api import _cookie_signing as cs
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository, get_session_factory
-from bifrost.cli.config import get_settings, reset_settings
-from bifrost.storage.models import Conversation
+from orgbrain.api import _cookie_signing as cs
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository, get_session_factory
+from orgbrain.cli.config import get_settings, reset_settings
+from orgbrain.storage.models import Conversation
 from tests.auth_helpers import boot, client, header_identity
 
 
@@ -68,11 +68,11 @@ async def test_http_request_with_unacceptable_cookie_gets_a_fresh_session(
     cookie = old_id if kind == "bare" else f"{old_id}.forged"
     async with client(app) as ac:
         resp = await ac.get(
-            "/api/v1/conversations", headers={"Cookie": f"bifrost_session={cookie}"}
+            "/api/v1/conversations", headers={"Cookie": f"orgbrain_session={cookie}"}
         )
     assert resp.status_code == 200
     set_cookie = resp.headers["set-cookie"]
-    assert set_cookie.startswith("bifrost_session=")
+    assert set_cookie.startswith("orgbrain_session=")
     assert old_id not in set_cookie
 
 
@@ -82,7 +82,7 @@ async def test_http_request_with_valid_cookie_keeps_its_session(monkeypatch) -> 
     async with client(app) as ac:
         resp = await ac.get(
             "/api/v1/conversations",
-            headers={"Cookie": f"bifrost_session={cs.mint_signed_cookie()}"},
+            headers={"Cookie": f"orgbrain_session={cs.mint_signed_cookie()}"},
         )
     assert resp.status_code == 200
     assert "set-cookie" not in resp.headers
@@ -105,7 +105,7 @@ async def test_orphan_endpoints_are_not_served(monkeypatch) -> None:
         adopt = await ac.post(
             "/api/v1/conversations/adopt-orphan",
             json={"session_id": "a" * 32},
-            headers={"X-Requested-With": "bifrost-ui"},
+            headers={"X-Requested-With": "orgbrain-ui"},
         )
     # The path now falls into the sibling /{conversation_id} routes: a
     # non-UUID id is a 400 for GET, and POST has no such sibling (405).
@@ -114,7 +114,7 @@ async def test_orphan_endpoints_are_not_served(monkeypatch) -> None:
 
 
 def test_orphan_repository_helpers_are_gone() -> None:
-    from bifrost.storage.repository import EntityRepository
+    from orgbrain.storage.repository import EntityRepository
 
     assert not hasattr(EntityRepository, "list_orphan_sessions")
     assert not hasattr(EntityRepository, "adopt_orphan_session")
@@ -126,7 +126,7 @@ def test_orphan_repository_helpers_are_gone() -> None:
 @pytest.fixture
 async def foreign_conversation(monkeypatch) -> AsyncIterator[uuid.UUID]:
     """A committed conversation owned by some other session."""
-    monkeypatch.setenv("BIFROST_DEMO_MODE", "true")
+    monkeypatch.setenv("ORGBRAIN_DEMO_MODE", "true")
     reset_settings()
     factory = get_session_factory(get_settings())
     conv_id = uuid.uuid4()
@@ -148,14 +148,14 @@ async def test_operator_email_under_header_provider_does_not_expose_other_sessio
         monkeypatch,
         provider="header",
         roles={"admin": []},
-        extra_env={"BIFROST_OPERATOR_EMAIL": "op@example.com"},
+        extra_env={"ORGBRAIN_OPERATOR_EMAIL": "op@example.com"},
     )
     async with client(app) as ac:
         resp = await ac.get(
             f"/api/v1/conversations/{foreign_conversation}",
             headers={
                 **header_identity("u@example.com"),
-                "Cookie": f"bifrost_session={cs.mint_signed_cookie()}",
+                "Cookie": f"orgbrain_session={cs.mint_signed_cookie()}",
             },
         )
     assert resp.status_code == 404
@@ -168,6 +168,6 @@ async def test_none_provider_operator_sees_every_conversation(
     async with client(app) as ac:
         resp = await ac.get(
             f"/api/v1/conversations/{foreign_conversation}",
-            headers={"Cookie": f"bifrost_session={cs.mint_signed_cookie()}"},
+            headers={"Cookie": f"orgbrain_session={cs.mint_signed_cookie()}"},
         )
     assert resp.status_code == 200, resp.text

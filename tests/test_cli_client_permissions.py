@@ -13,13 +13,13 @@ from pathlib import Path
 
 import pytest
 
-import bifrost
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import McpConfig
-from bifrost.errors import ConfigError
-from bifrost.extraction.cli_client import ClaudeCliError, ClaudeLlmClient
+import orgbrain
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import McpConfig
+from orgbrain.errors import ConfigError
+from orgbrain.extraction.cli_client import ClaudeCliError, ClaudeLlmClient
 
-SRC = Path(bifrost.__file__).parent
+SRC = Path(orgbrain.__file__).parent
 JIRA_GET = "mcp__atlassian__getJiraIssue"
 
 _OK_STDOUT = (
@@ -60,7 +60,7 @@ def argvs(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
 
 
 def _client(**kw: object) -> ClaudeLlmClient:
-    return ClaudeLlmClient(BifrostSettings(llm_cache_enabled=False, **kw))
+    return ClaudeLlmClient(OrgBrainSettings(llm_cache_enabled=False, **kw))
 
 
 def _flag(argv: list[str], name: str) -> str:
@@ -184,10 +184,10 @@ def spy(monkeypatch: pytest.MonkeyPatch) -> type[_SpyClient]:
 
 
 async def test_external_agent_allowed_tools_come_from_configured_prefix(monkeypatch, spy):
-    from bifrost.research import external_agent
+    from orgbrain.research import external_agent
 
     monkeypatch.setattr(external_agent, "ClaudeLlmClient", spy)
-    settings = BifrostSettings(mcp={"tool_prefix": {"atlassian": "mcp__corp_jira__"}})
+    settings = OrgBrainSettings(mcp={"tool_prefix": {"atlassian": "mcp__corp_jira__"}})
 
     await external_agent.research_external(question="how does X work?", settings=settings)
 
@@ -198,10 +198,10 @@ async def test_external_agent_allowed_tools_come_from_configured_prefix(monkeypa
 
 
 async def test_slack_draft_allowed_tools_come_from_configured_prefix(monkeypatch, spy):
-    from bifrost.collaboration import slack_draft
+    from orgbrain.collaboration import slack_draft
 
     monkeypatch.setattr(slack_draft, "ClaudeLlmClient", spy)
-    settings = BifrostSettings(mcp={"tool_prefix": {"slack": "mcp__corp_slack__"}})
+    settings = OrgBrainSettings(mcp={"tool_prefix": {"slack": "mcp__corp_slack__"}})
 
     await slack_draft.create_slack_draft(channel="#c", body_md="hello", settings=settings)
 

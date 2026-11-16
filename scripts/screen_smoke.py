@@ -10,7 +10,7 @@ backend, and reports a per-screen table. Exit code is non-zero if ANY
 endpoint returns 5xx — so you can loop on it:
 
     python scripts/screen_smoke.py            # against http://localhost:8000
-    BIFROST_SMOKE_BASE=http://localhost:8000 python scripts/screen_smoke.py
+    ORGBRAIN_SMOKE_BASE=http://localhost:8000 python scripts/screen_smoke.py
 
 It found (and now guards against) real bugs: the Connections
 query referencing non-existent columns (has_pr / plans_* / total_cost_usd /
@@ -34,13 +34,13 @@ from sqlalchemy import text
 # Import path: run from repo root (script lives in scripts/).
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from bifrost.api.deps import get_session_factory  # noqa: E402
-from bifrost.cli.config import get_settings  # noqa: E402
+from orgbrain.api.deps import get_session_factory  # noqa: E402
+from orgbrain.cli.config import get_settings  # noqa: E402
 
-BASE = os.environ.get("BIFROST_SMOKE_BASE", "http://localhost:8000") + "/api/v1"
+BASE = os.environ.get("ORGBRAIN_SMOKE_BASE", "http://localhost:8000") + "/api/v1"
 # Local identity header (works in dev where identity.provider=header or demo mode resolves it).
 HEADERS = {
-    "X-Forwarded-Email": os.environ.get("BIFROST_SMOKE_EMAIL", "smoke@acmeco.example"),
+    "X-Forwarded-Email": os.environ.get("ORGBRAIN_SMOKE_EMAIL", "smoke@acmeco.example"),
 }
 
 

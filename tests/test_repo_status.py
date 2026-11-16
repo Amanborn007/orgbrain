@@ -1,6 +1,6 @@
 """Repo status classifier tests.
 
-Pure-data tests for ``bifrost.research.status.classify_repo_status``
+Pure-data tests for ``orgbrain.research.status.classify_repo_status``
 — no DB. The classifier takes already-loaded ``code_entity_counts``
 and ``fresh_by_id`` so we can exercise every branch from in-memory
 fixtures.
@@ -21,8 +21,8 @@ from __future__ import annotations
 import uuid as _uuid
 from dataclasses import dataclass
 
-from bifrost.research.freshness import RepoFreshness as RepoFreshState
-from bifrost.research.status import (
+from orgbrain.research.freshness import RepoFreshness as RepoFreshState
+from orgbrain.research.status import (
     classify_repo_status,
     deep_indexed_ids,
     manifest_only_ids,

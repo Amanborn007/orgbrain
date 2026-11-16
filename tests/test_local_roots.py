@@ -10,23 +10,23 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bifrost.adapters.git import GitAdapter, GitAdapterError
-from bifrost.api.app import create_app
-from bifrost.api.deps import get_repository
-from bifrost.cli.config import BifrostSettings, get_settings
-from bifrost.cli.config_sections import LocalSourceConfig, SourcesConfig
-from bifrost.core.local_roots import (
+from orgbrain.adapters.git import GitAdapter, GitAdapterError
+from orgbrain.api.app import create_app
+from orgbrain.api.deps import get_repository
+from orgbrain.cli.config import OrgBrainSettings, get_settings
+from orgbrain.cli.config_sections import LocalSourceConfig, SourcesConfig
+from orgbrain.core.local_roots import (
     LocalPathNotAllowedError,
     ensure_local_path_allowed,
     local_path_allowed,
     local_path_from_url,
 )
-from bifrost.research.ownership_sync import resolve_repo_files
-from bifrost.storage.repository import EntityRepository
+from orgbrain.research.ownership_sync import resolve_repo_files
+from orgbrain.storage.repository import EntityRepository
 
 
-def _settings(roots: list[str] | None = None, *, production: bool = False) -> BifrostSettings:
-    return BifrostSettings(
+def _settings(roots: list[str] | None = None, *, production: bool = False) -> OrgBrainSettings:
+    return OrgBrainSettings(
         production_mode=production,
         sources=SourcesConfig(local=LocalSourceConfig(allowed_roots=roots or [])),
     )
@@ -131,7 +131,7 @@ async def client(app) -> AsyncGenerator[AsyncClient]:
 def _patch_route_settings(monkeypatch: pytest.MonkeyPatch, **update: object) -> None:
     base = get_settings()
     patched = base.model_copy(update=update)
-    monkeypatch.setattr("bifrost.api.routes.repos.get_settings", lambda: patched)
+    monkeypatch.setattr("orgbrain.api.routes.repos.get_settings", lambda: patched)
 
 
 class TestRegistration:

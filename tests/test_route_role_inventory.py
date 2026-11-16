@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from fastapi.routing import APIRoute
 
-from bifrost.api.app import create_app
+from orgbrain.api.app import create_app
 
 API = "/api/v1"
 MUTATING = {"POST", "PUT", "PATCH", "DELETE"}

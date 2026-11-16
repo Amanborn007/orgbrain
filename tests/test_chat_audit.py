@@ -29,15 +29,15 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy import delete, select, text
 
-from bifrost.api.deps import get_session_factory
-from bifrost.cli.config import get_settings
-from bifrost.research.chat_audit import chat_research_audit
-from bifrost.research.repo_agent import (
+from orgbrain.api.deps import get_session_factory
+from orgbrain.cli.config import get_settings
+from orgbrain.research.chat_audit import chat_research_audit
+from orgbrain.research.repo_agent import (
     EdgeVerification,
     MissedEdge,
     RepoReport,
 )
-from bifrost.storage.models import Conversation, Entity, EntityRelationship, Repo
+from orgbrain.storage.models import Conversation, Entity, EntityRelationship, Repo
 
 
 def _factory():
@@ -87,9 +87,9 @@ async def _seed_two_components_with_edge(
     src_name = f"OrderRouter-{suffix}"
     tgt_name = f"VendorClient-{suffix}"
     repo_full = f"AcmeApp-{suffix}"
-    urn_src = f"urn:bifrost:repo/{repo_full}/component/{src_name}"
-    urn_tgt = f"urn:bifrost:repo/{repo_full}/component/{tgt_name}"
-    urn_repo = f"urn:bifrost:repo/{repo_full}"
+    urn_src = f"urn:orgbrain:repo/{repo_full}/component/{src_name}"
+    urn_tgt = f"urn:orgbrain:repo/{repo_full}/component/{tgt_name}"
+    urn_repo = f"urn:orgbrain:repo/{repo_full}"
 
     f = _factory()
     async with f() as s:
@@ -171,7 +171,7 @@ async def _cleanup_audit_state(urns: list[str]) -> None:
             )
         await s.execute(delete(Entity).where(Entity.urn.in_(urns)))
         # Repos aren't strictly required to clean (cascade from entities),
-        # but be tidy: anything with urn starting "urn:bifrost:repo/AcmeApp-…"
+        # but be tidy: anything with urn starting "urn:orgbrain:repo/AcmeApp-…"
         await s.execute(
             text("DELETE FROM repos WHERE urn = ANY(:urns)"),
             {"urns": [u for u in urns if "/component/" not in u]},

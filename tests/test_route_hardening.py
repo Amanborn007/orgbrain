@@ -21,14 +21,14 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import bifrost.api.audit as audit_mod
-from bifrost.api._cookie_signing import mint_signed_cookie
-from bifrost.api.deps import get_db, get_repository
-from bifrost.cli.config import BifrostSettings, reset_settings
-from bifrost.collaboration import rate_limit
-from bifrost.collaboration.cost_estimate import CostEstimate
-from bifrost.extraction.cli_client import CliCompletion, Usage
-from bifrost.storage.repository import EntityRepository
+import orgbrain.api.audit as audit_mod
+from orgbrain.api._cookie_signing import mint_signed_cookie
+from orgbrain.api.deps import get_db, get_repository
+from orgbrain.cli.config import OrgBrainSettings, reset_settings
+from orgbrain.collaboration import rate_limit
+from orgbrain.collaboration.cost_estimate import CostEstimate
+from orgbrain.extraction.cli_client import CliCompletion, Usage
+from orgbrain.storage.repository import EntityRepository
 from tests.auth_helpers import boot, client, header_identity
 
 ADMIN_MAP = {"admin": ["eng-admins"]}
@@ -97,8 +97,8 @@ async def _seed_task_with_plan(session: AsyncSession) -> tuple[str, str]:
 
 @pytest.fixture
 def run_debug(monkeypatch) -> AsyncMock:
-    from bifrost.actions.debugger import DebugReport
-    from bifrost.api.routes import tasks as tasks_route
+    from orgbrain.actions.debugger import DebugReport
+    from orgbrain.api.routes import tasks as tasks_route
 
     report = DebugReport(
         task_id="t",
@@ -183,7 +183,7 @@ def _estimate(usd: float) -> CostEstimate:
 
 @pytest.fixture
 def handover(monkeypatch) -> Callable[[str, str, float], AsyncMock]:
-    from bifrost.api.routes import handover_docs as route
+    from orgbrain.api.routes import handover_docs as route
 
     def install(estimator: str, generator: str, usd: float) -> AsyncMock:
         generated = SimpleNamespace(
@@ -264,15 +264,15 @@ async def test_rate_limit_key_is_the_principal_and_survives_cookie_rotation(
     monkeypatch, handover
 ) -> None:
     handover("estimate_repo_handover_cost", "generate_repo_handover", 1.0)
-    app = _app(monkeypatch, extra_env={"BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE": "2"})
+    app = _app(monkeypatch, extra_env={"ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE": "2"})
     _stub_repo(app)
     ident = SCOPES[0][1]
     statuses = []
     for _ in range(3):
         headers = {
             **MEMBER,
-            "Cookie": f"bifrost_session={mint_signed_cookie()}",
-            "X-Requested-With": "bifrost-ui",
+            "Cookie": f"orgbrain_session={mint_signed_cookie()}",
+            "X-Requested-With": "orgbrain-ui",
         }
         statuses.append((await _generate(app, headers, "repos", ident)).status_code)
     assert statuses == [201, 201, 429]
@@ -280,7 +280,7 @@ async def test_rate_limit_key_is_the_principal_and_survives_cookie_rotation(
 
 async def test_rate_limit_buckets_are_per_principal(monkeypatch, handover) -> None:
     handover("estimate_repo_handover_cost", "generate_repo_handover", 1.0)
-    app = _app(monkeypatch, extra_env={"BIFROST_HANDOVER_RATE_LIMIT_PER_MINUTE": "1"})
+    app = _app(monkeypatch, extra_env={"ORGBRAIN_HANDOVER_RATE_LIMIT_PER_MINUTE": "1"})
     _stub_repo(app)
     ident = SCOPES[0][1]
     first = await _generate(app, MEMBER, "repos", ident)
@@ -295,7 +295,7 @@ CEILING_CODE = "settings.walk_breadth_above_ceiling"
 
 
 def _settings_app(monkeypatch, ceiling: int):
-    app = _app(monkeypatch, extra_env={"BIFROST_RESEARCH_WALK_BREADTH_CEILING": str(ceiling)})
+    app = _app(monkeypatch, extra_env={"ORGBRAIN_RESEARCH_WALK_BREADTH_CEILING": str(ceiling)})
     repo = MagicMock()
     repo.get_conversation_for_session = AsyncMock(return_value=object())
     repo.get_chat_settings = AsyncMock(return_value={})
@@ -318,7 +318,7 @@ async def _patch_breadth(app, value: int) -> httpx.Response:
 
 
 def test_ceiling_defaults_to_the_old_soft_cap_default() -> None:
-    assert BifrostSettings().research_walk_breadth_ceiling == 200
+    assert OrgBrainSettings().research_walk_breadth_ceiling == 200
 
 
 async def test_patch_above_the_ceiling_is_400_with_a_stable_code(monkeypatch) -> None:
@@ -339,14 +339,14 @@ async def test_patch_at_or_below_the_ceiling_is_accepted(monkeypatch, value: int
 
 
 def _plan(**overrides: Any):
-    from bifrost.research.orchestrator import OrchestrationPlan
+    from orgbrain.research.orchestrator import OrchestrationPlan
 
     return OrchestrationPlan(intent="discovery", **overrides)
 
 
 def test_stored_value_above_the_ceiling_is_clamped_at_use(caplog) -> None:
-    from bifrost.api.schemas.chat_settings import ChatSettings
-    from bifrost.research.orchestrator import merge_plan_with_settings
+    from orgbrain.api.schemas.chat_settings import ChatSettings
+    from orgbrain.research.orchestrator import merge_plan_with_settings
 
     stored = ChatSettings(walk_breadth_soft_cap=2000)
     caplog.set_level(logging.WARNING)
@@ -354,35 +354,35 @@ def test_stored_value_above_the_ceiling_is_clamped_at_use(caplog) -> None:
         _plan(),
         stored,
         user_touched_settings=True,
-        settings=BifrostSettings(research_walk_breadth_ceiling=300),
+        settings=OrgBrainSettings(research_walk_breadth_ceiling=300),
     )
     assert resolved.walk_breadth_soft_cap == 300
     assert "research_walk_breadth_ceiling" in caplog.text
 
 
 def test_plan_override_above_the_ceiling_is_clamped_at_use() -> None:
-    from bifrost.api.schemas.chat_settings import ChatSettings
-    from bifrost.research.orchestrator import merge_plan_with_settings
+    from orgbrain.api.schemas.chat_settings import ChatSettings
+    from orgbrain.research.orchestrator import merge_plan_with_settings
 
     resolved = merge_plan_with_settings(
         _plan(walk_breadth_soft_cap=1500),
         ChatSettings(),
         user_touched_settings=False,
-        settings=BifrostSettings(research_walk_breadth_ceiling=300),
+        settings=OrgBrainSettings(research_walk_breadth_ceiling=300),
     )
     assert resolved.walk_breadth_soft_cap == 300
 
 
 def test_value_within_the_ceiling_is_unchanged_and_silent(caplog) -> None:
-    from bifrost.api.schemas.chat_settings import ChatSettings
-    from bifrost.research.orchestrator import merge_plan_with_settings
+    from orgbrain.api.schemas.chat_settings import ChatSettings
+    from orgbrain.research.orchestrator import merge_plan_with_settings
 
     caplog.set_level(logging.WARNING)
     resolved = merge_plan_with_settings(
         _plan(),
         ChatSettings(walk_breadth_soft_cap=250),
         user_touched_settings=True,
-        settings=BifrostSettings(research_walk_breadth_ceiling=300),
+        settings=OrgBrainSettings(research_walk_breadth_ceiling=300),
     )
     assert resolved.walk_breadth_soft_cap == 250
     assert caplog.text == ""
@@ -391,15 +391,15 @@ def test_value_within_the_ceiling_is_unchanged_and_silent(caplog) -> None:
 def test_default_settings_leave_the_router_top_k_at_200() -> None:
     import inspect
 
-    from bifrost.api.schemas.chat_settings import ChatSettings
-    from bifrost.research import coordinator
-    from bifrost.research.orchestrator import merge_plan_with_settings
+    from orgbrain.api.schemas.chat_settings import ChatSettings
+    from orgbrain.research import coordinator
+    from orgbrain.research.orchestrator import merge_plan_with_settings
 
     resolved = merge_plan_with_settings(
         _plan(),
         ChatSettings(),
         user_touched_settings=False,
-        settings=BifrostSettings(),
+        settings=OrgBrainSettings(),
     )
     assert resolved.walk_breadth_soft_cap == 200
     source = inspect.getsource(coordinator)
@@ -409,15 +409,15 @@ def test_default_settings_leave_the_router_top_k_at_200() -> None:
 def test_research_max_repos_does_not_limit_discovery() -> None:
     import inspect
 
-    from bifrost.api.schemas.chat_settings import ChatSettings
-    from bifrost.research import coordinator
-    from bifrost.research.orchestrator import merge_plan_with_settings
+    from orgbrain.api.schemas.chat_settings import ChatSettings
+    from orgbrain.research import coordinator
+    from orgbrain.research.orchestrator import merge_plan_with_settings
 
     resolved = merge_plan_with_settings(
         _plan(),
         ChatSettings(),
         user_touched_settings=False,
-        settings=BifrostSettings(research_max_repos=1),
+        settings=OrgBrainSettings(research_max_repos=1),
     )
     assert resolved.walk_breadth_soft_cap == 200
     assert "research_max_repos" not in inspect.getsource(coordinator)
@@ -457,13 +457,13 @@ def slack(monkeypatch) -> _Slack:
 async def collab_client(
     monkeypatch, db_session: AsyncSession, tmp_path, slack: _Slack
 ) -> AsyncGenerator[AsyncClient]:
-    from bifrost.api.routes import collaboration as route
+    from orgbrain.api.routes import collaboration as route
 
-    monkeypatch.setenv("BIFROST_HANDOVERS_DIR", str(tmp_path))
+    monkeypatch.setenv("ORGBRAIN_HANDOVERS_DIR", str(tmp_path))
     monkeypatch.setattr(
         route,
         "get_settings",
-        lambda: BifrostSettings(slack_escalation_channel=CHANNEL, slack_bot_token=TOKEN),
+        lambda: OrgBrainSettings(slack_escalation_channel=CHANNEL, slack_bot_token=TOKEN),
     )
     app = _app(monkeypatch)
 
@@ -532,7 +532,7 @@ async def test_an_escalated_doubt_can_still_be_resolved(collab_client, db_sessio
 
 @pytest.fixture
 def create_draft(monkeypatch) -> AsyncMock:
-    from bifrost.collaboration import slack_draft
+    from orgbrain.collaboration import slack_draft
 
     mock = AsyncMock(return_value=SimpleNamespace(ok=True, channel_link=None, error=None))
     monkeypatch.setattr(slack_draft, "create_slack_draft", mock)
@@ -596,8 +596,8 @@ class _MeteredClient:
 
 @pytest.fixture
 def ask_app(monkeypatch, db_session):
-    from bifrost.agents.coordinator import TaskCoordinator
-    from bifrost.api.routes import ask as ask_route
+    from orgbrain.agents.coordinator import TaskCoordinator
+    from orgbrain.api.routes import ask as ask_route
 
     urns = ["urn:repo:a", "urn:repo:b"]
     repos = [SimpleNamespace(urn=u, id=uuid.uuid4(), name=u, url=None) for u in urns]

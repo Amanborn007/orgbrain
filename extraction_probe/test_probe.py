@@ -1,4 +1,4 @@
-"""Tests for the Bifrost Extraction Probe.
+"""Tests for the OrgBrain Extraction Probe.
 
 Covers:
 - Pydantic validation (positive + negative cases)

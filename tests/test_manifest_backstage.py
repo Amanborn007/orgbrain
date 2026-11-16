@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.cli.config_sections import BackstageConfig
-from bifrost.manifest.files import InMemoryRepoFiles
-from bifrost.manifest.providers.backstage import BackstageProvider, parse_catalog_info
+from orgbrain.cli.config_sections import BackstageConfig
+from orgbrain.manifest.files import InMemoryRepoFiles
+from orgbrain.manifest.providers.backstage import BackstageProvider, parse_catalog_info
 
 ACME = Path(__file__).resolve().parents[1] / "examples" / "acmeco"
 

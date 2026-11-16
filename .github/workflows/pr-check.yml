@@ -32,20 +32,20 @@ jobs:
       postgres:
         image: pgvector/pgvector:0.8.0-pg16
         env:
-          POSTGRES_USER: bifrost
-          POSTGRES_PASSWORD: bifrost_dev
-          POSTGRES_DB: bifrost_test
+          POSTGRES_USER: orgbrain
+          POSTGRES_PASSWORD: orgbrain_dev
+          POSTGRES_DB: orgbrain_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U bifrost -d bifrost_test"
+          --health-cmd "pg_isready -U orgbrain -d orgbrain_test"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
     env:
       # Mirrors the default in tests/conftest.py — kept explicit here
       # so the CI URL stays decoupled from any local-dev defaults.
-      TEST_DATABASE_URL: postgresql+asyncpg://bifrost:bifrost_dev@localhost:5432/bifrost_test
+      TEST_DATABASE_URL: postgresql+asyncpg://orgbrain:orgbrain_dev@localhost:5432/orgbrain_test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -77,13 +77,13 @@ jobs:
       - name: Pyright gate (runtime-crash rules only)
         run: uv run python scripts/pyright_gate.py
 
-      - name: Import every bifrost.* module (catches shadow-imports)
+      - name: Import every orgbrain.* module (catches shadow-imports)
         run: |
           uv run python -c "
           import importlib, pkgutil, sys
-          import bifrost
+          import orgbrain
           failed = []
-          for m in pkgutil.walk_packages(bifrost.__path__, prefix='bifrost.'):
+          for m in pkgutil.walk_packages(orgbrain.__path__, prefix='orgbrain.'):
               try:
                   importlib.import_module(m.name)
               except Exception as e:
@@ -91,7 +91,7 @@ jobs:
           if failed:
               for f in failed: print(f, file=sys.stderr)
               sys.exit(1)
-          print('all bifrost.* modules import cleanly')
+          print('all orgbrain.* modules import cleanly')
           "
 
       - name: Shadow-import audit (function-scope imports of module-level symbols)
@@ -178,7 +178,7 @@ jobs:
           EOF
 
   no-browser-automation:
-    # Project invariant (CLAUDE.md anti-pattern #10): Bifrost
+    # Project invariant (CLAUDE.md anti-pattern #10): OrgBrain
     # MUST NOT use browser-automation libraries for extraction or
     # research. All external data flows through git clone + MCP servers
     # + gh CLI. This gate fails any PR that introduces these packages

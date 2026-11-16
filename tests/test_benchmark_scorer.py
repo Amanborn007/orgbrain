@@ -1,4 +1,4 @@
-"""Unit tests for ``bifrost.benchmarks.scorer``.
+"""Unit tests for ``orgbrain.benchmarks.scorer``.
 
 Pure-function module — no DB, no event loop. Each test exercises one
 scoring concern in isolation so a regression points straight at its
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.benchmarks.scorer import (
+from orgbrain.benchmarks.scorer import (
     DEFAULT_WEIGHTS,
     ScoreInput,
     score_answer,
@@ -20,10 +20,10 @@ from bifrost.benchmarks.scorer import (
 
 def test_recall_full_match() -> None:
     inp = ScoreInput(
-        answer_text=("DLVR uses urn:bifrost:repo/Dispatcher and urn:bifrost:repo/SigningKeys."),
+        answer_text=("DLVR uses urn:orgbrain:repo/Dispatcher and urn:orgbrain:repo/SigningKeys."),
         expected_entities=[
-            "urn:bifrost:repo/Dispatcher",
-            "urn:bifrost:repo/SigningKeys",
+            "urn:orgbrain:repo/Dispatcher",
+            "urn:orgbrain:repo/SigningKeys",
         ],
     )
     out = score_answer(inp)
@@ -33,15 +33,15 @@ def test_recall_full_match() -> None:
 
 def test_recall_partial_miss() -> None:
     inp = ScoreInput(
-        answer_text="urn:bifrost:repo/Dispatcher is the main service.",
+        answer_text="urn:orgbrain:repo/Dispatcher is the main service.",
         expected_entities=[
-            "urn:bifrost:repo/Dispatcher",
-            "urn:bifrost:repo/SigningKeys",
+            "urn:orgbrain:repo/Dispatcher",
+            "urn:orgbrain:repo/SigningKeys",
         ],
     )
     out = score_answer(inp)
     assert out.recall == 0.5
-    assert out.missing_entities == ["urn:bifrost:repo/SigningKeys"]
+    assert out.missing_entities == ["urn:orgbrain:repo/SigningKeys"]
 
 
 def test_recall_no_expectations_is_vacuous_full() -> None:
@@ -56,8 +56,8 @@ def test_recall_no_expectations_is_vacuous_full() -> None:
 
 def test_precision_on_topic_full() -> None:
     inp = ScoreInput(
-        answer_text="urn:bifrost:repo/Dispatcher is the answer.",
-        expected_entities=["urn:bifrost:repo/Dispatcher"],
+        answer_text="urn:orgbrain:repo/Dispatcher is the answer.",
+        expected_entities=["urn:orgbrain:repo/Dispatcher"],
     )
     out = score_answer(inp)
     assert out.precision == 1.0
@@ -67,8 +67,8 @@ def test_precision_drops_with_off_topic_urn() -> None:
     """An answer that cites both the right URN and an unrelated one
     scores 0.5 precision — half of cited URNs are on-topic."""
     inp = ScoreInput(
-        answer_text=("urn:bifrost:service:Dispatcher and urn:bifrost:service:Random."),
-        expected_entities=["urn:bifrost:service:Dispatcher"],
+        answer_text=("urn:orgbrain:service:Dispatcher and urn:orgbrain:service:Random."),
+        expected_entities=["urn:orgbrain:service:Dispatcher"],
     )
     out = score_answer(inp)
     assert out.precision == 0.5
@@ -79,11 +79,11 @@ def test_precision_repo_prefix_relaxation() -> None:
     on-topic — answers legitimately go deeper than the expected set."""
     inp = ScoreInput(
         answer_text=(
-            "Top-level: urn:bifrost:service:Dispatcher. Components: "
-            "urn:bifrost:repo/Dispatcher/component/SenderInfo, "
-            "urn:bifrost:repo/Dispatcher/component/TierLimit."
+            "Top-level: urn:orgbrain:service:Dispatcher. Components: "
+            "urn:orgbrain:repo/Dispatcher/component/SenderInfo, "
+            "urn:orgbrain:repo/Dispatcher/component/TierLimit."
         ),
-        expected_entities=["urn:bifrost:service:Dispatcher"],
+        expected_entities=["urn:orgbrain:service:Dispatcher"],
     )
     out = score_answer(inp)
     # All three URNs are Dispatcher-prefixed → on-topic
@@ -94,9 +94,9 @@ def test_precision_repo_prefix_does_not_credit_wrong_repo() -> None:
     """A component in a NOT-expected repo doesn't get credit."""
     inp = ScoreInput(
         answer_text=(
-            "urn:bifrost:service:Dispatcher and urn:bifrost:repo/SomeOtherRepo/component/Foo"
+            "urn:orgbrain:service:Dispatcher and urn:orgbrain:repo/SomeOtherRepo/component/Foo"
         ),
-        expected_entities=["urn:bifrost:service:Dispatcher"],
+        expected_entities=["urn:orgbrain:service:Dispatcher"],
     )
     out = score_answer(inp)
     assert out.precision == 0.5
@@ -105,10 +105,10 @@ def test_precision_repo_prefix_does_not_credit_wrong_repo() -> None:
 def test_precision_one_hop_adjacency_credits_neighbour() -> None:
     """A neighbour of the expected entity is treated as on-topic."""
     inp = ScoreInput(
-        answer_text=("urn:bifrost:repo/Dispatcher and urn:bifrost:repo/SigningKeys"),
-        expected_entities=["urn:bifrost:repo/Dispatcher"],
+        answer_text=("urn:orgbrain:repo/Dispatcher and urn:orgbrain:repo/SigningKeys"),
+        expected_entities=["urn:orgbrain:repo/Dispatcher"],
         one_hop_neighbours={
-            "urn:bifrost:repo/Dispatcher": {"urn:bifrost:repo/SigningKeys"},
+            "urn:orgbrain:repo/Dispatcher": {"urn:orgbrain:repo/SigningKeys"},
         },
     )
     out = score_answer(inp)
@@ -119,7 +119,7 @@ def test_precision_zero_when_no_citations() -> None:
     """No URNs at all → 0.0 precision (the answer isn't grounded)."""
     inp = ScoreInput(
         answer_text="The thing happens because of code.",
-        expected_entities=["urn:bifrost:repo/Dispatcher"],
+        expected_entities=["urn:orgbrain:repo/Dispatcher"],
     )
     out = score_answer(inp)
     assert out.precision == 0.0
@@ -268,11 +268,11 @@ def test_total_is_weighted_blend() -> None:
     reflects the blend by ``DEFAULT_WEIGHTS``."""
     inp = ScoreInput(
         answer_text=(
-            "urn:bifrost:repo/Dispatcher does the thing. urn:bifrost:repo/SigningKeys also does."
+            "urn:orgbrain:repo/Dispatcher does the thing. urn:orgbrain:repo/SigningKeys also does."
         ),
         expected_entities=[
-            "urn:bifrost:repo/Dispatcher",
-            "urn:bifrost:repo/SigningKeys",
+            "urn:orgbrain:repo/Dispatcher",
+            "urn:orgbrain:repo/SigningKeys",
         ],
         answer_confidence="confirmed",
         tier_floor=1,
@@ -302,7 +302,7 @@ def test_total_is_weighted_blend() -> None:
 
 def test_evidence_consistency_clean_confirmed_scores_full() -> None:
     inp = ScoreInput(
-        answer_text="Clean answer cites urn:bifrost:repo/Dispatcher. No issues.",
+        answer_text="Clean answer cites urn:orgbrain:repo/Dispatcher. No issues.",
         answer_confidence="confirmed",
     )
     out = score_answer(inp)
@@ -431,8 +431,8 @@ def test_format_adherence_explicit_max_words_overrides_default() -> None:
 
 def test_as_db_row_returns_serializable_shape() -> None:
     inp = ScoreInput(
-        answer_text="urn:bifrost:repo/Dispatcher handles DLVR-42.",
-        expected_entities=["urn:bifrost:repo/Dispatcher"],
+        answer_text="urn:orgbrain:repo/Dispatcher handles DLVR-42.",
+        expected_entities=["urn:orgbrain:repo/Dispatcher"],
         expected_jira_refs=["DLVR-42"],
     )
     row = score_answer(inp).as_db_row()
@@ -455,4 +455,4 @@ def test_as_db_row_returns_serializable_shape() -> None:
     ):
         assert k in row, f"missing key: {k}"
     assert "DLVR-42" in row["cited_jira_refs"]
-    assert "urn:bifrost:repo/Dispatcher" in row["cited_entity_urns"]
+    assert "urn:orgbrain:repo/Dispatcher" in row["cited_entity_urns"]

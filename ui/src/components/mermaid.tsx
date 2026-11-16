@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
  * <Mermaid> — renders ```mermaid fenced blocks as SVG, inline +
  * click-to-expand modal viewer.
  *
- * Every diagram across Bifrost (synthesis answers, HLD views, future
+ * Every diagram across OrgBrain (synthesis answers, HLD views, future
  * incident timelines) goes through this component so they share:
- *   - dark theme tuned to Bifrost chrome
+ *   - dark theme tuned to OrgBrain chrome
  *   - automatic HLD/LLD label extraction from `%% HLD: title` header
  *   - click-to-expand modal with zoom, copy source, download SVG
  *   - Escape key to close modal
  *
- * See ``src/bifrost/research/diagram_standards.py`` for the generation
+ * See ``src/orgbrain/research/diagram_standards.py`` for the generation
  * rules the backend follows.
  */
 

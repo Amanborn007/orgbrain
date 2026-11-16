@@ -19,8 +19,8 @@ from types import SimpleNamespace
 import pytest
 import structlog
 
-from bifrost.logging_config import (
-    _BIFROST_HANDLER_FLAG,
+from orgbrain.logging_config import (
+    _ORGBRAIN_HANDLER_FLAG,
     _use_json,
     configure_logging,
 )
@@ -45,11 +45,11 @@ def _restore_logging():
     structlog.configure(**saved_structlog)
 
 
-def _redirect_bifrost_handler_to_buffer() -> io.StringIO:
+def _redirect_orgbrain_handler_to_buffer() -> io.StringIO:
     """Point the handler configure_logging installed at an in-memory buffer
     so we can assert on exactly what it renders."""
     root = logging.getLogger()
-    handler = next(h for h in root.handlers if getattr(h, _BIFROST_HANDLER_FLAG, False))
+    handler = next(h for h in root.handlers if getattr(h, _ORGBRAIN_HANDLER_FLAG, False))
     buf = io.StringIO()
     handler.stream = buf  # type: ignore[attr-defined]
     return buf
@@ -66,38 +66,38 @@ def _last_json_line(text: str) -> dict:
 
 def test_stdlib_logger_emits_json_with_correlation_id() -> None:
     configure_logging(_settings("json"))
-    buf = _redirect_bifrost_handler_to_buffer()
+    buf = _redirect_orgbrain_handler_to_buffer()
     structlog.contextvars.bind_contextvars(correlation_id="cid-stdlib")
 
-    logging.getLogger("bifrost.test.stdlib").warning("hello %s", "world")
+    logging.getLogger("orgbrain.test.stdlib").warning("hello %s", "world")
 
     rec = _last_json_line(buf.getvalue())
     assert rec["event"] == "hello world"
     assert rec["correlation_id"] == "cid-stdlib"
     assert rec["level"] == "warning"
-    assert rec["logger"] == "bifrost.test.stdlib"
+    assert rec["logger"] == "orgbrain.test.stdlib"
     assert "timestamp" in rec
 
 
 def test_structlog_logger_emits_json_with_correlation_id() -> None:
     configure_logging(_settings("json"))
-    buf = _redirect_bifrost_handler_to_buffer()
+    buf = _redirect_orgbrain_handler_to_buffer()
     structlog.contextvars.bind_contextvars(correlation_id="cid-struct")
 
-    structlog.stdlib.get_logger("bifrost.test.struct").info("structured", n=7)
+    structlog.stdlib.get_logger("orgbrain.test.struct").info("structured", n=7)
 
     rec = _last_json_line(buf.getvalue())
     assert rec["event"] == "structured"
     assert rec["correlation_id"] == "cid-struct"
     assert rec["n"] == 7
-    assert rec["logger"] == "bifrost.test.struct"
+    assert rec["logger"] == "orgbrain.test.struct"
 
 
 def test_console_format_is_not_json() -> None:
     configure_logging(_settings("console"))
-    buf = _redirect_bifrost_handler_to_buffer()
+    buf = _redirect_orgbrain_handler_to_buffer()
 
-    logging.getLogger("bifrost.test.console").info("plain text line")
+    logging.getLogger("orgbrain.test.console").info("plain text line")
 
     out = buf.getvalue()
     assert "plain text line" in out
@@ -125,7 +125,7 @@ def test_idempotent_single_handler() -> None:
     configure_logging(_settings("json"))
     configure_logging(_settings("json"))
     root = logging.getLogger()
-    ours = [h for h in root.handlers if getattr(h, _BIFROST_HANDLER_FLAG, False)]
+    ours = [h for h in root.handlers if getattr(h, _ORGBRAIN_HANDLER_FLAG, False)]
     assert len(ours) == 1  # second call replaced, not appended
 
 

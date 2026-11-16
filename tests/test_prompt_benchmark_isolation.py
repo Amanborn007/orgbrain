@@ -13,8 +13,8 @@ import re
 
 import pytest
 
-import bifrost
-from bifrost.benchmarks.loader import REPO_ROOT, _load_yaml
+import orgbrain
+from orgbrain.benchmarks.loader import REPO_ROOT, _load_yaml
 
 ACMECO_DIR = REPO_ROOT / "examples" / "acmeco"
 _NAME_SUFFIX = re.compile(r"(_PROMPT|_SYSTEM|_BLOCK|_POLICY)S?$")
@@ -54,7 +54,7 @@ NEUTRAL_TERMS = (
     "OrderActionProcessor",
     "CarrierAddressApiController",
     "src/router/OrderRouter.kt",
-    "urn:bifrost:component:carrier-gateway::OrderRouter",
+    "urn:orgbrain:component:carrier-gateway::OrderRouter",
     "ADV",
     "SupplierClient",
     "STOCK_GATEWAY_HOST",
@@ -201,7 +201,7 @@ def _acmeco_identifiers() -> tuple[set[str], set[str]]:
         names.update(m.lower() for m in re.findall(r"^\s*name:\s*([a-z0-9-]+)\s*$", text, re.M))
     names.update({"acmeco", "dlvr", "plat", "webhook"})
     idents = {
-        i for i in idents if not i.startswith("BIFROST_")
+        i for i in idents if not i.startswith("ORGBRAIN_")
     }  # the app's own env, not the demo's
     return idents - GENERIC_ACME_IDENTIFIERS, names
 
@@ -214,7 +214,7 @@ def _prompt_texts() -> dict[str, str]:
     """{qualified name: text} for every module-level prompt constant plus known builders."""
     out: dict[str, str] = {}
     failures: list[str] = []
-    for info in pkgutil.walk_packages(bifrost.__path__, "bifrost."):
+    for info in pkgutil.walk_packages(orgbrain.__path__, "orgbrain."):
         try:
             mod = importlib.import_module(info.name)
         except Exception as exc:  # noqa: BLE001 - report every module that cannot be imported
@@ -236,9 +236,9 @@ def _prompt_texts() -> dict[str, str]:
                 out[f"{info.name}.{name}"] = "\n".join(value)
     assert not failures, f"modules failed to import: {failures}"
 
-    from bifrost.collaboration import handover_generator
+    from orgbrain.collaboration import handover_generator
 
-    out["bifrost.collaboration.handover_generator._section_regen_system_prompt()"] = (
+    out["orgbrain.collaboration.handover_generator._section_regen_system_prompt()"] = (
         handover_generator._section_regen_system_prompt("TL;DR")
     )
     return out
@@ -273,10 +273,10 @@ def test_walker_found_the_prompt_constants():
     # Guards against a silent walk: the repo has 50+ such constants today.
     assert len(PROMPTS) >= 45
     for expected in (
-        "bifrost.research.coordinator._SYNTHESIS_SYSTEM_PROMPT",
-        "bifrost.research.diagram_standards.DIAGRAM_RULES_BLOCK",
-        "bifrost.research.confidence_policy.CODE_IS_TRUTH_POLICY",
-        "bifrost.extraction.prompts.KNOWLEDGE_INDEX_SYSTEM_PROMPT",
+        "orgbrain.research.coordinator._SYNTHESIS_SYSTEM_PROMPT",
+        "orgbrain.research.diagram_standards.DIAGRAM_RULES_BLOCK",
+        "orgbrain.research.confidence_policy.CODE_IS_TRUTH_POLICY",
+        "orgbrain.extraction.prompts.KNOWLEDGE_INDEX_SYSTEM_PROMPT",
     ):
         assert expected in PROMPTS
 

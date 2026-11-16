@@ -9,9 +9,9 @@ back as REDACTED, never the original.
 
 from __future__ import annotations
 
-from bifrost.actions.executor import _scrub_secrets_for_log
-from bifrost.extraction.secrets import SecretScanner
-from bifrost.storage.repository import _scrub_secrets
+from orgbrain.actions.executor import _scrub_secrets_for_log
+from orgbrain.extraction.secrets import SecretScanner
+from orgbrain.storage.repository import _scrub_secrets
 
 
 class TestScrubSecretsHelper:

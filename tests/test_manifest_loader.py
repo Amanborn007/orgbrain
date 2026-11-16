@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from bifrost.cli.config_sections import BackstageConfig, ConventionsConfig, ManifestConfig
-from bifrost.manifest.files import InMemoryRepoFiles
-from bifrost.manifest.loader import load_manifest
-from bifrost.manifest.providers.none import NoneProvider
-from bifrost.manifest.providers.registry import build_providers
+from orgbrain.cli.config_sections import BackstageConfig, ConventionsConfig, ManifestConfig
+from orgbrain.manifest.files import InMemoryRepoFiles
+from orgbrain.manifest.loader import load_manifest
+from orgbrain.manifest.providers.none import NoneProvider
+from orgbrain.manifest.providers.registry import build_providers
 
 CATALOG = """
 kind: Component

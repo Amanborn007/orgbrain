@@ -1,6 +1,6 @@
 # 05 — Agents Inventory
 
-> **TL;DR.** Bifrost runs ~25 LLM agents grouped into five families: extraction-pipeline (A→I), research/chat (router + per-source fan-out + synthesiser), action-layer (discuss → plan → execute → verify → debug), collaboration (clarifier + synthesiser + handover authors), and utility classifiers (intent, planner, scope-matcher). Three logical models do all the work: **Haiku** for cheap classification, **Sonnet** for reasoning + writing, and **MiniLM-384** locally for embeddings. Every call goes through a `claude -p` subprocess — there is no API-key path. Every successful call is recorded to `llm_cost_log`, which the Spend page rolls up.
+> **TL;DR.** OrgBrain runs ~25 LLM agents grouped into five families: extraction-pipeline (A→I), research/chat (router + per-source fan-out + synthesiser), action-layer (discuss → plan → execute → verify → debug), collaboration (clarifier + synthesiser + handover authors), and utility classifiers (intent, planner, scope-matcher). Three logical models do all the work: **Haiku** for cheap classification, **Sonnet** for reasoning + writing, and **MiniLM-384** locally for embeddings. Every call goes through a `claude -p` subprocess — there is no API-key path. Every successful call is recorded to `llm_cost_log`, which the Spend page rolls up.
 
 > **Read this when** you're: tracking down which agent emitted a given message, sizing the cost of a feature that adds an LLM call, or deciding which agent to extend instead of writing a new one. **Skip if** you only need to look up *what one route does* — that's chapter 04.
 
@@ -8,7 +8,7 @@
 
 ## 0. Models in play
 
-Bifrost runs against **three logical models** configured via `BifrostSettings` (`src/bifrost/cli/config.py:46-48`):
+OrgBrain runs against **three logical models** configured via `OrgBrainSettings` (`src/orgbrain/cli/config.py:46-48`):
 
 | Setting | Default | Used by |
 |---|---|---|
@@ -16,7 +16,7 @@ Bifrost runs against **three logical models** configured via `BifrostSettings` (
 | `extraction_model` | `claude-sonnet-4-6` | Sonnet — Phases D–I of extraction (components, flows, dependencies, relationships, knowledge index, confidence) |
 | `agent_model` | `claude-sonnet-4-6` | Sonnet — every reasoning agent (research, action layer, collaboration) |
 
-All calls go through `ClaudeLlmClient` (`src/bifrost/extraction/cli_client.py`), which spawns a `claude -p` subprocess and parses its NDJSON output. **There is no API-key path** — auth is whatever your Claude login (`claude auth login`) provides. Only `extraction_probe/agent.py` builds an `anthropic` client, from `ANTHROPIC_API_KEY`.
+All calls go through `ClaudeLlmClient` (`src/orgbrain/extraction/cli_client.py`), which spawns a `claude -p` subprocess and parses its NDJSON output. **There is no API-key path** — auth is whatever your Claude login (`claude auth login`) provides. Only `extraction_probe/agent.py` builds an `anthropic` client, from `ANTHROPIC_API_KEY`.
 
 Every successful call records to `llm_cost_log` via `extraction/cost.py::CostTracker.record()`. The Costs page rolls these up.
 
@@ -30,10 +30,10 @@ The five agent families and how they relate at runtime:
 
 | Family | Where they live | Lifetime | Inherits user MCP? |
 |---|---|---|---|
-| Extraction pipeline | `src/bifrost/extraction/` | Per-extraction-task, in-process worker | No — runs in a closed subprocess |
-| Research / chat | `src/bifrost/research/` | Per chat turn, fans out concurrently | **Yes** for Confluence / Jira / GitHub / Slack agents (they call MCP tools); No for code-only agents |
-| Action layer | `src/bifrost/actions/` | Per Task, sequential phases | Mixed: discuss/plan/verify/debug = no MCP; execute = inherits Claude Code's worktree-scoped tools |
-| Collaboration | `src/bifrost/collaboration/` | Per session / per generate | Clarifier inherits MCP indirectly via handover-doc context; synthesiser does not |
+| Extraction pipeline | `src/orgbrain/extraction/` | Per-extraction-task, in-process worker | No — runs in a closed subprocess |
+| Research / chat | `src/orgbrain/research/` | Per chat turn, fans out concurrently | **Yes** for Confluence / Jira / GitHub / Slack agents (they call MCP tools); No for code-only agents |
+| Action layer | `src/orgbrain/actions/` | Per Task, sequential phases | Mixed: discuss/plan/verify/debug = no MCP; execute = inherits Claude Code's worktree-scoped tools |
+| Collaboration | `src/orgbrain/collaboration/` | Per session / per generate | Clarifier inherits MCP indirectly via handover-doc context; synthesiser does not |
 | Utility classifiers | scattered | One-shot, sub-second | No |
 
 ```mermaid
@@ -57,7 +57,7 @@ flowchart TD
   Synth --> A[Markdown answer + citations]
 ```
 
-**MCP-inheritance security note.** Any agent marked "MCP" above runs the user's authenticated `mcp__atlassian__*`, `mcp__github__*`, or `mcp__claude_ai_Slack__*` tools. That means the bill (and the read-permissions exposure) is *the user's*, not Bifrost's. Code-only agents (RepoAgent, executor, verifier) explicitly do **not** inherit user MCP — they get a tightly scoped tool set against the local clone or the worktree.
+**MCP-inheritance security note.** Any agent marked "MCP" above runs the user's authenticated `mcp__atlassian__*`, `mcp__github__*`, or `mcp__claude_ai_Slack__*` tools. That means the bill (and the read-permissions exposure) is *the user's*, not OrgBrain's. Code-only agents (RepoAgent, executor, verifier) explicitly do **not** inherit user MCP — they get a tightly scoped tool set against the local clone or the worktree.
 
 > **If you remember nothing else about §0.5.** The chat answer is one Haiku call followed by N parallel Sonnet calls (capped at 5 repos × ~5 source agents = ~25 max), then one Sonnet synthesiser call to merge. That's where chat cost lives.
 
@@ -65,7 +65,7 @@ flowchart TD
 
 ## 1. Extraction pipeline agents
 
-The **A → I** phase pipeline. Code: `src/bifrost/extraction/pipeline.py` + `src/bifrost/extraction/prompts.py` (~970 lines of pure prompt strings).
+The **A → I** phase pipeline. Code: `src/orgbrain/extraction/pipeline.py` + `src/orgbrain/extraction/prompts.py` (~970 lines of pure prompt strings).
 
 > **Why phase letters skip B/C:** the spec assigned `B` and `C` to clone-and-list operations that happen *outside* the LLM pipeline (the GitAdapter handles them). The pipeline class never sees them; the letters were preserved so phase labels in cost charts and the database stay legible. (Comment block at `pipeline.py:1-15`.)
 
@@ -178,7 +178,7 @@ confidence is always "inferred" for freshly extracted entities; do NOT invent.
 
 ### 1.8 Pipeline-wide guarantees
 
-- **Canary tokens.** Every prompt embeds a random `BIFROST-CANARY-<hex>` token. After parsing, `validate_canary()` checks the *parsed JSON output* (not the assistant text — too many false positives) for echo. Echo = possible prompt injection, logs a warning. (`prompts.py:17-28`, `pipeline.py:414`.)
+- **Canary tokens.** Every prompt embeds a random `ORGBRAIN-CANARY-<hex>` token. After parsing, `validate_canary()` checks the *parsed JSON output* (not the assistant text — too many false positives) for echo. Echo = possible prompt injection, logs a warning. (`prompts.py:17-28`, `pipeline.py:414`.)
 - **Content size limit.** `MAX_CHARS_PER_CALL = 200,000` (~50K tokens). Exceeding this throws `ContentTooLargeError` *before* the LLM sees anything. (`prompts.py:33-35`.)
 - **Cost recording.** Every `_run_phase_call()` calls `_record_cost()` which writes to `llm_cost_log`. The CLI's `total_cost_usd` field is preferred over our local price-table estimate. (`pipeline.py:364-381`.)
 
@@ -188,7 +188,7 @@ confidence is always "inferred" for freshly extracted entities; do NOT invent.
 
 ## 2. Research / chat agents
 
-The chat product. Path: `src/bifrost/research/`. The **Coordinator** orchestrates the rest.
+The chat product. Path: `src/orgbrain/research/`. The **Coordinator** orchestrates the rest.
 
 ### 2.1 Coordinator (synthesis agent)
 
@@ -373,7 +373,7 @@ Return JSON. Be conservative: prefer EXTEND_BUNDLE over CLARIFY when uncertain.
 
 ## 3. Action layer agents
 
-The spec-driven workflow: **discuss → plan → execute → verify → debug**. Path: `src/bifrost/actions/`.
+The spec-driven workflow: **discuss → plan → execute → verify → debug**. Path: `src/orgbrain/actions/`.
 
 ### 3.1 Intent router
 
@@ -381,7 +381,7 @@ The spec-driven workflow: **discuss → plan → execute → verify → debug**.
 **Model:** **Haiku** (`triage_model`) — 15s timeout.
 **System prompt sketch** (greppable as `_ROUTER_SYSTEM_PROMPT` in `actions/intent_router.py`):
 ```
-You are Bifrost's intent classifier. Every user message gets one of five intents:
+You are OrgBrain's intent classifier. Every user message gets one of five intents:
   ask | plan | execute | quick | clarify
 Guidance:
   * A Jira URL alone → prefer `clarify`.
@@ -405,7 +405,7 @@ Guidance:
 **Model:** **Sonnet** (`agent_model`).
 **System prompt sketch** (greppable as `_DISCUSSION_SYSTEM_PROMPT`):
 ```
-You are Bifrost's discussion agent.
+You are OrgBrain's discussion agent.
 HARD RULES:
 1. ASSUMPTIONS ARE ATOMIC. One fact per row.
 2. ASSUMPTIONS HAVE PROVENANCE. source_type ∈ {user_stated, manifest, gradle,
@@ -428,7 +428,7 @@ HARD RULES:
 **Model:** **Sonnet**.
 **System prompt sketch** (greppable as `_PLAN_SYSTEM_PROMPT`):
 ```
-You are Bifrost's plan agent.
+You are OrgBrain's plan agent.
 HARD RULES:
 1. TASKS ARE ATOMIC. "Migrate the cache" is NOT a task; "Create the
    order_status_cache table" and "Wire the Postgres reader into
@@ -449,12 +449,12 @@ HARD RULES:
 **Model:** **Sonnet**.
 **System prompt sketch** (greppable as `_EXECUTOR_SYSTEM_PROMPT`):
 ```
-You are Bifrost's executor agent. ONE atomic task in a fresh worktree.
+You are OrgBrain's executor agent. ONE atomic task in a fresh worktree.
 HARD RULES:
 1. STAY IN SCOPE. Edit only files listed under "Files".
 2. DO NOT SURPRISE. No refactors / renames / "while I'm here" cleanup.
 3. USE THE TOOLS YOU HAVE. Read/Glob/Grep/Edit/Write/Bash for THIS dir only.
-4. NO COMMITS. Bifrost commits for you.
+4. NO COMMITS. OrgBrain commits for you.
 5. WHEN DONE, WRITE A SHORT SUMMARY (1-3 sentences).
 ```
 **Output:** Modified files + a run summary.
@@ -470,7 +470,7 @@ HARD RULES:
 **Model:** **Sonnet**.
 **System prompt sketch** (greppable as `_VERIFIER_SYSTEM_PROMPT`):
 ```
-You are Bifrost's verifier agent. Read/Glob/Grep/Bash in a worktree where an
+You are OrgBrain's verifier agent. Read/Glob/Grep/Bash in a worktree where an
 executor just made changes.
 HARD RULES:
 1. USE TOOLS TO VERIFY. For each check: Read/Grep the files; run verify_cmd
@@ -491,7 +491,7 @@ HARD RULES:
 **Model:** **Sonnet**.
 **System prompt sketch** (greppable as `_DEBUG_SYSTEM_PROMPT`):
 ```
-You are Bifrost's debug helper. A single executor task failed.
+You are OrgBrain's debug helper. A single executor task failed.
 Rules:
 1. START FROM THE LOG (transcript + verify output).
 2. CITE SPECIFICS. "Tests failed" isn't a diagnosis.
@@ -511,7 +511,7 @@ Rules:
 **Model:** **Haiku** (`triage_model`).
 **System prompt sketch** (greppable as `_QUICK_SYSTEM_PROMPT`):
 ```
-You are Bifrost's quick-mode planner. Trivial code change — typo, rename,
+You are OrgBrain's quick-mode planner. Trivial code change — typo, rename,
 one-liner. ONE atomic task for the executor.
 HARD RULES:
 1. ONE TASK. No waves. No depends_on. If it needs more, ready_to_execute=false.
@@ -541,7 +541,7 @@ HARD RULES:
 
 ## 4. Collaboration agents
 
-The interaction substrate. Path: `src/bifrost/collaboration/`.
+The interaction substrate. Path: `src/orgbrain/collaboration/`.
 
 ### 4.1 Clarifier
 
@@ -549,7 +549,7 @@ The interaction substrate. Path: `src/bifrost/collaboration/`.
 **Model:** **Sonnet** (`agent_model`) — 45s inline timeout.
 **System prompt sketch** (greppable as `_CLARIFIER_SYSTEM_PROMPT`):
 ```
-You are Bifrost's collaboration clarifier. A team member is asking another
+You are OrgBrain's collaboration clarifier. A team member is asking another
 team for help. Make the request concrete enough that the owning team can scope it.
 EITHER: (a) ask 1-3 specific clarifying questions and emit each as new_doubts,
 OR     (b) set requirement_is_concrete=true and write a short Markdown ack.
@@ -571,7 +571,7 @@ doc_resolutions with citation_md + source_ref so the doubt closes as answered_by
 **Model:** **Sonnet** — 180s inline timeout.
 **System prompt sketch** (greppable as `_SYNTHESIZER_SYSTEM_PROMPT`):
 ```
-You are Bifrost's collaboration synthesizer. Produce the FINAL BRIEF.
+You are OrgBrain's collaboration synthesizer. Produce the FINAL BRIEF.
 Fields: title (≤80 chars), summary_md (60-120 words, owning-team frame),
 affected_scopes (bulleted), owning_teams (don't invent names),
 estimated_work_md, required_artifacts_md, contacts_md, open_risks_md
@@ -593,7 +593,7 @@ ready-to-paste Slack/email).
 **Model:** **Haiku** (`triage_model`) — 15s timeout.
 **System prompt sketch** (greppable as `_MATCHER_SYSTEM_PROMPT`):
 ```
-You are Bifrost's scope classifier. Pick candidate handover indices most
+You are OrgBrain's scope classifier. Pick candidate handover indices most
 relevant to the user_intent. Return at most 3 indices, ordered by relevance.
 Rules:
   * Match on semantic intent, not literal token overlap.
@@ -612,7 +612,7 @@ Rules:
 
 ### 4.4 Slack escalation post (no agent)
 
-**Purpose:** When a doubt is escalated and both `BIFROST_SLACK_ESCALATION_CHANNEL` and `BIFROST_SLACK_BOT_TOKEN` are set, post the synthesizer's `draft_ask_message` verbatim to that channel.
+**Purpose:** When a doubt is escalated and both `ORGBRAIN_SLACK_ESCALATION_CHANNEL` and `ORGBRAIN_SLACK_BOT_TOKEN` are set, post the synthesizer's `draft_ask_message` verbatim to that channel.
 **Model:** none. This is a plain Slack Web API call (`chat.postMessage`, `chat.getPermalink`), not an LLM agent.
 **Called from:** `api/routes/collaboration.py` via `slack_escalation.py`.
 **Inherits MCP:** **No.**
@@ -624,7 +624,7 @@ Rules:
 **Model:** **Sonnet** for all four.
 **System prompt sketch** (greppable as `_HANDOVER_SYSTEM_PROMPT`, repo-scoped variant):
 ```
-You are Bifrost's repo-scoped handover-doc author. Given metadata + a slice of
+You are OrgBrain's repo-scoped handover-doc author. Given metadata + a slice of
 the entity graph, write a handover that helps an external engineer
 (a) understand what this team owns, (b) know whom to talk to, (c) frame asks.
 Sections (separate JSON fields): title, executive_summary, architecture
@@ -654,7 +654,7 @@ ktlo_surface, glossary.
 **Model:** **Sonnet**.
 **System prompt sketch** (greppable as `_PARENT_COMPOSER_SYSTEM_PROMPT` at line 1352):
 ```
-You are Bifrost's multi-repo composer. Given truncated child handovers,
+You are OrgBrain's multi-repo composer. Given truncated child handovers,
 compose the parent doc — preserve the canonical 7 sections; lift only
 cross-cutting facts; do NOT re-author per-repo content children already covered.
 ```
@@ -681,7 +681,7 @@ cross-cutting facts; do NOT re-author per-repo content children already covered.
 **Inherits MCP:** No.
 **Cost target:** **~$0.05–0.20 per edit**.
 
-> **If you remember nothing else about §4.** Tree decomposition (`_TREE_THRESHOLD=5`) is what makes domain handovers tractable: ≤5 repos = one Sonnet call; >5 repos = N children + 1 parent. The cost ceiling (`BIFROST_HANDOVER_MAX_COST_USD`, default $10) exists because the second mode can run away.
+> **If you remember nothing else about §4.** Tree decomposition (`_TREE_THRESHOLD=5`) is what makes domain handovers tractable: ≤5 repos = one Sonnet call; >5 repos = N children + 1 parent. The cost ceiling (`ORGBRAIN_HANDOVER_MAX_COST_USD`, default $10) exists because the second mode can run away.
 
 ---
 
@@ -699,7 +699,7 @@ A cheat sheet for where the Anthropic bill goes. All numbers are order-of-magnit
 | Collab session turn | Haiku matcher + Sonnet clarifier | ~$0.05 | |
 | Collab close (synth) | Sonnet | ~$0.30 | One call |
 | Repo-scoped handover | Sonnet | **$0.30-2** | One call |
-| Domain handover (10 repos, tree decomp) | Sonnet × ~12 (10 children + parent + maybe a re-run) | **$5-25** | Capped by `BIFROST_HANDOVER_MAX_COST_USD` |
+| Domain handover (10 repos, tree decomp) | Sonnet × ~12 (10 children + parent + maybe a re-run) | **$5-25** | Capped by `ORGBRAIN_HANDOVER_MAX_COST_USD` |
 
 ---
 
@@ -707,8 +707,8 @@ A cheat sheet for where the Anthropic bill goes. All numbers are order-of-magnit
 
 - **Haiku is the lever to pull on cost.** Triage / intent / scope-matching all run on Haiku; the cost-per-event for those is in the ~$0.001-0.02 range. Doubling them barely shows up. Sonnet calls (extraction, agents, synthesis) are 50-500× more expensive each.
 - **Worst offenders:** Phase D (component extraction) and the executor in a multi-file Task. These are where the Sonnet bill actually accumulates.
-- **`agent_model` controls *most* of the bill.** Set `BIFROST_AGENT_MODEL=claude-haiku-4-5` to demolish your spend in exchange for noticeably worse synthesis. Don't do this in production unless you've tested.
-- **Every prompt has a canary.** Echoed canary in a structured output = injection signal. Look for the warning in `bifrost_server.log` and treat it like a security incident.
+- **`agent_model` controls *most* of the bill.** Set `ORGBRAIN_AGENT_MODEL=claude-haiku-4-5` to demolish your spend in exchange for noticeably worse synthesis. Don't do this in production unless you've tested.
+- **Every prompt has a canary.** Echoed canary in a structured output = injection signal. Look for the warning in `orgbrain_server.log` and treat it like a security incident.
 - **Cost per run is preferred over our estimate.** The Claude CLI returns `total_cost_usd` per call; the cost tracker uses it as ground truth. A >50% divergence between CLI-reported and our local estimate logs a warning (`extraction/cost.py:191`).
 - **Tree decomposition is opt-in by scale.** For ≤5 repos, multi-repo handover is a single Sonnet call (cheap). Above 5, it's per-repo children + parent (expensive but better signal). The threshold lives in `_TREE_THRESHOLD = 5`.
 - **MCP-inheritance follows the user's permissions.** Confluence/Jira/GitHub/Slack agents run as the logged-in user, with the user's scopes. The local code agents (RepoAgent, executor, verifier) explicitly do not inherit MCP — they get a tightly scoped tool set.

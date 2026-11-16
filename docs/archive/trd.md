@@ -1,4 +1,4 @@
-# Bifrost V1 — Technical Requirements Document (TRD)
+# OrgBrain V1 — Technical Requirements Document (TRD)
 
 **Companion to:** docs/archive/prd.md (PRD), docs/archive/specs/ (design specs)
 **Status:** Pre-implementation plan, kept because code cites its section numbers. The built system is described in docs/handbook/ (layout 02 §5, schema 03, API 04, config 10).
@@ -13,7 +13,7 @@ The built layout is in the How it works table of [README.md](../../README.md#how
 
 ## 2. Core Python Interfaces
 
-Planned shapes. Built in core/types.py, core/enums.py, core/models.py, agents/runtime.py, adapters/base.py, storage/backend.py. AgentEvent, AgentResponse and MigrationState were not built; Interface is BifrostInterface (core/models.py).
+Planned shapes. Built in core/types.py, core/enums.py, core/models.py, agents/runtime.py, adapters/base.py, storage/backend.py. AgentEvent, AgentResponse and MigrationState were not built; Interface is OrgBrainInterface (core/models.py).
 
 ### 2.1 Primitive Types
 
@@ -28,7 +28,7 @@ from typing import Literal, TypeAlias
 # UUID v7 -- time-sortable, used as all primary keys
 EntityId: TypeAlias = uuid.UUID
 
-# bifrost:{scope}:{type}:{id} -- globally unique across all deployments
+# orgbrain:{scope}:{type}:{id} -- globally unique across all deployments
 URN: TypeAlias = str
 
 # ISO 8601 timestamp (always timezone-aware in runtime)
@@ -71,8 +71,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from bifrost.core.confidence import ConfidenceLevel
-from bifrost.core.primitives import Timestamp
+from orgbrain.core.confidence import ConfidenceLevel
+from orgbrain.core.primitives import Timestamp
 
 
 class LineRange(BaseModel):
@@ -107,9 +107,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from bifrost.core.confidence import ConfidenceLevel
-from bifrost.core.evidence import EvidenceRef
-from bifrost.core.primitives import Scope, Timestamp
+from orgbrain.core.confidence import ConfidenceLevel
+from orgbrain.core.evidence import EvidenceRef
+from orgbrain.core.primitives import Scope, Timestamp
 
 
 class FreshnessInfo(BaseModel):
@@ -243,8 +243,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from bifrost.core.agent_response import AgentResponse
-from bifrost.core.primitives import Timestamp
+from orgbrain.core.agent_response import AgentResponse
+from orgbrain.core.primitives import Timestamp
 
 
 class ThinkingEvent(BaseModel):
@@ -314,9 +314,9 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from bifrost.core.confidence import ConfidenceLevel
-from bifrost.core.evidence import EvidenceRef
-from bifrost.core.primitives import Timestamp
+from orgbrain.core.confidence import ConfidenceLevel
+from orgbrain.core.evidence import EvidenceRef
+from orgbrain.core.primitives import Timestamp
 
 
 class Finding(BaseModel):
@@ -401,8 +401,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 
-from bifrost.core.agent_event import AgentEvent
-from bifrost.core.agent_task import AgentTask
+from orgbrain.core.agent_event import AgentEvent
+from orgbrain.core.agent_task import AgentTask
 
 
 class AgentRuntime(ABC):
@@ -530,7 +530,7 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
-from bifrost.core.primitives import URN
+from orgbrain.core.primitives import URN
 
 
 class SourceObjectType(StrEnum):
@@ -699,7 +699,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
-from bifrost.core.source_adapter import SourceObjectRef
+from orgbrain.core.source_adapter import SourceObjectRef
 
 
 class TextContent(BaseModel):
@@ -766,7 +766,7 @@ class SourceMetadata(BaseModel):
 class ExtractedContent(BaseModel):
     """Output of SourceAdapter.extract().
 
-    Consumed by the extraction pipeline (bifrost.extraction) as input to LLM analysis.
+    Consumed by the extraction pipeline (orgbrain.extraction) as input to LLM analysis.
     Content size is bounded by AdapterContentPolicy (default: 50K tokens).
     """
 
@@ -789,9 +789,9 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from bifrost.core.confidence import ConfidenceLevel
-from bifrost.core.evidence import EvidenceRef
-from bifrost.core.primitives import Timestamp
+from orgbrain.core.confidence import ConfidenceLevel
+from orgbrain.core.evidence import EvidenceRef
+from orgbrain.core.primitives import Timestamp
 
 
 class TaskFinding(BaseModel):
@@ -883,10 +883,10 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from bifrost.core.confidence import ConfidenceLevel
-from bifrost.core.evidence import EvidenceRef
-from bifrost.core.metadata import MetadataEnvelope
-from bifrost.core.primitives import (
+from orgbrain.core.confidence import ConfidenceLevel
+from orgbrain.core.evidence import EvidenceRef
+from orgbrain.core.metadata import MetadataEnvelope
+from orgbrain.core.primitives import (
     EntityId,
     KnowledgeTier,
     Scope,
@@ -905,14 +905,14 @@ class ComponentType(StrEnum):
 
 
 class Component(BaseModel):
-    """A software component tracked by Bifrost."""
+    """A software component tracked by OrgBrain."""
 
     id: EntityId
-    urn: URN                        # bifrost:repo:{repo_id}:component:{id}
+    urn: URN                        # orgbrain:repo:{repo_id}:component:{id}
     repo_id: EntityId
     name: str
     type: ComponentType
-    interfaces: list[EntityId]      # FK[] to BifrostInterface
+    interfaces: list[EntityId]      # FK[] to OrgBrainInterface
     dependencies: list[EntityId]    # FK[] to DependencyReference
     metadata: MetadataEnvelope
     created_at: Timestamp
@@ -928,14 +928,14 @@ class InterfaceType(StrEnum):
     CONFIG = "config"
 
 
-class BifrostInterface(BaseModel):
+class OrgBrainInterface(BaseModel):
     """An interface exposed by a component.
 
-    Named BifrostInterface to avoid collision with Python builtins.
+    Named OrgBrainInterface to avoid collision with Python builtins.
     """
 
     id: EntityId
-    urn: URN                        # bifrost:repo:{repo_id}:interface:{id}
+    urn: URN                        # orgbrain:repo:{repo_id}:interface:{id}
     component_id: EntityId
     type: InterfaceType
     name: str
@@ -982,7 +982,7 @@ class FlowReference(BaseModel):
     """An end-to-end flow spanning one or more components."""
 
     id: EntityId
-    urn: URN                        # bifrost:{scope}:flow:{id}
+    urn: URN                        # orgbrain:{scope}:flow:{id}
     name: str
     flow_type: FlowType
     segments: list[FlowSegment]
@@ -1074,7 +1074,7 @@ class GapReport(BaseModel):
     Used for V2 training signal and continuous knowledge improvement.
     """
 
-    id: str                         # bifrost:gap-report:{scope}:{id}
+    id: str                         # orgbrain:gap-report:{scope}:{id}
     entity_type: Literal["gap_report"] = "gap_report"
     scope: EntityId                 # repo_id or domain_id
     query_id: str                   # task_id that surfaced this gap
@@ -1121,7 +1121,7 @@ class Correction(BaseModel):
 class MigrationState(BaseModel):
     """Tracks the Track A -> Track B migration state for a given repo or domain.
 
-    Written when BIFROST_TRACK switches from A to B.
+    Written when ORGBRAIN_TRACK switches from A to B.
     Used by the migration job to ensure all knowledge_text_cache rows are
     uploaded to Anthropic Memory Stores before Track A data is retired.
     """
@@ -1153,7 +1153,7 @@ class MigrationState(BaseModel):
 
 ## 3. Database Schema
 
-The built schema is in `alembic/versions/001_baseline.py` and `src/bifrost/storage/models.py`, and is described in [handbook 03](../handbook/03-data-model.md). It has 52 tables. 35 are mapped as ORM models in `models.py`, and 17 exist only in the migration. The column-level tables that were planned here are not kept.
+The built schema is in `alembic/versions/001_baseline.py` and `src/orgbrain/storage/models.py`, and is described in [handbook 03](../handbook/03-data-model.md). It has 52 tables. 35 are mapped as ORM models in `models.py`, and 17 exist only in the migration. The column-level tables that were planned here are not kept.
 
 The 12 V1 tables planned in §3.1 to §3.12 were:
 
@@ -1179,7 +1179,7 @@ The 12 V1 tables planned in §3.1 to §3.12 were:
 Base URL: `/api/v1/`. All responses use the standard envelope from S10:
 
 ```python
-# bifrost/api/schemas/envelope.py
+# orgbrain/api/schemas/envelope.py
 
 from datetime import datetime
 from typing import Generic, TypeVar, Literal
@@ -1195,7 +1195,7 @@ class EnvelopeMeta(BaseModel):
     track: Literal["A", "B"] = "A"
 
 
-class BifrostEnvelope(BaseModel, Generic[T]):
+class OrgBrainEnvelope(BaseModel, Generic[T]):
     data: T
     meta: EnvelopeMeta
 
@@ -1207,21 +1207,21 @@ class ErrorDetail(BaseModel):
     detail: dict | None = None
 
 
-class BifrostErrorResponse(BaseModel):
+class OrgBrainErrorResponse(BaseModel):
     error: ErrorDetail
     meta: EnvelopeMeta
 ```
 
 **Auth (shared across all authenticated routes):**
 
-Bifrost resolves a principal for every non-public route in `IdentityMiddleware` (`src/bifrost/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `bifrost token new`, which Bifrost matches by sha256 against `api_tokens` in `bifrost.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../RUNNING.md#6-identity) and [handbook 02 §8.1](../handbook/02-architecture.md#81-auth-at-the-api-boundary).
+OrgBrain resolves a principal for every non-public route in `IdentityMiddleware` (`src/orgbrain/api/auth/`). `identity.provider` chooses how: `none` treats a loopback caller as the admin operator and needs no header; `header` reads identity from trusted proxy headers; `oidc_jwt` verifies an `Authorization: Bearer` JWT against the configured JWKS and accepts RS256 and ES256 only. Scripts can send `Authorization: Bearer bft_…` tokens minted with `orgbrain token new`, which OrgBrain matches by sha256 against `api_tokens` in `orgbrain.yaml`. Any other bearer value gets 401 `invalid_credentials`, a request with no principal gets 401 `identity_required`, and a principal without the needed role gets 403 `auth.role_required`. The only auth routes are `GET /api/v1/auth/me`, `POST /api/v1/auth/refresh` and `POST /api/v1/auth/logout`. See [RUNNING.md section 6](../../RUNNING.md#6-identity) and [handbook 02 §8.1](../handbook/02-architecture.md#81-auth-at-the-api-boundary).
 
-The route snippets below show the planned `Depends(get_current_user)` dependency, which was not built. The built routes take `current_principal` from `bifrost.api.auth.middleware` and `require_role` from `bifrost.api.deps`.
+The route snippets below show the planned `Depends(get_current_user)` dependency, which was not built. The built routes take `current_principal` from `orgbrain.api.auth.middleware` and `require_role` from `orgbrain.api.deps`.
 
 ### 4.1 Repos Endpoints
 
 ```python
-# bifrost/api/schemas/repos.py
+# orgbrain/api/schemas/repos.py
 
 from pydantic import BaseModel
 from datetime import datetime
@@ -1292,12 +1292,12 @@ class TriggerExtractionData(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/repos.py
+# orgbrain/api/routes/repos.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from bifrost.api.deps import get_current_user
-from bifrost.api.schemas.envelope import BifrostEnvelope
-from bifrost.api.schemas.repos import (
+from orgbrain.api.deps import get_current_user
+from orgbrain.api.schemas.envelope import OrgBrainEnvelope
+from orgbrain.api.schemas.repos import (
     RegisterRepoRequest, RegisterRepoData,
     RepoSummary, RepoDetail,
     DeregisterRepoData,
@@ -1309,52 +1309,52 @@ router = APIRouter(prefix="/api/v1/repos", tags=["repos"])
 
 @router.post(
     "",
-    response_model=BifrostEnvelope[RegisterRepoData],
+    response_model=OrgBrainEnvelope[RegisterRepoData],
     status_code=status.HTTP_201_CREATED,
 )
 async def register_repo(
     body: RegisterRepoRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[RegisterRepoData]:
+) -> OrgBrainEnvelope[RegisterRepoData]:
     """Register a new repository.
     Errors: 400 (ValidationError), 409 (ConflictError -- URL already registered)"""
     ...
 
 
-@router.get("", response_model=BifrostEnvelope[list[RepoSummary]])
+@router.get("", response_model=OrgBrainEnvelope[list[RepoSummary]])
 async def list_repos(
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[list[RepoSummary]]:
+) -> OrgBrainEnvelope[list[RepoSummary]]:
     """List all registered repos."""
     ...
 
 
-@router.get("/{repo_id}", response_model=BifrostEnvelope[RepoDetail])
+@router.get("/{repo_id}", response_model=OrgBrainEnvelope[RepoDetail])
 async def get_repo(
     repo_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[RepoDetail]:
+) -> OrgBrainEnvelope[RepoDetail]:
     """Repo detail.
-    Errors: 404 (BifrostError -- repo not found)"""
+    Errors: 404 (OrgBrainError -- repo not found)"""
     ...
 
 
-@router.delete("/{repo_id}", response_model=BifrostEnvelope[DeregisterRepoData])
+@router.delete("/{repo_id}", response_model=OrgBrainEnvelope[DeregisterRepoData])
 async def deregister_repo(
     repo_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[DeregisterRepoData]:
+) -> OrgBrainEnvelope[DeregisterRepoData]:
     """Deregister (soft delete).
     Errors: 404"""
     ...
 
 
-@router.post("/{repo_id}/extract", response_model=BifrostEnvelope[TriggerExtractionData])
+@router.post("/{repo_id}/extract", response_model=OrgBrainEnvelope[TriggerExtractionData])
 async def trigger_extraction(
     repo_id: str,
     body: TriggerExtractionRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[TriggerExtractionData]:
+) -> OrgBrainEnvelope[TriggerExtractionData]:
     """Trigger manual extraction.
     Auth: principal required (see the auth paragraph above).
     Errors: 400, 404, 402 (BudgetExceededError)"""
@@ -1364,7 +1364,7 @@ async def trigger_extraction(
 ### 4.2 Domains Endpoints
 
 ```python
-# bifrost/api/schemas/domains.py
+# orgbrain/api/schemas/domains.py
 
 from pydantic import BaseModel
 
@@ -1430,12 +1430,12 @@ class RemoveRepoDomainData(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/domains.py
+# orgbrain/api/routes/domains.py
 
 from fastapi import APIRouter, Depends, status
-from bifrost.api.deps import get_current_user
-from bifrost.api.schemas.envelope import BifrostEnvelope
-from bifrost.api.schemas.domains import (
+from orgbrain.api.deps import get_current_user
+from orgbrain.api.schemas.envelope import OrgBrainEnvelope
+from orgbrain.api.schemas.domains import (
     CreateDomainRequest, CreateDomainData,
     DomainSummary, DomainDetail,
     UpdateDomainRequest, UpdateDomainData,
@@ -1449,78 +1449,78 @@ router = APIRouter(prefix="/api/v1/domains", tags=["domains"])
 
 @router.post(
     "",
-    response_model=BifrostEnvelope[CreateDomainData],
+    response_model=OrgBrainEnvelope[CreateDomainData],
     status_code=status.HTTP_201_CREATED,
 )
 async def create_domain(
     body: CreateDomainRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[CreateDomainData]:
+) -> OrgBrainEnvelope[CreateDomainData]:
     ...
 
 
-@router.get("", response_model=BifrostEnvelope[list[DomainSummary]])
+@router.get("", response_model=OrgBrainEnvelope[list[DomainSummary]])
 async def list_domains(
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[list[DomainSummary]]:
+) -> OrgBrainEnvelope[list[DomainSummary]]:
     ...
 
 
-@router.get("/{domain_id}", response_model=BifrostEnvelope[DomainDetail])
+@router.get("/{domain_id}", response_model=OrgBrainEnvelope[DomainDetail])
 async def get_domain(
     domain_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[DomainDetail]:
+) -> OrgBrainEnvelope[DomainDetail]:
     ...
 
 
-@router.put("/{domain_id}", response_model=BifrostEnvelope[UpdateDomainData])
+@router.put("/{domain_id}", response_model=OrgBrainEnvelope[UpdateDomainData])
 async def update_domain(
     domain_id: str,
     body: UpdateDomainRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[UpdateDomainData]:
+) -> OrgBrainEnvelope[UpdateDomainData]:
     ...
 
 
-@router.delete("/{domain_id}", response_model=BifrostEnvelope[DeleteDomainData])
+@router.delete("/{domain_id}", response_model=OrgBrainEnvelope[DeleteDomainData])
 async def delete_domain(
     domain_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[DeleteDomainData]:
+) -> OrgBrainEnvelope[DeleteDomainData]:
     """Note: does NOT delete repos -- only removes the grouping."""
     ...
 
 
 @router.post(
     "/{domain_id}/repos",
-    response_model=BifrostEnvelope[AddRepoDomainData],
+    response_model=OrgBrainEnvelope[AddRepoDomainData],
     status_code=status.HTTP_201_CREATED,
 )
 async def add_repo_to_domain(
     domain_id: str,
     body: AddRepoDomainRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[AddRepoDomainData]:
+) -> OrgBrainEnvelope[AddRepoDomainData]:
     ...
 
 
 @router.delete(
     "/{domain_id}/repos/{repo_id}",
-    response_model=BifrostEnvelope[RemoveRepoDomainData],
+    response_model=OrgBrainEnvelope[RemoveRepoDomainData],
 )
 async def remove_repo_from_domain(
     domain_id: str,
     repo_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[RemoveRepoDomainData]:
+) -> OrgBrainEnvelope[RemoveRepoDomainData]:
     ...
 ```
 
 ### 4.3 Tasks Endpoints
 
 ```python
-# bifrost/api/schemas/extraction_tasks.py
+# orgbrain/api/schemas/extraction_tasks.py
 
 from pydantic import BaseModel
 from datetime import datetime
@@ -1576,12 +1576,12 @@ class CancelTaskData(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/extraction_tasks.py
+# orgbrain/api/routes/extraction_tasks.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from bifrost.api.deps import get_current_user
-from bifrost.api.schemas.envelope import BifrostEnvelope
-from bifrost.api.schemas.extraction_tasks import (
+from orgbrain.api.deps import get_current_user
+from orgbrain.api.schemas.envelope import OrgBrainEnvelope
+from orgbrain.api.schemas.extraction_tasks import (
     SubmitTaskRequest, SubmitTaskData,
     TaskSummary, TaskDetail,
     CancelTaskData,
@@ -1592,42 +1592,42 @@ router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
 @router.post(
     "",
-    response_model=BifrostEnvelope[SubmitTaskData],
+    response_model=OrgBrainEnvelope[SubmitTaskData],
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def submit_task(
     body: SubmitTaskRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[SubmitTaskData]:
+) -> OrgBrainEnvelope[SubmitTaskData]:
     """Submit a task.
     Auth: principal required (see the auth paragraph above).
     Errors: 400 (ValidationError), 402 (BudgetExceededError)"""
     ...
 
 
-@router.get("", response_model=BifrostEnvelope[list[TaskSummary]])
+@router.get("", response_model=OrgBrainEnvelope[list[TaskSummary]])
 async def list_tasks(
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[list[TaskSummary]]:
+) -> OrgBrainEnvelope[list[TaskSummary]]:
     """List tasks."""
     ...
 
 
-@router.get("/{task_id}", response_model=BifrostEnvelope[TaskDetail])
+@router.get("/{task_id}", response_model=OrgBrainEnvelope[TaskDetail])
 async def get_task(
     task_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[TaskDetail]:
+) -> OrgBrainEnvelope[TaskDetail]:
     """Get task result.
     Errors: 404"""
     ...
 
 
-@router.delete("/{task_id}", response_model=BifrostEnvelope[CancelTaskData])
+@router.delete("/{task_id}", response_model=OrgBrainEnvelope[CancelTaskData])
 async def cancel_task(
     task_id: str,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[CancelTaskData]:
+) -> OrgBrainEnvelope[CancelTaskData]:
     """Cancel task.
     Errors: 404, 409 (task already delivered/failed)"""
     ...
@@ -1636,7 +1636,7 @@ async def cancel_task(
 ### 4.4 SSE Streaming
 
 ```python
-# bifrost/api/schemas/sse.py
+# orgbrain/api/schemas/sse.py
 
 from pydantic import BaseModel
 from typing import Literal
@@ -1688,12 +1688,12 @@ class TaskDeliveredEvent(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/streaming.py
+# orgbrain/api/routes/streaming.py
 
 from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from bifrost.api.deps import get_current_user
+from orgbrain.api.deps import get_current_user
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["streaming"])
 
@@ -1723,7 +1723,7 @@ async def stream_task(
 ### 4.6 Feedback Endpoint
 
 ```python
-# bifrost/api/schemas/feedback.py
+# orgbrain/api/schemas/feedback.py
 
 from pydantic import BaseModel
 
@@ -1750,25 +1750,25 @@ class SubmitFeedbackData(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/feedback.py
+# orgbrain/api/routes/feedback.py
 
 from fastapi import APIRouter, Depends, status
-from bifrost.api.deps import get_current_user
-from bifrost.api.schemas.envelope import BifrostEnvelope
-from bifrost.api.schemas.feedback import SubmitFeedbackRequest, SubmitFeedbackData
+from orgbrain.api.deps import get_current_user
+from orgbrain.api.schemas.envelope import OrgBrainEnvelope
+from orgbrain.api.schemas.feedback import SubmitFeedbackRequest, SubmitFeedbackData
 
 router = APIRouter(prefix="/api/v1/feedback", tags=["feedback"])
 
 
 @router.post(
     "",
-    response_model=BifrostEnvelope[SubmitFeedbackData],
+    response_model=OrgBrainEnvelope[SubmitFeedbackData],
     status_code=status.HTTP_201_CREATED,
 )
 async def submit_feedback(
     body: SubmitFeedbackRequest,
     current_user: User = Depends(get_current_user),
-) -> BifrostEnvelope[SubmitFeedbackData]:
+) -> OrgBrainEnvelope[SubmitFeedbackData]:
     """Submit feedback on a completed task.
     Errors: 400 (ValidationError), 404 (task not found)"""
     ...
@@ -1777,7 +1777,7 @@ async def submit_feedback(
 ### 4.7 Health Endpoint
 
 ```python
-# bifrost/api/schemas/health.py
+# orgbrain/api/schemas/health.py
 
 from pydantic import BaseModel
 
@@ -1802,10 +1802,10 @@ class HealthResponse(BaseModel):
 ```
 
 ```python
-# bifrost/api/routes/health.py
+# orgbrain/api/routes/health.py
 
 from fastapi import APIRouter
-from bifrost.api.schemas.health import HealthResponse
+from orgbrain.api.schemas.health import HealthResponse
 
 router = APIRouter(tags=["health"])
 
@@ -1827,12 +1827,12 @@ All errors extend the base exception class. HTTP status codes are deterministic 
 ### 5.1 Error Codes
 
 ```python
-# bifrost/errors.py
+# orgbrain/errors.py
 
 from enum import StrEnum
 
 
-class BifrostErrorCode(StrEnum):
+class OrgBrainErrorCode(StrEnum):
     """Canonical error codes returned in all error responses."""
     EXTRACTION_ERROR = "EXTRACTION_ERROR"
     BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
@@ -1864,16 +1864,16 @@ class BudgetDimension(StrEnum):
 ### 5.2 Exception Classes
 
 ```python
-# bifrost/errors.py (continued)
+# orgbrain/errors.py (continued)
 
 from __future__ import annotations
 
 from typing import Any
 
 
-class BifrostError(Exception):
+class OrgBrainError(Exception):
     """
-    Base class for all Bifrost errors. All subclasses must set code, status_code,
+    Base class for all OrgBrain errors. All subclasses must set code, status_code,
     and retryable at construction time.
     """
 
@@ -1881,7 +1881,7 @@ class BifrostError(Exception):
         self,
         message: str,
         *,
-        code: BifrostErrorCode,
+        code: OrgBrainErrorCode,
         status_code: int,
         retryable: bool,
         detail: Any = None,
@@ -1893,7 +1893,7 @@ class BifrostError(Exception):
         self.detail = detail
 
 
-class ExtractionError(BifrostError):
+class ExtractionError(OrgBrainError):
     """
     Thrown during extraction pipeline phases (clone, triage, component, flow,
     dependency, write). The phase field identifies where in the pipeline the
@@ -1911,7 +1911,7 @@ class ExtractionError(BifrostError):
     ) -> None:
         super().__init__(
             message,
-            code=BifrostErrorCode.EXTRACTION_ERROR,
+            code=OrgBrainErrorCode.EXTRACTION_ERROR,
             status_code=500,
             retryable=retryable,
             detail=detail,
@@ -1920,7 +1920,7 @@ class ExtractionError(BifrostError):
         self.phase = phase
 
 
-class BudgetExceededError(BifrostError):
+class BudgetExceededError(OrgBrainError):
     """
     Thrown when a task or extraction run exceeds its LLM cost budget.
     The orchestrator catches this and returns a partial result, not a 5xx.
@@ -1936,7 +1936,7 @@ class BudgetExceededError(BifrostError):
     ) -> None:
         super().__init__(
             f"Budget exceeded: {dimension} used={used} limit={limit}",
-            code=BifrostErrorCode.BUDGET_EXCEEDED,
+            code=OrgBrainErrorCode.BUDGET_EXCEEDED,
             status_code=402,
             retryable=False,
         )
@@ -1946,7 +1946,7 @@ class BudgetExceededError(BifrostError):
         self.dimension = dimension
 
 
-class NotImplementedTrackBError(BifrostError):
+class NotImplementedTrackBError(OrgBrainError):
     """
     Thrown when a caller requests a Track B feature while running Track A.
     All Track B stubs raise this so the orchestrator can surface a clear message.
@@ -1958,15 +1958,15 @@ class NotImplementedTrackBError(BifrostError):
     def __init__(self, feature_name: str) -> None:
         super().__init__(
             f"{feature_name} requires Track B (Managed Agents). "
-            "Set BIFROST_TRACK=B and ensure Research Preview access.",
-            code=BifrostErrorCode.NOT_IMPLEMENTED_TRACK_B,
+            "Set ORGBRAIN_TRACK=B and ensure Research Preview access.",
+            code=OrgBrainErrorCode.NOT_IMPLEMENTED_TRACK_B,
             status_code=501,
             retryable=False,
         )
         self.feature_name = feature_name
 
 
-class ConflictError(BifrostError):
+class ConflictError(OrgBrainError):
     """
     Thrown by AgentStateBackend.write() when a precondition fails.
     Callers must re-read the current document and retry the write.
@@ -1982,7 +1982,7 @@ class ConflictError(BifrostError):
     ) -> None:
         super().__init__(
             f"Optimistic concurrency conflict at path: {path}",
-            code=BifrostErrorCode.CONFLICT,
+            code=OrgBrainErrorCode.CONFLICT,
             status_code=409,
             retryable=True,  # caller should re-read and retry
         )
@@ -1991,7 +1991,7 @@ class ConflictError(BifrostError):
         self.expected_hash = expected_hash
 
 
-class AdapterError(BifrostError):
+class AdapterError(OrgBrainError):
     """
     Thrown by SourceAdapter implementations after all retry attempts are
     exhausted. The adapter_id field identifies which adapter failed (for
@@ -2005,7 +2005,7 @@ class AdapterError(BifrostError):
         adapter_id: str,
         adapter_type: str,
         retryable: bool = False,
-        code: BifrostErrorCode = BifrostErrorCode.ADAPTER_ERROR,
+        code: OrgBrainErrorCode = OrgBrainErrorCode.ADAPTER_ERROR,
         detail: Any = None,
     ) -> None:
         super().__init__(
@@ -2019,7 +2019,7 @@ class AdapterError(BifrostError):
         self.adapter_type = adapter_type
 
 
-class ValidationError(BifrostError):
+class ValidationError(OrgBrainError):
     """
     Thrown when a request body or LLM JSON output fails Pydantic validation.
     The field property identifies the specific failing path for client feedback.
@@ -2034,7 +2034,7 @@ class ValidationError(BifrostError):
     ) -> None:
         super().__init__(
             message,
-            code=BifrostErrorCode.VALIDATION_ERROR,
+            code=OrgBrainErrorCode.VALIDATION_ERROR,
             status_code=400,
             retryable=False,
             detail=pydantic_errors,
@@ -2046,14 +2046,14 @@ class ValidationError(BifrostError):
 ### 5.3 FastAPI Exception Handlers
 
 ```python
-# bifrost/api/error_handlers.py
+# orgbrain/api/error_handlers.py
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from bifrost.errors import (
+from orgbrain.errors import (
     AdapterError,
-    BifrostError,
+    OrgBrainError,
     BudgetExceededError,
     ConflictError,
     ExtractionError,
@@ -2063,7 +2063,7 @@ from bifrost.errors import (
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Register all Bifrost exception handlers on the FastAPI app."""
+    """Register all OrgBrain exception handlers on the FastAPI app."""
 
     @app.exception_handler(ValidationError)
     async def handle_validation_error(
@@ -2167,11 +2167,11 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(BifrostError)
-    async def handle_bifrost_error(
-        request: Request, exc: BifrostError
+    @app.exception_handler(OrgBrainError)
+    async def handle_orgbrain_error(
+        request: Request, exc: OrgBrainError
     ) -> JSONResponse:
-        """Catch-all for any BifrostError subclass without a specific handler."""
+        """Catch-all for any OrgBrainError subclass without a specific handler."""
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -2192,7 +2192,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 | `ValidationError` | 400 Bad Request | No |
 | Auth failure (middleware) | 401 Unauthorized | No |
 | `BudgetExceededError` | 402 (budget exceeded) | No (returns partial) |
-| `BifrostError` (generic not-found) | 404 Not Found | No |
+| `OrgBrainError` (generic not-found) | 404 Not Found | No |
 | `ConflictError` | 409 Conflict | Yes (re-read + retry) |
 | `ExtractionError` (recoverable) | 500 Internal Server Error | Yes (once) |
 | `ExtractionError` (non-recoverable) | 500 Internal Server Error | No |
@@ -2204,13 +2204,13 @@ def register_exception_handlers(app: FastAPI) -> None:
 The orchestrator's `with_retry` wrapper checks `exc.retryable` before deciding to retry. Retry budget is fixed at 3 attempts with 1s/2s/4s exponential backoff. The orchestrator MUST NOT retry `BudgetExceededError` or `ValidationError` -- these indicate caller errors, not transient failures.
 
 ```python
-# bifrost/errors.py (`with_retry`)
+# orgbrain/errors.py (`with_retry`)
 
 import asyncio
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
 
-from bifrost.errors import BifrostError
+from orgbrain.errors import OrgBrainError
 
 T = TypeVar("T")
 
@@ -2224,14 +2224,14 @@ async def with_retry(
 ) -> T:
     """
     Execute an async callable with exponential backoff retry.
-    Only retries when the raised BifrostError has retryable=True.
-    Non-BifrostError exceptions propagate immediately.
+    Only retries when the raised OrgBrainError has retryable=True.
+    Non-OrgBrainError exceptions propagate immediately.
     """
     last_exc: Exception | None = None
     for attempt in range(max_attempts):
         try:
             return await fn()
-        except BifrostError as exc:
+        except OrgBrainError as exc:
             last_exc = exc
             if not exc.retryable or attempt >= max_attempts - 1:
                 raise
@@ -2319,13 +2319,13 @@ This is an implementer checklist. Each item maps to a specific spec section. Mar
 ### Adapter Security
 
 - [ ] `validate_adapter_url()` called before any adapter `base_url` is used -- blocks RFC 1918 ranges, loopback, metadata endpoints (`169.254.169.254`)
-- [ ] `validate_adapter_url()` blocks schemes other than `https://` in production (`BIFROST_ENV != "development"`)
+- [ ] `validate_adapter_url()` blocks schemes other than `https://` in production (`ORGBRAIN_ENV != "development"`)
 - [ ] Adapter credentials stored in environment variables only -- never in PostgreSQL plaintext or JSONB columns
 
 ### Content Security
 
 - [ ] `scan_for_secrets()` called on all `ExtractedContent.content` before it enters LLM context -- AWS keys, GitHub tokens, private keys, connection strings
-- [ ] `inject_canary_token()` called in all system prompts that include source code -- token format: `BIFROST_INTEGRITY_TOKEN: {random-per-session-UUID}`
+- [ ] `inject_canary_token()` called in all system prompts that include source code -- token format: `ORGBRAIN_INTEGRITY_TOKEN: {random-per-session-UUID}`
 - [ ] Content size validated before LLM submission: `token_estimate <= 50_000` or `AdapterContentPolicy.overflow_strategy` applied
 - [ ] RESTRICTED repos are processed only when your Claude plan's data terms allow it (from S11) -- `repo.classification == "RESTRICTED"` uses the same runtime as other repos
 
@@ -2359,7 +2359,7 @@ This is an implementer checklist. Each item maps to a specific spec section. Mar
 
 ## 9. Configuration Reference
 
-The environment variables and settings are listed in `.env.example` and in [handbook 10](../handbook/10-operations.md). The `BIFROST_*` names that were planned here are not the built names.
+The environment variables and settings are listed in `.env.example` and in [handbook 10](../handbook/10-operations.md). The `ORGBRAIN_*` names that were planned here are not the built names.
 
 ---
 

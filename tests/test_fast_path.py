@@ -24,7 +24,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from bifrost.research.fast_path import (
+from orgbrain.research.fast_path import (
     _detect_fast_path_intent,
     _try_fast_path,
 )
@@ -45,7 +45,7 @@ def _make_entity(name: str = "OrderRouter", entity_type: str = "component") -> M
     e.id = uuid.uuid4()
     e.name = name
     e.entity_type = entity_type
-    e.urn = f"urn:bifrost:repo/orders/component/{name}"
+    e.urn = f"urn:orgbrain:repo/orders/component/{name}"
     e.qualified_name = f"com.acmeco.delivery.{name}"
     e.confidence = 0.9
     e.confidence_level = "confirmed"
@@ -186,12 +186,12 @@ async def test_fast_path_entity_found_streams_events(monkeypatch: pytest.MonkeyP
 
     # Patch _find_entity_by_name to return our stub entity
     monkeypatch.setattr(
-        "bifrost.research.fast_path._find_entity_by_name",
+        "orgbrain.research.fast_path._find_entity_by_name",
         AsyncMock(return_value=entity),
     )
     # Patch _fetch_one_hop_relationships to return empty list
     monkeypatch.setattr(
-        "bifrost.research.fast_path._fetch_one_hop_relationships",
+        "orgbrain.research.fast_path._fetch_one_hop_relationships",
         AsyncMock(return_value=[]),
     )
 
@@ -213,7 +213,7 @@ async def test_fast_path_entity_found_streams_events(monkeypatch: pytest.MonkeyP
     # because the generator is lazy — ClaudeLlmClient is instantiated
     # when the generator is iterated, not when _try_fast_path is called.
     with patch(
-        "bifrost.research.fast_path.ClaudeLlmClient",
+        "orgbrain.research.fast_path.ClaudeLlmClient",
     ) as MockClient:
         instance = MockClient.return_value
         instance.stream_text = _fake_stream
@@ -267,11 +267,11 @@ async def test_fast_path_synthesis_failure_emits_error_sentinel(
     settings = _make_settings()
 
     monkeypatch.setattr(
-        "bifrost.research.fast_path._find_entity_by_name",
+        "orgbrain.research.fast_path._find_entity_by_name",
         AsyncMock(return_value=entity),
     )
     monkeypatch.setattr(
-        "bifrost.research.fast_path._fetch_one_hop_relationships",
+        "orgbrain.research.fast_path._fetch_one_hop_relationships",
         AsyncMock(return_value=[]),
     )
 
@@ -286,7 +286,7 @@ async def test_fast_path_synthesis_failure_emits_error_sentinel(
         yield  # make it an async generator
 
     events: list[dict[str, Any]] = []
-    with patch("bifrost.research.fast_path.ClaudeLlmClient") as MockClient:
+    with patch("orgbrain.research.fast_path.ClaudeLlmClient") as MockClient:
         instance = MockClient.return_value
         instance.stream_text = _failing_stream
 
@@ -335,13 +335,13 @@ async def test_coordinator_run_research_uses_fast_path(
     # a local import inside run_research, so patching the module where
     # the name lives is the correct target.
     monkeypatch.setattr(
-        "bifrost.research.fast_path._try_fast_path",
+        "orgbrain.research.fast_path._try_fast_path",
         AsyncMock(return_value=_fast_gen()),
     )
 
     # We need a minimal ResearchDeps — session_factory and settings
     # are never actually reached because the fast path intercepts first
-    from bifrost.research.coordinator import ResearchDeps, run_research
+    from orgbrain.research.coordinator import ResearchDeps, run_research
 
     @dataclass
     class _FakeSettings:

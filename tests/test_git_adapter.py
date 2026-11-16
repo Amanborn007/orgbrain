@@ -12,13 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from bifrost.adapters.base import (
+from orgbrain.adapters.base import (
     AdapterScope,
     ScopeFilter,
     SourceAdapter,
     SourceObjectType,
 )
-from bifrost.adapters.git import (
+from orgbrain.adapters.git import (
     GitAdapter,
     GitAdapterError,
     GitCloneError,
@@ -158,7 +158,7 @@ class TestSSRFGuard:
     @pytest.fixture(autouse=True)
     def _no_optin(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Ensure the dev opt-out is off so the guard is active.
-        monkeypatch.delenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", raising=False)
+        monkeypatch.delenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", raising=False)
 
     @pytest.mark.parametrize(
         "url",
@@ -197,7 +197,7 @@ class TestSSRFGuard:
         _validate_repo_url(url)
 
     def test_opt_out_bypasses_guard(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("BIFROST_ALLOW_PRIVATE_GIT_URLS", "true")
+        monkeypatch.setenv("ORGBRAIN_ALLOW_PRIVATE_GIT_URLS", "true")
         # With the dev opt-out, a private address is allowed through.
         _validate_repo_url("https://10.0.0.5/owner/repo.git")
 

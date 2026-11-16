@@ -1,6 +1,6 @@
 """End-to-end workflow test: repo register → extract → query → verify entities.
 
-This is a single linear test that exercises the full Bifrost pipeline in
+This is a single linear test that exercises the full OrgBrain pipeline in
 sequence. It requires a running PostgreSQL container (provided by conftest.py).
 """
 
@@ -29,7 +29,7 @@ async def test_full_pipeline(client: httpx.AsyncClient, test_repo_url: str) -> N
     assert register_resp.status_code == 201, f"Register failed: {register_resp.text}"
     register_data = register_resp.json()["data"]
     repo_id = register_data["id"]
-    assert register_data["urn"] == "urn:bifrost:repo:e2e-test-repo"
+    assert register_data["urn"] == "urn:orgbrain:repo:e2e-test-repo"
 
     # ------------------------------------------------------------------
     # Step 2: Verify repo appears in list
@@ -46,7 +46,7 @@ async def test_full_pipeline(client: httpx.AsyncClient, test_repo_url: str) -> N
     assert detail_resp.status_code == 200
     detail = detail_resp.json()["data"]
     assert detail["name"] == "e2e-test-repo"
-    assert detail["urn"] == "urn:bifrost:repo:e2e-test-repo"
+    assert detail["urn"] == "urn:orgbrain:repo:e2e-test-repo"
 
     # ------------------------------------------------------------------
     # Step 4: Trigger extraction — returns a task ID

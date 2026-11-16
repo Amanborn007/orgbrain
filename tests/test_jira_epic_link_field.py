@@ -5,14 +5,14 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.cli.config import BifrostSettings
-from bifrost.cli.config_sections import JiraSourceConfig
-from bifrost.errors import ConfigError
-from bifrost.research.coordinator import _jira_chain_system
+from orgbrain.cli.config import OrgBrainSettings
+from orgbrain.cli.config_sections import JiraSourceConfig
+from orgbrain.errors import ConfigError
+from orgbrain.research.coordinator import _jira_chain_system
 
 
-def _settings(**jira: object) -> BifrostSettings:
-    return BifrostSettings(sources={"jira": jira})
+def _settings(**jira: object) -> OrgBrainSettings:
+    return OrgBrainSettings(sources={"jira": jira})
 
 
 def test_default_asks_for_parent_and_no_custom_field() -> None:
@@ -49,5 +49,5 @@ def test_field_name_must_match_customfield_pattern(bad: str) -> None:
 
 
 def test_env_name_is_nested(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BIFROST_SOURCES__JIRA__EPIC_LINK_FIELD", "customfield_10008")
-    assert BifrostSettings().sources.jira.epic_link_field == "customfield_10008"
+    monkeypatch.setenv("ORGBRAIN_SOURCES__JIRA__EPIC_LINK_FIELD", "customfield_10008")
+    assert OrgBrainSettings().sources.jira.epic_link_field == "customfield_10008"

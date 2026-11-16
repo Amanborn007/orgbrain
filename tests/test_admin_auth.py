@@ -12,10 +12,10 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
-import bifrost.api.audit as _audit_mod
-from bifrost.api.auth.principal import Principal
-from bifrost.api.auth.roles import RoleRequired
-from bifrost.api.deps import require_role
+import orgbrain.api.audit as _audit_mod
+from orgbrain.api.auth.principal import Principal
+from orgbrain.api.auth.roles import RoleRequired
+from orgbrain.api.deps import require_role
 
 
 def _make_request(
@@ -80,7 +80,7 @@ class TestRequireAdminRole:
     @pytest.mark.asyncio
     async def test_raw_admin_group_without_the_role_is_refused(self, audit_events) -> None:
         """Group names carry no authority; only the resolved role does."""
-        principal = Principal(email="g@example.com", groups=("bifrost-admin",), roles=("member",))
+        principal = Principal(email="g@example.com", groups=("orgbrain-admin",), roles=("member",))
         with pytest.raises(RoleRequired):
             await require_role("admin")(_make_request(principal=principal))
 
@@ -106,7 +106,7 @@ class TestAdminRouterDependency:
     fails this test."""
 
     def test_admin_router_has_gate(self) -> None:
-        from bifrost.api.routes import admin
+        from orgbrain.api.routes import admin
 
         deps = admin.router.dependencies
         assert len(deps) >= 1, "admin router must declare at least one dependency"

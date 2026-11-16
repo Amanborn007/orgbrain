@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from bifrost.api.routes.ask import _DEFAULT_GATE_FLOOR, _evaluate_gate
+from orgbrain.api.routes.ask import _DEFAULT_GATE_FLOOR, _evaluate_gate
 
 
 @pytest.mark.parametrize(
