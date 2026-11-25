@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 40 992 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="orgbrain-architecture-title orgbrain-architecture-desc">
+<title id="orgbrain-architecture-title">How OrgBrain fits together</title>
+<desc id="orgbrain-architecture-desc">Architecture diagram showing the browser UI and the orgbrain CLI calling one FastAPI process, which stores the extracted graph and vectors in Postgres with pgvector and spawns one claude -p subprocess per model call. The subprocess reads the cloned repos and reaches Anthropic and MCP servers. Repositories are cloned from git hosts.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4a5568"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c8501a"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+</defs>
+<rect width="992" height="432" fill="#ffffff"/>
+<rect x="16" y="56" width="752" height="296" rx="8" fill="rgba(20,32,43,0.02)" stroke="rgba(20,32,43,0.12)" stroke-width="0.8"/>
+<rect x="28" y="60" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="72" y="69" fill="rgba(20,32,43,0.45)" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.14em">YOUR MACHINE</text>
+<rect x="784" y="56" width="192" height="296" rx="8" fill="rgba(20,32,43,0.02)" stroke="rgba(20,32,43,0.12)" stroke-width="0.8"/>
+<rect x="844" y="60" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="880" y="69" fill="rgba(20,32,43,0.45)" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.14em">EXTERNAL</text>
+<path d="M 160,128 H 208" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 352,128 H 400" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 560,128 H 608" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 752,128 H 800" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 480,160 V 256" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 680,160 V 256" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 800,288 H 752" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 160,288 H 372 Q 380,288 380,280 V 160 Q 380,152 388,152 H 400" fill="none" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="168" y="108" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="184" y="117" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">ASK</text>
+<rect x="360" y="108" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="376" y="117" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">HTTP</text>
+<rect x="562" y="108" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="584" y="117" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">SPAWNS</text>
+<rect x="756" y="108" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="776" y="117" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">CALLS</text>
+<rect x="488" y="200" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="532" y="209" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">GRAPH · VECTORS</text>
+<rect x="688" y="200" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="708" y="209" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">READS</text>
+<rect x="756" y="268" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="776" y="277" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">CLONE</text>
+<rect x="244" y="268" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="277" fill="#8a8a8a" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">HTTP</text>
+<rect x="32" y="96" width="128" height="64" rx="6" fill="#ffffff"/>
+<rect x="32" y="96" width="128" height="64" rx="6" fill="rgba(74,85,104,0.10)" stroke="#8a8a8a" stroke-width="1"/>
+<rect x="40" y="102" width="28" height="12" rx="2" fill="none" stroke="#8a8a8a" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="54" y="111" fill="#8a8a8a" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">YOU</text>
+<text x="96" y="132" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">You</text>
+<text x="96" y="148" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">browser</text>
+<rect x="208" y="96" width="144" height="64" rx="6" fill="#ffffff"/>
+<rect x="208" y="96" width="144" height="64" rx="6" fill="#ffffff" stroke="#14202b" stroke-width="1"/>
+<rect x="216" y="102" width="20" height="12" rx="2" fill="none" stroke="#14202b" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="226" y="111" fill="#14202b" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+<text x="280" y="132" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">React UI</text>
+<text x="280" y="148" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">Vite · :5173</text>
+<rect x="400" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="96" width="160" height="64" rx="6" fill="#f4ded0" stroke="#c8501a" stroke-width="1"/>
+<rect x="408" y="102" width="32" height="12" rx="2" fill="none" stroke="#c8501a" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="424" y="111" fill="#c8501a" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">CORE</text>
+<text x="480" y="132" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">FastAPI process</text>
+<text x="480" y="148" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">API · worker · SSE</text>
+<rect x="608" y="96" width="144" height="64" rx="6" fill="#ffffff"/>
+<rect x="608" y="96" width="144" height="64" rx="6" fill="#ffffff" stroke="#14202b" stroke-width="1"/>
+<rect x="616" y="102" width="28" height="12" rx="2" fill="none" stroke="#14202b" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="630" y="111" fill="#14202b" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">LLM</text>
+<text x="680" y="132" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">claude -p</text>
+<text x="680" y="148" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">one process per call</text>
+<rect x="800" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="800" y="96" width="160" height="64" rx="6" fill="rgba(20,32,43,0.03)" stroke="rgba(20,32,43,0.30)" stroke-width="1"/>
+<rect x="808" y="102" width="28" height="12" rx="2" fill="none" stroke="#8a8a8a" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="822" y="111" fill="#8a8a8a" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">MCP</text>
+<text x="880" y="132" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">Claude &amp; MCP</text>
+<text x="880" y="148" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">Anthropic · Jira · Slack</text>
+<rect x="32" y="256" width="128" height="64" rx="6" fill="#ffffff"/>
+<rect x="32" y="256" width="128" height="64" rx="6" fill="rgba(74,85,104,0.10)" stroke="#8a8a8a" stroke-width="1"/>
+<rect x="40" y="262" width="28" height="12" rx="2" fill="none" stroke="#8a8a8a" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="54" y="271" fill="#8a8a8a" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">CLI</text>
+<text x="96" y="292" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">orgbrain CLI</text>
+<text x="96" y="308" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">thin client</text>
+<rect x="400" y="256" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="256" width="160" height="64" rx="6" fill="rgba(20,32,43,0.05)" stroke="#4a5568" stroke-width="1"/>
+<rect x="408" y="262" width="20" height="12" rx="2" fill="none" stroke="#4a5568" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="418" y="271" fill="#4a5568" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+<text x="480" y="292" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">Postgres 16</text>
+<text x="480" y="308" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">pgvector · graph</text>
+<rect x="608" y="256" width="144" height="64" rx="6" fill="#ffffff"/>
+<rect x="608" y="256" width="144" height="64" rx="6" fill="rgba(20,32,43,0.05)" stroke="#4a5568" stroke-width="1"/>
+<rect x="616" y="262" width="36" height="12" rx="2" fill="none" stroke="#4a5568" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="634" y="271" fill="#4a5568" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">FILES</text>
+<text x="680" y="292" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">Cloned repos</text>
+<text x="680" y="308" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">file:line source</text>
+<rect x="800" y="256" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="800" y="256" width="160" height="64" rx="6" fill="rgba(20,32,43,0.03)" stroke="rgba(20,32,43,0.30)" stroke-width="1"/>
+<rect x="808" y="262" width="28" height="12" rx="2" fill="none" stroke="#8a8a8a" stroke-opacity="0.45" stroke-width="0.8"/>
+<text x="822" y="271" fill="#8a8a8a" font-size="7" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">GIT</text>
+<text x="880" y="292" fill="#14202b" font-size="12" font-weight="600" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">Git hosts</text>
+<text x="880" y="308" fill="#4a5568" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="middle">GitHub · remotes</text>
+<line x1="32" y1="372" x2="960" y2="372" stroke="rgba(20,32,43,0.12)" stroke-width="0.8"/>
+<text x="32" y="392" fill="#4a5568" font-size="8" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="32" y="404" width="16" height="12" rx="2" fill="#f4ded0" stroke="#c8501a" stroke-width="1"/>
+<text x="64" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">One async process</text>
+<rect x="172" y="404" width="16" height="12" rx="2" fill="#ffffff" stroke="#14202b" stroke-width="1"/>
+<text x="204" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Component</text>
+<rect x="272" y="404" width="16" height="12" rx="2" fill="rgba(20,32,43,0.05)" stroke="#4a5568" stroke-width="1"/>
+<text x="304" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Local data</text>
+<rect x="376" y="404" width="16" height="12" rx="2" fill="rgba(20,32,43,0.03)" stroke="rgba(20,32,43,0.30)" stroke-width="1"/>
+<text x="408" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">External service</text>
+<rect x="512" y="404" width="16" height="12" rx="2" fill="rgba(74,85,104,0.10)" stroke="#8a8a8a" stroke-width="1"/>
+<text x="544" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Entry point</text>
+<line x1="624" y1="410" x2="648" y2="410" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="656" y="414" fill="#4a5568" font-size="9" font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Network call</text>
+</svg>
