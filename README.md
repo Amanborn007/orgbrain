@@ -1,5 +1,9 @@
 # OrgBrain
 
+OrgBrain answers questions about code spread across many repositories, such as "what breaks if `signing-keys` rotates its key", and cites `file:line` for every claim. It is for an engineer who has to work on a system their team does not own.
+
+Stack: Python 3.12 and FastAPI, Postgres 16 with pgvector, a React 19 UI, and the `claude` CLI for every model call.
+
 ## The problem
 
 In a codebase split across many repositories, a question like "what breaks if `signing-keys` rotates its key" is hard to answer. The answer is scattered across code, tickets, docs and chat, and the person asking usually does not own the code. Two moments where that happens: an engineer paged for a service another team owns, and a team that receives a system after a reorg and has to learn what it calls and what calls it. OrgBrain clones the repositories, extracts components, flows and dependencies into Postgres with pgvector, and answers with `file:line` citations and a confidence label.
@@ -73,7 +77,19 @@ Open http://localhost:5173. Registering from the Overview dialog extracts by def
 
 ## How it works
 
-Paths are under `src/orgbrain/` unless noted. Startup tasks, extraction phases and data flows are in [handbook 02](docs/handbook/02-architecture.md).
+Everything runs on your machine in one FastAPI process. Extraction clones each repository, has `claude -p` read it, and writes components, flows and dependencies into Postgres as a graph with vectors. A question finds seed entities by vector search, walks the graph from them, and has `claude -p` write the answer from what the walk found, with an adversarial verifier pass at the end.
+
+<p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/orgbrain-architecture-dark.svg">
+  <img alt="OrgBrain architecture: the browser UI and the orgbrain CLI call one FastAPI process, which stores the graph and vectors in Postgres with pgvector and spawns one claude -p subprocess per model call; the subprocess reads the cloned repos and reaches Anthropic and MCP servers, and repositories are cloned from git hosts." src="docs/assets/orgbrain-architecture.svg" width="880">
+</picture></p>
+
+Startup tasks, extraction phases and data flows are in [handbook 02](docs/handbook/02-architecture.md).
+
+<details>
+<summary>Components and where they live (13 rows)</summary>
+
+Paths are under `src/orgbrain/` unless noted.
 
 | Component | Path | What it does | Talks to |
 |---|---|---|---|
@@ -91,7 +107,27 @@ Paths are under `src/orgbrain/` unless noted. Startup tasks, extraction phases a
 | CLI | `cli/` | The `orgbrain` command, a thin client of the API. | The API |
 | UI | `ui/` | React 19, Vite, TanStack Query, Tailwind 4. | The API through the Vite proxy |
 
+</details>
+
 Where to start in the code: `extraction/cli_client.py` (the `claude -p` wrapper), `extraction/pipeline.py` (extraction phases) and `run_research` in `research/coordinator.py` (the chat path). The topology diagram is in [handbook 02 section 1](docs/handbook/02-architecture.md#1-topology-at-a-glance) and the trust boundary is in [section 8](docs/handbook/02-architecture.md#8-identity-auth-and-security-boundary). Where state lives is in [RUNNING.md section 12](RUNNING.md#12-ports-and-paths).
+
+---
+
+## Design decisions
+
+Three choices shaped most of the code. The full list, with what failed along the way, is in [docs/DECISIONS.md](docs/DECISIONS.md).
+
+**Every model call is a `claude -p` subprocess, not the SDK.** The first plan called the Messages API with an API key, which someone would have to provision, store and rotate. `extraction/cli_client.py` spawns `claude -p` per call instead and uses the operator's Claude Code login, and cost comes from the CLI's own `total_cost_usd`. The cost is a new process per call, and every user of one server spends from one login. Most calls pass an empty MCP config with `--strict-mcp-config`, so a spawn loads about 200 tokens of baseline instead of 50K.
+
+**One async process, with no Celery or Redis.** Extraction, chat and the janitors all need background work. They run as `asyncio` tasks started from the FastAPI lifespan, so there is one thing to start and no state shared across processes. The cost is that the SSE bus is a dict of queues in memory, so a second worker would not see the first one's events.
+
+**Extraction is LLM-only, with no parser.** An LLM pass needs no parser per language, so one pipeline covers any repo. The cost is a sparse graph, about 0.12 edges per entity, which limits what a blast-radius walk can find. I do not defend that as a win. The [roadmap](docs/roadmap.md#1-verdict) found that leading systems extract structure with parsers, and card P2.3 plans a tree-sitter symbol layer.
+
+## What I learned
+
+- Building the test schema with `Base.metadata.create_all` only knows ORM tables, so it wiped the 17 tables that exist only in migrations and broke every later test that used them. The test session now migrates the schema once with alembic (`tests/conftest.py`).
+- The benchmark could not see the gains I was tuning for. Three identical baseline runs scored 0.734, 0.741 and 0.738, and a later experiment reported +0.006, which is inside that spread. Measuring the noise floor now comes before any tuning ([roadmap section 1](docs/roadmap.md#1-verdict)).
+- Extraction routes submitted a task to the worker before committing it, and the worker runs in its own session, so it sometimes ran first and failed with "Task not found". The routes now commit before they submit (`tests/test_extract_commit_order.py`).
 
 ---
 
